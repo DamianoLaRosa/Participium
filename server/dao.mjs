@@ -32,4 +32,25 @@ export const getUser = (username, password) => {
   });
 };
 
+//to be changed when db addedddddddddddddddddddddddddddddddddddddddddd
+export const createUser = (name, email, password) => {
+  return new Promise((resolve, reject) => {
+    // salt generator
+    const salt = crypto.randomBytes(16).toString('hex');
+    
+    // cryptography the password
+    crypto.scrypt(password, salt, 32, function(err, hashedPassword) {
+      if (err) reject(err);
+      
+      const sql = 'INSERT INTO user(name, mail, password, salt) VALUES(?, ?, ?, ?)';
+      db.run(sql, [name, email, hashedPassword.toString('hex'), salt], function(err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve({id: this.lastID , name: name});
+        }
+      });
+    });
+  });
+};
 

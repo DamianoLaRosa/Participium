@@ -119,12 +119,11 @@ POST http://localhost:3001/api/sessions
 content-type: application/json
 
 {
-  "username": "alessioVivaldi",
+  "username": "aaaaaaaa@aaaaaaaaaaaa.com",
   "password": "password"
 }
 
-###
-
+### 
 ## Checking if user is still logged-in.
 GET http://localhost:3001/api/sessions/current
 
@@ -134,3 +133,13 @@ GET http://localhost:3001/api/sessions/current
 DELETE http://localhost:3001/api/sessions/current
 
 ###
+
+# Registration
+POST http://localhost:3001/api/registration
+content-type: application/json
+
+{
+  "name": "alessioVivaldi",
+  "email" : "aaaaaaaa@aaaaaaaaaaaa.com",
+  "password": "password"
+}

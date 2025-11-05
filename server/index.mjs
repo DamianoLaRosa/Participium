@@ -2,7 +2,7 @@
 import express from 'express';
 import morgan from 'morgan';
 import {check, validationResult} from 'express-validator';
-import {getUser} from './dao.mjs';
+import {getUser, createUser} from './dao.mjs';
 import {} from "./models.mjs"
 import cors from 'cors';
 
@@ -53,6 +53,32 @@ app.use(passport.authenticate('session'));
 
 // can use let id= req.user? req.user.id:0; in the APIs
 
+// POST /api/registration
+app.post('/api/registration', [
+  check('name').notEmpty().withMessage('Name is required'),
+  check('email').isEmail().withMessage('Invalid email format'),
+  check('password').isLength({min: 6}).withMessage('Password must be at least 6 characters long')
+], async (req, res) => {
+  
+  // Validation of the input data
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({errors: errors.array()});
+  }
+
+  try {
+    const {name, email, password} = req.body;
+    const user = await createUser(name, email, password);
+    res.status(201).json(user);
+  } catch (err) {
+    // Remember to manage the duplication email (UNIQUE constraint) -> to be changed
+    if (err.code === 'SQLITE_CONSTRAINT') {
+      res.status(409).json({error: 'Email already exists'});
+    } else {
+      res.status(503).json({error: 'Database error during user creation'});
+    }
+  }
+});
 
 // POST /api/sessions
 app.post('/api/sessions', passport.authenticate('local'), function(req, res) {
