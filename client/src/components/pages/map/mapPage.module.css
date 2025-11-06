@@ -1,0 +1,130 @@
+.mapWrapper {
+  width: 100%;
+  height: calc(100vh - 64px);
+  padding: 24px 12px;
+  box-sizing: border-box;
+}
+
+.mapContainer {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.searchBar {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  max-width: 600px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.searchForm {
+  display: flex;
+  gap: 8px;
+  background: white;
+  padding: 8px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.searchInputWrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 4px;
+}
+
+.searchIcon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  font-size: 14px;
+  outline: none;
+  transition: border-bottom-color 0.2s;
+}
+
+.searchInput:focus {
+  border-bottom-color: #4a90e2;
+}
+
+.searchInput:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
+.searchButton {
+  padding: 10px 20px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.searchButton:hover:not(:disabled) {
+  background-color: #357abd;
+}
+
+.searchButton:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.searchError {
+  background-color: #fee;
+  color: #c33;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.map {
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+}
+
+.createReportButton {
+  width: 100%;
+  padding: 8px 16px;
+  margin-top: 8px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.createReportButton:hover {
+  background-color: #357abd;
+}
+
+/* Leaflet popup content styling */
+:global(.leaflet-popup-content) p {
+  margin: 4px 0;
+  font-size: 13px;
+}
+
+:global(.leaflet-popup-content) strong {
+  font-weight: 600;
+}

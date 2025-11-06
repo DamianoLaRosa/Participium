@@ -1,7 +1,9 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import { Routes, Route, Navigate } from "react-router";
-import { DefaultLayout } from "./components/common/Layout";
-import { LoginPage } from "./components/pages/LoginPage";
+import { DefaultLayout } from "./components/common/layout/Layout";
+import InsertReportPage from "./components/pages/report/InsertReportPage";
+import { LoginPage } from "./components/pages/login/LoginPage";
+import { MapPage } from "./components/pages/map/MapPage";
 import { useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import API from "./API/API.mjs";
@@ -38,9 +40,22 @@ function App() {
       >
         <Route
           path="/"
-          element={user ? <></> : <LoginPage user={user} setUser={setUser} />}
+          element={
+            user ? (
+              <Navigate to="/map" />
+            ) : (
+              <LoginPage user={user} setUser={setUser} />
+            )
+          }
         />
+        <Route path="/map" element={user ? <MapPage /> : <Navigate to="/" />} />
 
+        <Route
+          path="/create_report"
+          element={
+            user ? <InsertReportPage user={user} /> : <Navigate to="/" />
+          }
+        />
         <Route path="*" element={<Navigate to="/" />} />
       </Route>
     </Routes>

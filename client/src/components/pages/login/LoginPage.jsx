@@ -1,5 +1,5 @@
 import { useState, useActionState } from "react";
-import API from "../../API/API.mjs";
+import API from "../../../API/API.mjs";
 import styles from "./loginPage.module.css";
 
 export function LoginPage(props) {

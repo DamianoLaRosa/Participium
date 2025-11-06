@@ -1,5 +1,5 @@
 import { Outlet } from "react-router";
-import { Header } from "./header/Header";
+import { Header } from "../header/Header";
 import { Container } from "react-bootstrap";
 import styles from "./layout.module.css";
 
