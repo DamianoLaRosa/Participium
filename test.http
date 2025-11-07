@@ -1,20 +1,8 @@
-### 1. GET player by ID
-GET http://localhost:3001/api/players/1
+### 1. GET all roles : id+name
+GET http://localhost:3001/api/offices
 Content-Type: application/json
 
 ###
-
-###
-
-### 8. PUT check letter
-PUT http://localhost:3001/api/games/1/0/checkLetter
-Content-Type: application/json
-
-{
-  "id": 26,
-  "timer": 45
-}
-
 
 ###
 
@@ -25,6 +13,17 @@ content-type: application/json
 {
   "username": "aaaaaaaa@aaaaaaaaaaaa.com",
   "password": "password"
+}
+
+###
+
+# Login admin
+POST http://localhost:3001/api/sessions
+content-type: application/json
+
+{
+  "username": "admin@participium.local",
+  "password": "participium"
 }
 
 ### 
@@ -43,9 +42,26 @@ POST http://localhost:3001/api/registration
 content-type: application/json
 
 {
+  "username": "alessioVialdi",
+  "first_name": "alessio",
+  "last_name": "vivaldi",
+  "email": "aaaaaaaa@aaaaaaaaaaa.com",
+  "email_notifications": true,
+  "password": "password"
+}
+
+###
+
+# Registration user
+POST http://localhost:3001/api/operators
+content-type: application/json
+
+{
   "username": "alessioVivaldi",
   "first_name": "alessio",
   "last_name" : "vivaldi",
   "email" : "aaaaaaaa@aaaaaaaaaaaa.com",
   "password": "password"
 }
+
+###
