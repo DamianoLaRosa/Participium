@@ -139,7 +139,9 @@ POST http://localhost:3001/api/registration
 content-type: application/json
 
 {
-  "name": "alessioVivaldi",
+  "username": "alessioVivaldi",
+  "first_name": "alessio",
+  "last_name" : "vivaldi",
   "email" : "aaaaaaaa@aaaaaaaaaaaa.com",
   "password": "password"
 }

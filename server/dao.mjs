@@ -1,13 +1,66 @@
-import sqlite3 from 'sqlite3';
 import {  } from './models.mjs';   
+import { Pool } from 'pg';
 import crypto from 'crypto';
 
-// Open the database -> temporary -> to be deleted
-const db = new sqlite3.Database('db.sqlite', (err) => {
-  if (err) throw err;
+const pool = new Pool({
+  user: 'admin',
+  host: 'localhost',
+  database: 'participium',
+  password: 'changeme',
+  port: 5432,
 });
 
+export const getUser = async (username, password) => {
+  try {
+    const sql = 'SELECT * FROM "citizens" WHERE email = $1';
+    const result = await pool.query(sql, [username]);
+
+    const row = result.rows[0];
+    if (!row) return false;
+
+    const user = { id: row.citizen_id, username: row.username };
+
+    return new Promise((resolve, reject) => {
+      crypto.scrypt(password, row.salt, 32, (err, hashedPassword) => {
+        if (err) return reject(err);
+
+        const match = crypto.timingSafeEqual(
+          Buffer.from(row.password_hash, 'hex'),
+          hashedPassword
+        );
+
+        resolve(match ? user : false);
+      });
+    });
+  } catch (err) {
+    throw err;
+  }
+};
+
+
+export const createUser = async (username, email,first_name,last_name, password) => {
+  const salt = crypto.randomBytes(16).toString('hex');
+
+  return new Promise((resolve, reject) => {
+    crypto.scrypt(password, salt, 32, async (err, hashedPassword) => {
+      if (err) return reject(err);
+
+      const sql = 'INSERT INTO "citizens"(username, email,first_name,last_name, password_hash, salt) VALUES($1, $2, $3, $4, $5, $6) RETURNING citizen_id';
+      const values = [username, email,first_name,last_name, hashedPassword.toString('hex'), salt];
+
+      try {
+        const result = await pool.query(sql, values);
+        resolve({ id: result.rows[0].citizen_id, username });
+      } catch (err) {
+        reject(err);
+      }
+    });
+  });
+};
+
+
 /*
+
 const { Client } = require('pg');
 require('dotenv').config();
 
@@ -34,51 +87,6 @@ client.query('SELECT * FROM citizens', (err, res) => {
   if (err) throw err;
   console.log(res.rows);
 });
+
+
 */
-export const getUser = (username, password) => {
-  return new Promise((resolve, reject) => {
-    const sql = 'SELECT * FROM user WHERE mail = ?';
-    db.get(sql, [username], (err, row) => {
-      if (err) { 
-        reject(err); 
-      }
-      else if (row === undefined) { 
-        resolve(false); //gestito nella local strategy 
-      }
-      else {
-        const user = {id: row.id, name: row.name};
-        
-        crypto.scrypt(password, row.salt, 32, function(err, hashedPassword) {
-          if (err) reject(err);
-          if(!crypto.timingSafeEqual(Buffer.from(row.password, 'hex'), hashedPassword)) 
-            resolve(false); //non è lui
-          else
-            resolve(user); //restituisco oggetto user
-        });
-      }
-    });
-  });
-};
-
-//to be changed when db addedddddddddddddddddddddddddddddddddddddddddd
-export const createUser = (name, email, password) => {
-  return new Promise((resolve, reject) => {
-    // salt generator
-    const salt = crypto.randomBytes(16).toString('hex');
-    
-    // cryptography the password
-    crypto.scrypt(password, salt, 32, function(err, hashedPassword) {
-      if (err) reject(err);
-      
-      const sql = 'INSERT INTO user(name, mail, password, salt) VALUES(?, ?, ?, ?)';
-      db.run(sql, [name, email, hashedPassword.toString('hex'), salt], function(err) {
-        if (err) {
-          reject(err);
-        } else {
-          resolve({id: this.lastID , name: name});
-        }
-      });
-    });
-  });
-};
-
