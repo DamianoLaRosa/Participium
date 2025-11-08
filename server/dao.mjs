@@ -1,12 +1,16 @@
 import { Pool } from 'pg';
 import crypto from 'crypto';
+import dotenv from 'dotenv';
+
+
+// load environment (support a local db.env file)
+dotenv.config({ path: './db.env' });
 
 const pool = new Pool({
-  user: 'admin',
-  host: 'localhost',
-  database: 'participium',
-  password: 'changeme',
-  port: 5432,
+  // Prefer DATABASE_URL (e.g. Neon). Fall back to local DB when not provided.
+  connectionString: process.env.DATABASE_URL || 'postgresql://admin:changeme@localhost:5432/participium',
+  // When using managed Postgres providers like Neon, require SSL but allow self-signed certs.
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
 });
 
 export const getUser = async (username, password) => {

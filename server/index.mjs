@@ -11,7 +11,7 @@ import session from 'express-session';
 
 // init
 const app = express();
-const port = 3001;
+const port = process.env.PORT || 3001;
 
 // middleware
 app.use(express.json());
@@ -42,7 +42,7 @@ passport.deserializeUser(function (user, cb) {
 });
 
 app.use(session({
-  secret: "shhhhh... it's a secret!",
+  secret: process.env.SESSION_SECRET || "shhhhh... it's a secret!",
   resave: false,
   saveUninitialized: false,
 }));
