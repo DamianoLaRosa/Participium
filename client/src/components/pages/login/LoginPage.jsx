@@ -21,13 +21,15 @@ export function LoginPage(props) {
       setMessage({ msg: `Welcome, ${user.name}!`, type: "success" });
       props.setUser(user);
 
-      if(user.username === 'admin'){
+      if (user.username === 'admin') {
         navigate(`/admin`);
-      }else{
+      } else {
         navigate(`/map`);
       }
     } catch (err) {
-      setMessage({ msg: err, type: "error" });
+      // ensure we store a string message, not an Error object
+      const text = err?.message || (typeof err === 'string' ? err : JSON.stringify(err));
+      setMessage({ msg: text, type: "error" });
     }
   };
 
@@ -49,15 +51,16 @@ export function LoginPage(props) {
       });
       props.setUser(user);
     } catch (err) {
-      if (err.errors) {
+      if (err && err.errors) {
         setMessage({
           msg: err.errors.map((e) => e.msg).join(", "),
           type: "error",
         });
-      } else if (err.error) {
-        setMessage({ msg: err.error, type: "error" });
+      } else if (err && err.error) {
+        setMessage({ msg: String(err.error), type: "error" });
       } else {
-        setMessage({ msg: "Registration failed", type: "error" });
+        const text = err?.message || (typeof err === 'string' ? err : JSON.stringify(err));
+        setMessage({ msg: text || "Registration failed", type: "error" });
       }
     }
   };
@@ -134,7 +137,7 @@ function LoginForm(props) {
               : styles.errorMessage
           }
         >
-          {props.message.msg}
+          {String(props.message.msg)}
         </div>
       )}
 
@@ -234,7 +237,7 @@ function SignUpForm(props) {
               : styles.errorMessage
           }
         >
-          {props.message.msg}
+          {String(props.message.msg)}
         </div>
       )}
 

@@ -23,7 +23,6 @@ const CreateUserPage = () => {
   const loadOffices = async () => {
     try {
       const data = await API.getAllOffices();
-      console.log('Offices loaded:', data, 'Is array:', Array.isArray(data)); // Debug
       setOffices(data);
     } catch (err) {
       setError('Failed to load offices');
