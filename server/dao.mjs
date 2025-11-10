@@ -1,12 +1,16 @@
 import { Pool } from 'pg';
 import crypto from 'crypto';
+import dotenv from 'dotenv';
+import utils from './utils.mjs';
+
+dotenv.config();
 
 const pool = new Pool({
-  user: 'admin',
-  host: 'localhost',
-  database: 'participium',
-  password: 'changeme',
-  port: 5432,
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT,
 });
 
 export const getUser = async (username, password) => {
@@ -115,6 +119,27 @@ export const getAllOperators = async () => {
   }
 };
 
+export const insertReport = async ({citizen_id, description, image_name, image_bytes, latitude, longitude}, supabase) => {
+  try {
+    // Upload image to Supabase Storage
+    const storageUtils = await utils(supabase);
+    console.log("storage utils:", storageUtils);
+    await storageUtils.uploadImage(image_bytes, image_name);
+
+    // Insert report into database
+    const sql = `
+      INSERT INTO reports (citizen_id, description, image_name, latitude, longitude, created_at)
+      VALUES ($1, $2, $3, $4, $5, NOW())
+      RETURNING report_id, citizen_id, description, image_name, latitude, longitude, created_at
+    `;
+    const values = [citizen_id, description, image_name, latitude, longitude];
+    const result = await pool.query(sql, values);
+    return result.rows[0];
+  } catch (err) {
+    throw err;
+  }
+};
+
 export const createMunicipalityUser = async (email, username, password, office_id) => {
   const salt = crypto.randomBytes(16).toString('hex');
 
@@ -138,3 +163,5 @@ export const createMunicipalityUser = async (email, username, password, office_i
     });
   });
 };
+
+

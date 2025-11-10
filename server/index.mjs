@@ -2,12 +2,27 @@
 import express from 'express';
 import morgan from 'morgan';
 import {check, validationResult} from 'express-validator';
-import {getUser, createUser, getAllOffices, createMunicipalityUser, getAllOperators} from './dao.mjs';
+import {getUser, createUser, getAllOffices, createMunicipalityUser, getAllOperators, insertReport} from './dao.mjs';
 import cors from 'cors';
 
 import passport from 'passport';
 import LocalStrategy from 'passport-local';
 import session from 'express-session';
+import dotenv from 'dotenv';
+dotenv.config();
+
+//supabase client
+import { createClient } from '@supabase/supabase-js'
+const supabaseUrl = process.env.SUPABASE_URL
+const supabaseKey = process.env.SUPABASE_KEY
+const supabase = createClient(supabaseUrl, supabaseKey)
+
+const {data, error} = await supabase
+.storage
+.createBucket('participium', { 
+  public: true,
+  allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif'],
+});
 
 // init
 const app = express();
@@ -135,6 +150,21 @@ app.post('/api/admin/createuser', [
     } else {
       res.status(503).json({ error: 'Database error during operator creation' });
     }
+  }
+});
+
+//POST /api/reports
+app.post('/api/reports', async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  try {
+    const { description, image_name, image_bytes, latitude, longitude } = req.body;
+    const report = await insertReport({ citizen_id: req.user.id, description, image_name, image_bytes, latitude, longitude }, supabase);
+    res.status(201).json(report);
+  } catch (err) {
+    console.error('Error inserting report:', err);
+    res.status(503).json({ error: 'Database error during report insertion' });
   }
 });
 
