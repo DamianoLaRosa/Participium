@@ -38,99 +38,55 @@ jest.mock('pg', () => {
 describe('API (index.mjs) - Jest tests with pg/crypto mocks (fixed)', () => {
     let agent;
     let queryMock;
-    beforeAll(async () => {
-        // get the mock query reference from the mocked module
-        const pg = require('pg');
-        queryMock = pg.__queryMock;
+    
+beforeAll(async () => {
+  // get the mock query reference from the mocked module
+  const pg = require('pg');
+  queryMock = pg.__queryMock;
 
-        // deterministic crypto.scrypt stub
-        jest.spyOn(crypto, 'scrypt').mockImplementation((password, salt, len, cb) => {
-            const hex = (password === 'correct') ? '01'.repeat(32) : '02'.repeat(32);
-            const buf = Buffer.from(hex, 'hex');
-            process.nextTick(() => cb(null, buf));
-        });
+  // --- MOCK dao.mjs to bypass crypto.scrypt and provide deterministic users ---
+  await jest.unstable_mockModule('../dao.mjs', () => {
+    return {
+      getUser: async (username, password) => {
+        if (username === 'admin' && password === 'correct') {
+          return { username: 'admin', role: 'Admin', id: 900, type: 'operator' };
+        }
+        if (username === 'found@operator' && password === 'correct') {
+          return { username: 'operator_user', role: 'Operator', id: 201, type: 'operator' };
+        }
+        // emulate failed auth
+        return null;
+      },
+      createUser: async (username, email, first_name, last_name, email_notifications, password) => {
+        return { id: 111, username };
+      },
+      getAllOffices: async () => [{ id: 1, name: 'Office A' }, { id: 2, name: 'Office B' }],
+      createMunicipalityUser: async (email, username, password, office_id, role_id) => ({ id: 222, username }),
+      getAllOperators: async () => [{ operator_id: 301, email: 'op1@example.com', username: 'op1', office_id: 1, role: 'municipality_user' }],
+      getAllRoles: async () => [{ role_id: 1, name: 'municipality_user' }],
+      getAllCategories: async () => [],
+      insertReport: async (obj) => ({ report_id: 555, description: obj.description || 'desc', image_name: (obj.image_urls && obj.image_urls[0]) || 'img.png' })
+    };
+  });
 
-        // configure pg query behaviour
-        queryMock.mockImplementation((sql, values) => {
-            const s = (sql || '').toString().toLowerCase();
+  // deterministic crypto.scrypt stub (optional, keep or remove)
+  jest.spyOn(crypto, 'scrypt').mockImplementation((password, salt, len, cb) => {
+    const hex = (password === 'correct') ? '01'.repeat(32) : '02'.repeat(32);
+    const buf = Buffer.from(hex, 'hex');
+    process.nextTick(() => cb(null, buf));
+  });
 
-            if (s.includes('from "citizens"') || s.includes('from citizens')) {
-                const email = Array.isArray(values) ? values[0] : undefined;
-                if (email === 'found@citizen') {
-                    return Promise.resolve({
-                        rows: [{
-                            citizen_id: 101,
-                            username: 'citizen_user',
-                            salt: 'citizen_salt',
-                            password_hash: '01'.repeat(32)
-                        }]
-                    });
-                }
-                if (email === 'admin') return Promise.resolve({ rows: [] });
-                return Promise.resolve({ rows: [] });
-            }
+  // configure pg query behaviour (you can keep this or remove if dao is fully mocked)
+  queryMock.mockImplementation((sql, values) => { /* ...existing implementation... */ });
 
-            if (s.includes('from "operators"') && s.includes('where')) {
-                const email = Array.isArray(values) ? values[0] : undefined;
-                if (email === 'admin') {
-                    return Promise.resolve({
-                        rows: [{
-                            operator_id: 900,
-                            username: 'admin',
-                            salt: 'op_salt',
-                            password_hash: '01'.repeat(32)
-                        }]
-                    });
-                }
-                if (email === 'found@operator') {
-                    return Promise.resolve({
-                        rows: [{
-                            operator_id: 201,
-                            username: 'operator_user',
-                            salt: 'op_salt',
-                            password_hash: '01'.repeat(32)
-                        }]
-                    });
-                }
-                return Promise.resolve({ rows: [] });
-            }
+  // import the ESM index after mocks are ready
+  await import('../index.mjs');
 
-            if (s.includes('insert into citizens')) {
-                return Promise.resolve({ rows: [{ citizen_id: 111 }] });
-            }
+  agent = request.agent('http://localhost:3001');
 
-            if (s.includes('insert into operators')) {
-                return Promise.resolve({ rows: [{ operator_id: 222 }] });
-            }
-
-            if (s.includes('select * from offices') || s.includes('from offices')) {
-                return Promise.resolve({
-                    rows: [
-                        { office_id: 1, name: 'Office A' },
-                        { office_id: 2, name: 'Office B' }
-                    ]
-                });
-            }
-
-            if (s.includes('join offices') || (s.includes('from operators') && s.includes('order'))) {
-                return Promise.resolve({
-                    rows: [
-                        { operator_id: 301, email: 'op1@example.com', username: 'op1', office_id: 1, office_name: 'Office A' },
-                        { operator_id: 302, email: 'op2@example.com', username: 'op2', office_id: 2, office_name: 'Office B' }
-                    ]
-                });
-            }
-
-            return Promise.resolve({ rows: [] });
-        });
-
-        await import('../index.mjs');
-
-        agent = request.agent('http://localhost:3001');
-
-        // small delay to ensure server listening
-        await new Promise((r) => setTimeout(r, 100));
-    });
+  // small delay to ensure server listening
+  await new Promise((r) => setTimeout(r, 100));
+});
 
     afterAll(async () => {
         jest.restoreAllMocks();
@@ -189,23 +145,7 @@ describe('API (index.mjs) - Jest tests with pg/crypto mocks (fixed)', () => {
         expect(res.status).toBe(401);
         expect(res.body).toMatchObject({ error: 'Not authenticated' });
     });
-
-    test('login as admin, access /api/admin and create user', async () => {
-        const loginRes = await agent.post('/api/sessions').send({ username: 'admin', password: 'correct' });
-        expect(loginRes.status).toBe(201);
-        expect(loginRes.body).toMatchObject({ username: 'admin', type: 'operator' });
-
-        const adminRes = await agent.get('/api/admin');
-        expect(adminRes.status).toBe(200);
-        expect(Array.isArray(adminRes.body)).toBe(true);
-        expect(adminRes.body[0]).toHaveProperty('role', 'municipality_user');
-
-        const createPayload = { username: 'newop', email: 'newop@example.com', password: 'validpass', office_id: 1 };
-        const createRes = await agent.post('/api/admin/createuser').send(createPayload);
-        expect(createRes.status).toBe(201);
-        expect(createRes.body).toMatchObject({ id: 222, username: 'newop' });
-    });
-
+    
     test('DELETE /api/sessions/current logs out', async () => {
         const res = await agent.delete('/api/sessions/current');
         expect([200, 204]).toContain(res.status);
@@ -222,7 +162,7 @@ describe('API (index.mjs) - Jest tests with pg/crypto mocks (fixed)', () => {
         expect(Array.isArray(adminRes.body)).toBe(true);
         expect(adminRes.body[0]).toHaveProperty('role', 'municipality_user');
 
-        const createPayload = { username: 'newop', email: 'newop@example.com', password: 'validpass', office_id: 1 };
+        const createPayload = { username: 'newop', email: 'newop@example.com', password: 'validpass', office_id: 1, role: 2 };
         const createRes = await agent.post('/api/admin/createuser').send(createPayload);
         expect(createRes.status).toBe(201);
         expect(createRes.body).toMatchObject({ id: 222, username: 'newop' });
@@ -255,8 +195,9 @@ describe('API (index.mjs) - Jest tests with pg/crypto mocks (fixed)', () => {
     });
 
     test('GET /api/sessions/current after login returns authenticated user', async () => {
-        await agent.post('/api/sessions').send({ username: 'admin', password: 'correct' });
-        const res = await agent.get('/api/sessions/current');
+        let res = await agent.post('/api/sessions').send({ username: 'admin', password: 'correct' });
+        console.log("Logged in:", res.status, res.body);
+        res = await agent.get('/api/sessions/current');
         expect(res.status).toBe(200);
         expect(res.body).toMatchObject({ username: 'admin', type: 'operator' });
     });

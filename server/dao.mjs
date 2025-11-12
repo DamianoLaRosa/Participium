@@ -1,8 +1,6 @@
 import { Pool } from 'pg';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
-import utils from './utils.mjs';
-import { type } from 'os';
 
 dotenv.config();
 
