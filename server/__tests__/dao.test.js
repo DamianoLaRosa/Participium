@@ -109,8 +109,8 @@ test('getOperators: propagates scrypt error', async () => {
 
 test('getUser: returns user when citizen found and password matches', async () => {
   const passwordHashHex = mkHex32(0x66);
-  const fakeCitizen = {
-    citizen_id: 101,
+  const fakeOperator = {
+    operator_id: 101,
     username: 'citizen1',
     salt: 'salt-citizen',
     password_hash: passwordHashHex,
@@ -118,14 +118,14 @@ test('getUser: returns user when citizen found and password matches', async () =
   };
 
   // first query is citizens -> return the citizen row
-  queryMock.mockResolvedValueOnce({ rows: [fakeCitizen] });
+  queryMock.mockResolvedValueOnce({ rows: [fakeOperator] });
 
   scryptSpy = jest.spyOn(crypto, 'scrypt').mockImplementation((password, salt, len, cb) => {
     cb(null, Buffer.from(passwordHashHex, 'hex'));
   });
 
-  const res = await dao.getUser(fakeCitizen.email, 'pw');
-  expect(res).toEqual({ id: fakeCitizen.citizen_id, username: fakeCitizen.username, type: 'user' });
+  const res = await dao.getUser(fakeOperator.email, 'pw');
+  expect(res).toEqual({ id: fakeOperator.operator_id, username: fakeOperator.username, type: 'operator' });
 });
 
 test('getUser: falls back to operators when citizen not found', async () => {
@@ -196,8 +196,8 @@ test('getAllOffices: maps rows to id/name', async () => {
 
 test('getAllOperators: maps rows and includes office_name', async () => {
   const rows = [
-    { operator_id: 10, email: 'a@x', username: 'a', office_id: 5, office_name: 'Off1' },
-    { operator_id: 11, email: 'b@x', username: 'b', office_id: null, office_name: null }
+    { operator_id: 10, email: 'a@x', username: 'a', office_id: 5, office_name: 'Off1', role_name: 'municipality_user'  },
+    { operator_id: 11, email: 'b@x', username: 'b', office_id: null, office_name: null, role_name: 'municipality_user'  }
   ];
   queryMock.mockResolvedValueOnce({ rows });
 
