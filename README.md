@@ -3,11 +3,10 @@ terminal BE : cd server;npm i;nodemon index.mjs
 terminal FE : cd client;npm i;npm run dev 
 connection to db: (docker-desktop open and running) docker compose up -d
 test: cd server; npm test ( cd server; npm run test:coverage)
+retrospective: cd retrospective; node calculate.mjs
 
 # mail - password
 admin@participium.local -  participium
-
-
 
 # DB
 
@@ -37,23 +36,3 @@ notifications (notification_id, citizen_id, report_id, message,sent_at, seen)
 telegram_users(
     telegram_user_id, citizen_id, chat_id, linked_at
 )
-
-
-
-# PROBLEMS (or not) for the report
-
-- better division of task and stories (not to only one)
-- Fedor -> map and graphics (he is good at it)
-- Giulia -> not good at graphics, but loves BE
-- Gabriel -> leaves too much work to the end of the sprint
-- Too many people and hours in documentation
-- Attention to tasks with the duration more thant 2h
-- no more than 5 stories (it's already caotic as it is)
-- 4 stories are too easy and the 5th one is too much
-- achieved: we did not have comunication or organizational problems and we comunicated effectively without dead-time
-- achieved: the planning was done effectively and precisely in short time
-- achieved: we did not have much error in estimation (budget correctly)
-- achieved: we assigned a task to not more than two people -> less coordination problems
-
-- better: finish the code in the first week -> code review and automatic testing on the second one
-
