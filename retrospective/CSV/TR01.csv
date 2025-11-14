@@ -12,6 +12,7 @@
 "-","PAR-20","BE - API Login session ","0.25","0.25","0.25","0.25"
 "-","PAR-21","BE - API Registration","1.0","1.0833333333333333","1.0","1.0833333333333333"
 "-","PAR-22","BE - Unit testing","1.5","1.5","1.5","1.5"
+"-","PAR-24","FE - E2E testing and use case","1.0","1.0","1.0","1.0"
 "-","PAR-25","Data base Roles creation","0.25","0.25","0.25","0.25"
 "-","PAR-27","BE - API Registration for municipality user","0.5","0.5","0.5","0.5"
 "-","PAR-28","BE - Unit testing","1.5","1.5","1.5","1.5"

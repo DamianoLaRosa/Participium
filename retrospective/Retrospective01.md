@@ -71,7 +71,7 @@ sections:
   - Total hours spent
     > 5 h
   - Nr of test cases
-    >
+    > 21 user cases
 - Code review 
   - Total hours estimated 
     > 22.5 h
@@ -92,31 +92,26 @@ sections:
 
 - What lessons did you learn in this sprint?
 
-  > Fedor -> map and graphics (he is good at it)
+  > Fedor -> map and website graphics (he is good at it)
 
-  > Giulia -> not good at graphics
+  > Giulia -> not good at website graphics
 
   > Gabriel -> leaves too much work to the end of the sprint, but good at testing
-
-  > no more than 5 stories (it's already caotic as it is)
 
   > give less hours to documentation and to one person only -> not all the team need to know all about each element
 
 - Which improvement goals set in the previous retrospective were you able to achieve? 
 
-  > achieved: we did not have comunication or organizational problems and we comunicated effectively without dead-time
+  > **achieved**: we did not have comunication or organizational problems and we comunicated effectively without dead-time
 
-  > achieved: the planning was done effectively and precisely in short time
-
-  > achieved: we did not have much error in estimation (budget correctly)
-
-  > achieved: we assigned a task to not more than two people -> less coordination problems
+  > **achieved**: the planning was done effectively and precisely in short time
   
 - There were no unachieved goals
 
 - Improvement goals for the next sprint and how to achieve them 
 
   > Finish the code in the first week -> code review and automatic testing on the second one
+
   > Division of the code of diffrent sprint on diffrent files (BackEnd and testing) -> simpler to correct
 
 - One thing you are proud of as a Team!!

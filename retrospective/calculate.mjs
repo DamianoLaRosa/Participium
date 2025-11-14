@@ -1,6 +1,6 @@
 import fs from "fs";
 
-const csv = fs.readFileSync("TR01.csv", "utf-8"); // reads csv
+const csv = fs.readFileSync("CSV/TR01.csv", "utf-8"); // reads csv
 const lines = csv.split("\n").slice(1); // salta l’intestazione
 
 const estimated = [];
@@ -19,10 +19,6 @@ for (const line of lines) { // clean up
     actual.push(act);
   }
 }
-
-// GABRIEL HOURS
-estimated.push(1);
-actual.push(1);
 
 // show the result
 //console.log("Estimated:", estimated);
