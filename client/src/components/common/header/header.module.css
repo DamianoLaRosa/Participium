@@ -29,41 +29,35 @@
   position: relative;
 }
 
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .headerGreeting {
   font-size: 1rem;
+  cursor: default;
 }
 
-.logoutPopup {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 8px;
-  padding: 16px;
-  background-color: var(--static-white);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  z-index: 9999;
-  min-width: 120px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.logoutButton {
-  padding: 8px 16px;
-  background: var(--gradient-primary);
-  color: var(--static-white);
+.logoutIconButton {
+  background: none;
   border: none;
-  border-radius: var(--radius-md);
   cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 600;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--static-black);
   transition: all 0.3s ease;
-  white-space: nowrap;
+  border-radius: var(--radius-sm);
 }
 
-.logoutButton:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-hover);
+.logoutIconButton:hover {
+  background-color: var(--border-light);
+}
+
+.logoutIcon {
+  width: 20px;
+  height: 20px;
 }
