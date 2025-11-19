@@ -6,6 +6,7 @@ import { LoginPage } from "./components/pages/login/LoginPage";
 import HomePage from "./components/pages/home/HomePage";
 import AdminPage from "./components/pages/admin/AdminPage";
 import RelationOfficerPage from "./components/pages/relation-officer/RelatioOfficerPage";
+import TechnicalOfficerPage from "./components/pages/technical-officer/TechnicalOfficerPage";
 import CreateUserPage from "./components/pages/admin/CreateUserPage";
 import { MapPage } from "./components/pages/map/MapPage";
 import { useNavigate } from "react-router";
@@ -54,6 +55,9 @@ function App() {
               ) : user.role==="Municipal public relations officer"? (
 
                 <RelationOfficerPage/>
+              ) : user.role =="Technical office staff member" ? (
+
+                <TechnicalOfficerPage/>
               )
               
               :(
@@ -82,6 +86,11 @@ function App() {
         <Route
           path="/relationOfficer"
           element={<RelationOfficerPage/>}
+        />
+
+        <Route
+          path="/technicalOfficer"
+          element={<TechnicalOfficerPage/>}
         />
 
         <Route path="/map" element={user ? <MapPage /> : <Navigate to="/" />} />

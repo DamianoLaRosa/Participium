@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import API from '../../../API/API.mjs';
 import { useNavigate } from 'react-router';
-import './RelationOfficerPage.css';
+import './TechnicalOfficerPage.css';
 
-function RelationOfficerPage() {
+function TechnicalOfficerPage() {
   const [reports, setReports] = useState([]);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -80,4 +80,4 @@ function RelationOfficerPage() {
   );
 }
 
-export default RelationOfficerPage;
+export default TechnicalOfficerPage;
