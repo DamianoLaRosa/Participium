@@ -409,9 +409,68 @@ export const updateReportStatus = async (report_id, status_id, rejection_reason 
       photos: row.photos || []
     };
   } catch (err) {
-    await client.query('ROLLBACK');
+    //await client.query('ROLLBACK');
     throw err;
   } finally {
     client.release();
+  }
+};
+
+export const getApprovedReports = async () => {
+  try {
+    const sql = `
+      SELECT
+        r.report_id,
+        r.title,
+        r.description,
+        r.latitude,
+        r.longitude,
+        r.anonymous,
+        r.created_at,
+        r.updated_at,
+        r.citizen_id,
+        c.username as citizen_username,
+        c.first_name as citizen_first_name,
+        c.last_name as citizen_last_name,
+        r.category_id,
+        cat.name as category_name,
+        r.office_id,
+        off.name as office_name,
+        r.status_id,
+        s.name as status_name,
+        COALESCE(json_agg(DISTINCT jsonb_build_object('photo_id', p.photo_id, 'image_url', p.image_url)) FILTER (WHERE p.photo_id IS NOT NULL), '[]') AS photos
+      FROM reports r
+      LEFT JOIN citizens c ON r.citizen_id = c.citizen_id
+      LEFT JOIN categories cat ON r.category_id = cat.category_id
+      LEFT JOIN offices off ON r.office_id = off.office_id
+      LEFT JOIN statuses s ON r.status_id = s.status_id
+      LEFT JOIN photos p ON r.report_id = p.report_id
+      WHERE r.status_id IN (2, 3, 4)
+      GROUP BY r.report_id, c.citizen_id, c.username, c.first_name, c.last_name, cat.name, off.name, s.name
+      ORDER BY r.created_at DESC
+    `;
+
+    const result = await pool.query(sql);
+    return result.rows.map((row) => ({
+      id: row.report_id,
+      title: row.title,
+      description: row.description,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      anonymous: row.anonymous,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+      citizen: row.anonymous ? null : (row.citizen_id ? {
+        username: row.citizen_username,
+        first_name: row.citizen_first_name,
+        last_name: row.citizen_last_name
+      } : null),
+      category: { id: row.category_id, name: row.category_name },
+      office: { id: row.office_id, name: row.office_name },
+      status: { id: row.status_id, name: row.status_name },
+      photos: row.photos || []
+    }));
+  } catch (err) {
+    throw err;
   }
 };

@@ -5,7 +5,7 @@ import registration from './router/registration_route.mjs';
 import getAll from './router/get-all_route.mjs';
 import forms from './router/forms_route.mjs';
 import { check, validationResult } from 'express-validator';
-import { getUser, getAllReports, updateReportStatus } from "./dao.mjs";
+import { getUser, getAllReports, updateReportStatus, getApprovedReports } from "./dao.mjs";
 import cors from 'cors';
 
 import passport from 'passport';
@@ -73,7 +73,7 @@ app.use(passport.authenticate('session'));
 app.get('/api/reports', async (req, res) => {
   try {
     if (!req.isAuthenticated()) return res.status(401).json({ error: 'Not authenticated' });
-    if (req.user.role !== 'Municipal public relations officer' ) return res.status(403).json({ error: 'Forbidden' });
+    if (req.user.role !== 'Admin' && req.user.role !== 'Operator' ) return res.status(403).json({ error: 'Forbidden' });
 
     const reports = await getAllReports();
     res.status(200).json(reports);
@@ -87,7 +87,7 @@ app.get('/api/reports', async (req, res) => {
 app.put('/api/reports/:id/status', async (req, res) => {
   try {
     if (!req.isAuthenticated()) return res.status(401).json({ error: 'Not authenticated' });
-    if (req.user.role !== 'Municipal public relations officer'  ) return res.status(403).json({ error: 'Forbidden' });
+    if (req.user.role !== 'Admin' && req.user.role !== 'Operator'  ) return res.status(403).json({ error: 'Forbidden' }); //Municipal public relations officer
 
     const reportId = parseInt(req.params.id, 10);
     if (isNaN(reportId)) return res.status(422).json({ error: 'Invalid report id' });
@@ -101,6 +101,17 @@ app.put('/api/reports/:id/status', async (req, res) => {
     res.status(200).json(updated);
   } catch (err) {
     res.status(503).json({ error: 'Database error during status update' });
+  }
+});
+
+// GET /api/reports/approved -> approved reports for map (public - no auth required)
+app.get('/api/reports/approved', async (req, res) => {
+  try {
+    const reports = await getApprovedReports();
+    res.status(200).json(reports);
+  } catch (err) {
+    console.error('Error fetching approved reports:', err);
+    res.status(503).json({ error: 'Database error during report retrieval' });
   }
 });
 

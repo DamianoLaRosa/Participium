@@ -33,6 +33,7 @@ CREATE TABLE reports (
     category_id INT REFERENCES categories(category_id),
     office_id INT REFERENCES offices(office_id),
     status_id INT REFERENCES statuses(status_id),
+    assigned_to_operator_id INT REFERENCES operators(operator_id),
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     latitude DOUBLE PRECISION NOT NULL,
