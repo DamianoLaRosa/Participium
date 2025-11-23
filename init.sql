@@ -6,7 +6,7 @@ CREATE TABLE citizens (
     last_name VARCHAR(100) NOT NULL,
     password_hash TEXT NOT NULL,
     salt TEXT NOT NULL,
-    --telegram_username VARCHAR(100),
+    telegram_username VARCHAR(100),
     email_notifications BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT NOW()
 );
@@ -25,6 +25,21 @@ CREATE TABLE categories (
 CREATE TABLE statuses (
     status_id SERIAL PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL
+);
+CREATE TABLE roles (
+    role_id SERIAL PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL,
+    description TEXT
+);
+
+CREATE TABLE operators (
+    operator_id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    username VARCHAR(100) NOT NULL,
+    password_hash TEXT NOT NULL,
+    salt TEXT NOT NULL,
+    office_id INT REFERENCES offices(office_id),
+    role_id INT REFERENCES roles(role_id) NOT NULL
 );
 
 CREATE TABLE reports (
@@ -51,21 +66,6 @@ CREATE TABLE photos (
     uploaded_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE roles (
-    role_id SERIAL PRIMARY KEY,
-    name VARCHAR(50) UNIQUE NOT NULL,
-    description TEXT
-);
-
-CREATE TABLE operators (
-    operator_id SERIAL PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    username VARCHAR(100) NOT NULL,
-    password_hash TEXT NOT NULL,
-    salt TEXT NOT NULL,
-    office_id INT REFERENCES offices(office_id),
-    role_id INT REFERENCES roles(role_id) NOT NULL
-);
 
 CREATE TABLE comments (
     comment_id SERIAL PRIMARY KEY,
@@ -92,13 +92,13 @@ CREATE TABLE notifications (
     sent_at TIMESTAMP DEFAULT NOW(),
     seen BOOLEAN DEFAULT FALSE
 );
-/*
+
 CREATE TABLE telegram_users (
     telegram_user_id SERIAL PRIMARY KEY,
     citizen_id INT UNIQUE REFERENCES citizens(citizen_id),
     chat_id BIGINT UNIQUE NOT NULL,
     linked_at TIMESTAMP DEFAULT NOW()
-);*/
+);
 
 
 -- 1. Offices
@@ -187,3 +187,92 @@ VALUES (
   (SELECT office_id FROM offices WHERE name = 'Organization Office'),
   (SELECT role_id FROM roles WHERE name = 'Admin')
 );
+
+-- 5. Operatori: 2 per ogni ufficio (tranne organization office che non ha il tecnico)
+-- Organization Office
+INSERT INTO operators (email, username, password_hash, salt, office_id, role_id) VALUES
+('off.org@participium.local', 'off_organization', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
+  (SELECT office_id FROM offices WHERE name = 'Organization Office'), 
+  (SELECT role_id FROM roles WHERE name = 'Municipal public relations officer'));
+
+
+-- Water Department
+INSERT INTO operators (email, username, password_hash, salt, office_id, role_id) VALUES
+('off.water@participium.local', 'off_water', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
+  (SELECT office_id FROM offices WHERE name = 'Water Department'), 
+  (SELECT role_id FROM roles WHERE name = 'Municipal public relations officer')),
+('tec.water@participium.local', 'tec_water', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
+  (SELECT office_id FROM offices WHERE name = 'Water Department'), 
+  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'));
+
+-- Accessibility Office
+INSERT INTO operators (email, username, password_hash, salt, office_id, role_id) VALUES
+('off.accessibility@participium.local', 'off_accessibility', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
+  (SELECT office_id FROM offices WHERE name = 'Accessibility Office'), 
+  (SELECT role_id FROM roles WHERE name = 'Municipal public relations officer')),
+('tec.accessibility@participium.local', 'tec_accessibility', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
+  (SELECT office_id FROM offices WHERE name = 'Accessibility Office'), 
+  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'));
+
+-- Sewage Department
+INSERT INTO operators (email, username, password_hash, salt, office_id, role_id) VALUES
+('off.sewage@participium.local', 'off_sewage', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
+  (SELECT office_id FROM offices WHERE name = 'Sewage Department'), 
+  (SELECT role_id FROM roles WHERE name = 'Municipal public relations officer')),
+('tec.sewage@participium.local', 'tec_sewage', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
+  (SELECT office_id FROM offices WHERE name = 'Sewage Department'), 
+  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'));
+
+-- Lighting Department
+INSERT INTO operators (email, username, password_hash, salt, office_id, role_id) VALUES
+('off.lighting@participium.local', 'off_lighting', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
+  (SELECT office_id FROM offices WHERE name = 'Lighting Department'), 
+  (SELECT role_id FROM roles WHERE name = 'Municipal public relations officer')),
+('tec.lighting@participium.local', 'tec_lighting', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
+  (SELECT office_id FROM offices WHERE name = 'Lighting Department'), 
+  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'));
+
+-- Waste Management
+INSERT INTO operators (email, username, password_hash, salt, office_id, role_id) VALUES
+('off.waste@participium.local', 'off_waste', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
+  (SELECT office_id FROM offices WHERE name = 'Waste Management'), 
+  (SELECT role_id FROM roles WHERE name = 'Municipal public relations officer')),
+('tec.waste@participium.local', 'tec_waste', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
+  (SELECT office_id FROM offices WHERE name = 'Waste Management'), 
+  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'));
+
+-- Traffic Department
+INSERT INTO operators (email, username, password_hash, salt, office_id, role_id) VALUES
+('off.traffic@participium.local', 'off_traffic', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
+  (SELECT office_id FROM offices WHERE name = 'Traffic Department'), 
+  (SELECT role_id FROM roles WHERE name = 'Municipal public relations officer')),
+('tec.traffic@participium.local', 'tec_traffic', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
+  (SELECT office_id FROM offices WHERE name = 'Traffic Department'), 
+  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'));
+
+-- Public Works
+INSERT INTO operators (email, username, password_hash, salt, office_id, role_id) VALUES
+('off.publicworks@participium.local', 'off_publicworks', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
+  (SELECT office_id FROM offices WHERE name = 'Public Works'), 
+  (SELECT role_id FROM roles WHERE name = 'Municipal public relations officer')),
+('tec.publicworks@participium.local', 'tec_publicworks', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
+  (SELECT office_id FROM offices WHERE name = 'Public Works'), 
+  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'));
+
+-- Parks Department
+INSERT INTO operators (email, username, password_hash, salt, office_id, role_id) VALUES
+('off.parks@participium.local', 'off_parks', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
+  (SELECT office_id FROM offices WHERE name = 'Parks Department'), 
+  (SELECT role_id FROM roles WHERE name = 'Municipal public relations officer')),
+('tec.parks@participium.local', 'tec_parks', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
+  (SELECT office_id FROM offices WHERE name = 'Parks Department'), 
+  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'));
+
+-- General Services
+INSERT INTO operators (email, username, password_hash, salt, office_id, role_id) VALUES
+('off.general@participium.local', 'off_general', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
+  (SELECT office_id FROM offices WHERE name = 'General Services'), 
+  (SELECT role_id FROM roles WHERE name = 'Municipal public relations officer')),
+('tec.general@participium.local', 'tec_general', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
+  (SELECT office_id FROM offices WHERE name = 'General Services'), 
+  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'));

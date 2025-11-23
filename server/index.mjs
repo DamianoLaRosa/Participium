@@ -5,7 +5,7 @@ import registration from './router/registration_route.mjs';
 import getAll from './router/get-all_route.mjs';
 import forms from './router/forms_route.mjs';
 import { check, validationResult } from 'express-validator';
-import { getUser, getAllReports, updateReportStatus, getApprovedReports } from "./dao.mjs";
+import { getUser, getAllReports, updateReportStatus, getAllApprovedReports } from "./dao.mjs";
 import cors from 'cors';
 
 import passport from 'passport';
@@ -107,7 +107,7 @@ app.put('/api/reports/:id/status', async (req, res) => {
 // GET /api/reports/approved -> approved reports for map (public - no auth required)
 app.get('/api/reports/approved', async (req, res) => {
   try {
-    const reports = await getApprovedReports();
+    const reports = await getAllApprovedReports();
     res.status(200).json(reports);
   } catch (err) {
     console.error('Error fetching approved reports:', err);

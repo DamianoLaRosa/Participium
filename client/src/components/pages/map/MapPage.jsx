@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -16,9 +16,12 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import searchIcon from "../../../images/search.svg";
 import styles from "./mapPage.module.css";
+
 import Turin_GEOJSON from "../../../data/turin_geojson.json";
 import { GeoJSON } from "react-leaflet";
 import * as turf from "@turf/turf";
+import API from "../../../API/API.mjs";
+
 
 // Fix for default marker icons in Leaflet with React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -42,6 +45,9 @@ const redIcon = new L.Icon({
   popupAnchor: [1, -34],
   shadowSize: [41, 41],
 });
+
+  
+
 
 /**
  * Map component that initializes the map view.
@@ -150,6 +156,34 @@ export function MapPage(props) {
   const [mapZoom, setMapZoom] = useState(defaultZoom);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(null);
+ 
+  const [reports, setReports] = useState([]);
+  const [error, setError] = useState('');
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [isModalOpen, setIsModalOpen]= useState(false);
+
+  useEffect(()=> {
+    loadReports();
+  }, []);
+
+  const loadReports = async () => {
+    try {
+      const data = await API.getAllApprovedReports();
+      setReports(data);
+    } catch (error) {
+      setError("Failed to load reports");
+    }
+  };
+
+  const handleViewDetails = (report) => {
+    setSelectedReport(report);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal =()=>{
+    setIsModalOpen(false);
+    setSelectedReport(null);
+  };
 
   /**
    * Reverse geocoding: get address from coordinates
@@ -345,6 +379,9 @@ export function MapPage(props) {
               />
             </LayersControl.BaseLayer>
           </LayersControl>
+
+          <ApprovedReportsLayer reports={reports} onViewDetails={handleViewDetails} />
+
           {location.position && location.address && (
             <MarkerWithAutoOpen position={location.position} icon={redIcon}>
               <div>
@@ -367,6 +404,124 @@ export function MapPage(props) {
           )}
           <ZoomControl position="bottomright" />
         </MapContainer>
+      </div>
+
+      {isModalOpen && selectedReport && (
+        <ReportDetailsModal 
+        report={selectedReport}
+        onClose={handleCloseModal}
+      />
+      )}
+    </div>
+  );
+}
+
+// Blue Icon for existing reports (to distinguish them from the user's red selection)
+const blueIcon = new L.Icon({
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+function ApprovedReportsLayer({ reports, onViewDetails }) {
+
+  if (!reports || reports.length === 0) {
+    return null;
+  }
+
+  return (
+    <>
+      {reports.map((report) => {
+         if (!report.latitude || !report.longitude || !report.id) {
+          console.warn("Report missing required fields:", report);
+          return null;
+        }
+
+        return (
+          <Marker 
+            key={report.id} 
+            position={[report.latitude, report.longitude]} 
+            icon={blueIcon}
+          >
+          <Popup>
+            <div className={styles.reportPopup}>
+              <h4 onClick={() => onViewDetails(report)} style={{cursor:'pointer', color: '#000000ff'}}>
+                {report.title}
+              </h4>
+              <p>{report.category.name}</p>
+              <p>
+                <strong>Reported by:</strong>{" "}
+                {report.citizen.username || "Anonymous"}
+              </p>
+            </div>
+          </Popup>
+        </Marker>
+        );
+      })}
+    </>
+  );
+}
+
+function ReportDetailsModal ({report, onClose}){
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <h2>{report.title}</h2>
+          <button className={styles.closeButton} onClick={onClose}>×</button>
+        </div>
+
+        <div className={styles.modalBody}>
+          <div className={styles.detailRow}>
+            <strong>Description:</strong>
+            <p>{report.description}</p>
+          </div>
+
+          <div className={styles.detailRow}>
+            <strong>Category:</strong>
+            <p>{report.category.name}</p>
+          </div>
+
+          <div className={styles.detailRow}>
+            <strong>Status:</strong>
+            <p>{report.status.name}</p>
+          </div>
+
+          <div className={styles.detailRow}>
+            <strong>Reported by:</strong>
+            <p>{report.citizen.username || "Anonymous"}</p>
+          </div>
+
+          <div className={styles.detailRow}>
+            <strong>Created:</strong>
+            <p>{new Date(report.created_at).toLocaleString()}</p>
+          </div>
+
+          {report.images && report.images.length > 0 && (
+            <div className={styles.detailRow}>
+              <strong>Images:</strong>
+              <div className={styles.imagesContainer}>
+                {report.images.map((imgUrl, index) => (
+                  <img
+                    key={index}
+                    src={imgUrl}
+                    alt={`Report Image ${index + 1}`}
+                    className={styles.reportImage}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className={styles.modalFooter}>
+          <button className={styles.closeModalButton} onClick={onClose}>
+            Close
+          </button>
+        </div>
       </div>
     </div>
   );

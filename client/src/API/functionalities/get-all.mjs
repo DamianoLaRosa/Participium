@@ -68,9 +68,11 @@ export const getAllApprovedReports = async () => {
   const response = await fetch (`${SERVER_URL}/api/reports/approved`, {
     credentials: 'include'
   });
-  if (!response.ok) {
+  if (response.ok) {
+    const reports=await response.json();
+    return reports;
+  }else{
     const errDetail = await response.json();
     throw errDetail.error;
   }
-  return await response.json(); 
 };

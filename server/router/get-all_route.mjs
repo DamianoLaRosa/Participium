@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAllOffices, getAllRoles, getAllCategories, getAllOperators } from '../dao.mjs';
+import { getAllOffices, getAllRoles, getAllCategories, getAllOperators, getTechnicalOfficersByOffice } from '../dao.mjs';
 
 const router = Router();
 
@@ -15,10 +15,10 @@ router.get('/offices', async (req, res) => {
 
 //GET /api/roles -> all roles
 router.get('/roles', async (req, res) => {
-  try{
-  const roles = await getAllRoles();
-  res.status(200).json(roles);
-  }catch (err) {
+  try {
+    const roles = await getAllRoles();
+    res.status(200).json(roles);
+  } catch (err) {
     res.status(503).json({ error: 'Database error during role retrieval' });
   }
 });
@@ -32,7 +32,6 @@ router.get('/categories', async (req, res) => {
     res.status(503).json({ error: 'Database error during category retrieval' });
   }
 });
-
 
 // GET /api/admin - Get all (and only) operators
 router.get('/admin', async (req, res) => {
@@ -50,6 +49,27 @@ router.get('/admin', async (req, res) => {
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+//Get /api/operators?operatorId&officeId - Get operators by operatorId and/or officeId
+router.get('/operators', async (req, res) => {
+
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  try {
+    const { operatorId, officeId } = req.query;
+    const operators = await getTechnicalOfficersByOffice(operatorId, officeId);
+    res.status(200).json(operators);
+  } catch (err) {
+    if (['officer_id  must be provided',
+      'Operatot not allowed, he is not a Municipal public relations officer',
+      'Either valid officer_id or office_id must be provided'].includes(err.message)) {
+      res.status(422).json({ error: err.message });
+    } else {
+      res.status(503).json({ error: 'Database error during operators retrieval' });
+    }
   }
 });
 

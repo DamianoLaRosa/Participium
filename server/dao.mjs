@@ -14,6 +14,39 @@ const pool = new Pool({
 
 // console.log("Loaded dao.mjs and changed insertReport");
 
+//get all technical officers by relation officer's office_id
+export const getTechnicalOfficersByOffice = async (officerId) => {
+  let resultOfficers;
+  try {
+    if (officerId) {
+      const sqlGetOfficer = 'SELECT * FROM operators WHERE operator_id = $1';
+      const result = await pool.query(sqlGetOfficer, [officerId]);
+      if(result.rows.length === 0) {
+        throw new Error('Either valid officer_id or office_id must be provided');
+      }
+      console.log(result.rows[0]);
+      const operatorRoleSql = 'SELECT role_id FROM roles WHERE name = \'Municipal public relations officer\'  AND role_id = $1';
+      const operatorRoleResult = await pool.query(operatorRoleSql, [result.rows[0].role_id]);
+      if(operatorRoleResult.rows.length === 0) {
+        throw new Error('Operatot not allowed, he is not a Municipal public relations officer');
+      }
+      const sqlGetTechnicalOfficers = 'SELECT * FROM operators WHERE office_id = $1 AND role_id = (SELECT role_id FROM roles WHERE name = \'Technical office staff member\')';
+      resultOfficers = await pool.query(sqlGetTechnicalOfficers, [result.rows[0].office_id]);
+    } else {
+      throw new Error('officer_id  must be provided');
+    }
+  } catch (err) {
+    console.error('Error fetching technical officers:', err);
+    throw err;
+  }
+  return resultOfficers.rows
+    .map((e) => ({
+      id: e.operator_id,
+      email: e.email,
+      username: e.username,
+      office_id: e.office_id
+      }));
+}
 
 
 //given username (email) and password does the login -> searches in citizen and then operators tables
@@ -25,10 +58,10 @@ export const getUser = async (username, password) => {
 
     if (operatorResult.rows.length > 0) {
       const row = operatorResult.rows[0];
-      const user = { 
-        id: row.operator_id, 
-        username: row.username, 
-        role: row.role_name 
+      const user = {
+        id: row.operator_id,
+        username: row.username,
+        role: row.role_name
       };
 
       return new Promise((resolve, reject) => {
@@ -80,7 +113,7 @@ export const getOperators = async (username, password) => {
     const row = result.rows[0];
     if (!row) return false;
 
-    const user = { id: row.operator_id, username: row.username, role: row.role_name};
+    const user = { id: row.operator_id, username: row.username, role: row.role_name };
 
     return new Promise((resolve, reject) => {
       crypto.scrypt(password, row.salt, 32, (err, hashedPassword) => {
@@ -100,7 +133,7 @@ export const getOperators = async (username, password) => {
 };
 
 //ginen user data creates a citizen
-export const createUser = async (username, email,first_name,last_name , email_notifications, password) => {
+export const createUser = async (username, email, first_name, last_name, email_notifications, password) => {
   const salt = crypto.randomBytes(16).toString('hex');
 
   return new Promise((resolve, reject) => {
@@ -108,11 +141,11 @@ export const createUser = async (username, email,first_name,last_name , email_no
       if (err) return reject(err);
 
       const sql = 'INSERT INTO citizens (username, email,first_name,last_name, password_hash,email_notifications, salt) VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING citizen_id';
-      const values = [username, email,first_name,last_name, hashedPassword.toString('hex'),email_notifications, salt];
+      const values = [username, email, first_name, last_name, hashedPassword.toString('hex'), email_notifications, salt];
 
       try {
         const result = await pool.query(sql, values);
-        resolve({ id: result.rows[0].citizen_id, username: username , first_name: first_name });
+        resolve({ id: result.rows[0].citizen_id, username: username, first_name: first_name });
       } catch (err) {
         reject(err);
       }
@@ -125,18 +158,18 @@ export const getAllOffices = async () => {
   try {
     const sql = 'SELECT * FROM offices';
     const result = await pool.query(sql);
-    return result.rows.map((e) => {return { id: e.office_id, name: e.name};});
+    return result.rows.map((e) => { return { id: e.office_id, name: e.name }; });
   } catch (err) {
     throw err;
   }
 };
 
 //returns all roles
-export const getAllRoles = async () =>{
+export const getAllRoles = async () => {
   try {
-    const sql =' SELECT * FROM roles';
+    const sql = ' SELECT * FROM roles';
     const result = await pool.query(sql);
-    return result.rows.map((e) => {return { id: e.role_id, name: e.name};});
+    return result.rows.map((e) => { return { id: e.role_id, name: e.name }; });
   } catch (err) {
     throw err;
   }
@@ -175,11 +208,11 @@ export const insertReport = async ({ title, citizen_id, description, image_urls,
     // Get office_id from category
     const categorySql = 'SELECT office_id FROM categories WHERE category_id = $1';
     const categoryResult = await client.query(categorySql, [category_id]);
-    
+
     if (categoryResult.rows.length === 0) {
       throw new Error('Invalid category_id');
     }
-    
+
     const office_id = categoryResult.rows[0].office_id;
 
     // Get "Pending Approval" status_id
@@ -249,7 +282,7 @@ export const getAllCategories = async () => {
   try {
     const sql = 'SELECT * FROM categories';
     const result = await pool.query(sql);
-    
+
     return result.rows.map((e) => ({
       id: e.category_id,
       name: e.name,
@@ -416,7 +449,7 @@ export const updateReportStatus = async (report_id, status_id, rejection_reason 
   }
 };
 
-export const getApprovedReports = async () => {
+export const getAllApprovedReports = async () => {
   try {
     const sql = `
       SELECT

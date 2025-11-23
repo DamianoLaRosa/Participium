@@ -30,8 +30,9 @@ function AdminPage() {
   const getRoleDisplay = (role) => {
     const roleMap = {
       'Admin': 'Admin',
-      'Organization Office Staff': 'Organization Staff',
-      'Technical Office Staff': 'Technical Staff'
+      'Municipal public relations officer': 'Municipal public relations officer',
+      'Technical office staff member': 'Technical office staff member',
+      'Municipal administrator': 'Municipal administrator'
     };
     return roleMap[role] || role;
   };
@@ -40,10 +41,12 @@ function AdminPage() {
     switch (role) {
       case 'Admin':
         return 'role-admin';
-      case 'Organization Office Staff':
-        return 'role-organization';
-      case 'Technical Office Staff':
+      case 'Municipal public relations officer':
+        return 'role-municipal-relations';
+      case 'Technical office staff member':
         return 'role-technical';
+      case 'Municipal administrator':
+        return 'role-municipal-administrator';
       default:
         return 'role-default';
     }
