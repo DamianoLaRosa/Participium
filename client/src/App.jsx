@@ -53,7 +53,7 @@ function App() {
             user ? (
               user.role === "Admin" ? (
                 <Navigate replace to={`/admin`} />
-              ) : user.role==="Organization Office Staff"? (
+              ) : user.role==="Municipal public relations officer"? (
 
                 <RelationOfficerPage/>
               ) : user.role =="Technical office staff member" ? (
