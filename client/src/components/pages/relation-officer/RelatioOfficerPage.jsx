@@ -3,10 +3,24 @@ import API from '../../../API/API.mjs';
 import { useNavigate } from 'react-router';
 import './RelationOfficerPage.css';
 
+import { useDispatch, useSelector } from "react-redux";
+import { setSelectedReport } from '../../../store/reportSlice';
+
+
 function RelationOfficerPage() {
+  const dispatch = useDispatch();
   const [reports, setReports] = useState([]);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  const STATUS_MAP = {
+  1: { label: 1, color: "#ffcc00" },
+  2: { label: 2, color: "#4caf50" },
+  3: { label: 3, color: "#673ab7" },
+  4: { label: 4, color: "#2196f3" },
+  5: { label: 5, color: "#ff4d4d" },
+  6: { label: 6, color: "#9e9e9e" }
+};
 
   useEffect(() => {
     loadReports();
@@ -55,21 +69,35 @@ function RelationOfficerPage() {
                 <th>ID</th>
                 <th>Title</th>
                 <th>Created At</th>
+                <th>Status</th>
               </tr>
             </thead>
 
             <tbody>
-                {reports.map(report => (
-                    <tr
-                    key={report.id}
-                    className="clickable-row"
-                    onClick={() => navigate('/')}
-                    >
-                    <td className="report-id">{report.id}</td>
-                    <td className="report-title">{report.title}</td>
-                    <td className="report-date">{formatDate(report.created_at)}</td>
-                    </tr>
-                ))}
+              {reports.map(report => (
+                <tr
+                  key={report.id}
+                  className="clickable-row"
+                  onClick={() => {
+                    dispatch(setSelectedReport(report));
+                    navigate('/inspectReport');
+                  }}
+                >
+                  <td className="report-id">{report.id}</td>
+                  <td className="report-title">{report.title}</td>
+                  <td className="report-date">{formatDate(report.created_at)}</td>
+                  <td>
+                  <span
+                    style={{
+                      color: "white",
+                      backgroundColor:
+                        STATUS_MAP[report.status.id]?.color || "gray"
+                    }}>
+                    {STATUS_MAP[report.status.id]?.label || "Unknown"}
+                  </span>
+                </td>
+                </tr>
+              ))}
             </tbody>
 
           </table>

@@ -16,7 +16,12 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import searchIcon from "../../../images/search.svg";
 import styles from "./mapPage.module.css";
+
+import Turin_GEOJSON from "../../../data/turin_geojson.json";
+import { GeoJSON } from "react-leaflet";
+import * as turf from "@turf/turf";
 import API from "../../../API/API.mjs";
+
 
 // Fix for default marker icons in Leaflet with React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -136,6 +141,11 @@ function MarkerWithAutoOpen({ position, icon, children }) {
 export function MapPage(props) {
   const defaultCenter = [45.0703, 7.6868]; // Turin, Italy coordinates
   const defaultZoom = 13;
+  const turinBounds = [
+  [45.0000, 7.5000], // Southwest corner
+  [45.1500, 7.8000]  // Northeast corner
+  ];
+  const cityLayer = L.geoJSON(Turin_GEOJSON);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -204,6 +214,21 @@ export function MapPage(props) {
     const lat = latlng.lat;
     const lng = latlng.lng;
     const coordinates = [lat, lng];
+
+    // Check if the clicked point is inside Turin city limits
+    const point = turf.point([latlng.lng, latlng.lat]); 
+    const polygon =
+      Turin_GEOJSON.type === "FeatureCollection"
+    ? Turin_GEOJSON.features[0]
+    : Turin_GEOJSON;
+
+
+    // Check if the point is inside the boundaries of the city polygon
+    const isInside = turf.booleanPointInPolygon(point, polygon);
+    if (!isInside) {
+      dispatch(clearLocation());
+      return;
+    }
 
     // Get address using reverse geocoding
     const address = await reverseGeocode(lat, lng);
@@ -326,9 +351,12 @@ export function MapPage(props) {
           scrollWheelZoom={true}
           className={styles.map}
           zoomControl={false}
+          maxBounds={turinBounds}
+          maxBoundsViscosity={1.0}
         >
           <MapView center={mapCenter} zoom={mapZoom} />
           <MapClickHandler onMapClick={handleMapClick} />
+          <GeoJSON data={Turin_GEOJSON} style={{ color: "blue", weight: 2, fill:false}} />
           <LayersControl position="bottomleft">
             <LayersControl.BaseLayer checked name="OpenStreetMap">
               <TileLayer

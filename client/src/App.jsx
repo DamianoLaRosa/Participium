@@ -8,6 +8,7 @@ import AdminPage from "./components/pages/admin/AdminPage";
 import RelationOfficerPage from "./components/pages/relation-officer/RelatioOfficerPage";
 import TechnicalOfficerPage from "./components/pages/technical-officer/TechnicalOfficerPage";
 import CreateUserPage from "./components/pages/admin/CreateUserPage";
+import InspectReportPage from "./components/pages/inspectReport/inspectReportPage.jsx";
 import { MapPage } from "./components/pages/map/MapPage";
 import { useNavigate } from "react-router";
 import { useEffect, useState } from "react";
@@ -86,6 +87,11 @@ function App() {
         <Route
           path="/relationOfficer"
           element={<RelationOfficerPage/>}
+        />
+
+        <Route
+          path="/inspectReport"
+          element={<InspectReportPage />}
         />
 
         <Route

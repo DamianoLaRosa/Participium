@@ -90,7 +90,7 @@ app.put('/api/reports/:id/status', async (req, res) => {
     if (req.user.role !== 'Admin' && req.user.role !== 'Municipal public relations officer' && req.user.role !== "Technical office staff member"  ) return res.status(403).json({ error: 'Forbidden' });
 
     const reportId = parseInt(req.params.id, 10);
-    if (isNaN(reportId)) return res.status(422).json({ error: 'Invalid report id' });
+    if (isNaN(reportId)) return res.status(423).json({ error: 'Invalid report id' });
 
     const { status_id, rejection_reason } = req.body;
     if (typeof status_id !== 'number') return res.status(422).json({ error: 'status_id must be a number' });

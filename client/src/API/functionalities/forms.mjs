@@ -34,7 +34,7 @@ export const updateReportStatus = async (reportId, newStatus, rejection_reason=n
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ status: newStatus, rejection_reason: rejection_reason })
+    body: JSON.stringify({ status_id: newStatus, rejection_reason: rejection_reason })
   });
   if (!response.ok) {
     const errDetail = await response.json();
