@@ -42,3 +42,6 @@ export const updateReportStatus = async (reportId, newStatus, rejection_reason=n
   }
   return await response.json();
 }
+
+//export const assignReportToOfficer = async (reportId, officerId) => {
+  //const response = await fetch(`${SERVER_URL}/api/reports/${reportId}/assign`

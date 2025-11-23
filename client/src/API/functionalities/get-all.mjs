@@ -76,3 +76,14 @@ export const getAllApprovedReports = async () => {
     throw errDetail.error;
   }
 };
+
+export const getOperatorsByOffice = async (officeId) => {
+  const response = await fetch(`${SERVER_URL}/api/operators?officeId=${officeId}`, {
+    credentials: 'include'
+  });
+  if (!response.ok) {
+    const errDetail = await response.json();
+    throw errDetail.error;
+  }
+  return await response.json();
+}

@@ -10,8 +10,28 @@ function InspectReportPage() {
 
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [rejectReason, setRejectReason] = useState("");
+    const [officers, setOfficers] = useState([]);
+    const [selectedOfficer, setSelectedOfficer] = useState(null);
+    const [error, setError] = useState("");
 
-    const handleRejectReport = () => { setShowRejectModal(true); }
+    useEffect(() => {
+        if (selectedReport) {
+            loadOfficers();
+        }
+    }, [selectedReport]);
+
+    const loadOfficers = async () => {
+        try {
+            const officersData = await API.getOperatorsByOffice(selectedReport.office.id);
+            setOfficers(officersData);
+        } catch (err) {
+            setError('Failed to load officers: ' + err);
+        }
+    };
+
+    const handleRejectReport = () => { 
+        setShowRejectModal(true); 
+    }
 
     const submitRejectReason = () => { 
         API.updateReportStatus(selectedReport.id, 5, rejectReason);
@@ -19,6 +39,17 @@ function InspectReportPage() {
         setRejectReason("");   
         navigate(-1);
     }
+
+    const approveReport = () => {
+        if (!selectedOfficer) {
+            alert("Please select an officer.");
+            return;
+        }
+
+        API.updateReportStatus(selectedReport.id, 2)
+            .then(() => API.setOperatorByReport(selectedReport.id, selectedOfficer))
+            .then(() => navigate(-1));
+    };
 
 
     return (
@@ -66,8 +97,37 @@ function InspectReportPage() {
                         </div>
                     )}
 
+                    {/* Officer Dropdown */}
+                    <div style={{ marginTop: "1rem" }}>
+                        <label><strong>Assign Officer:</strong></label>
+                        <br />
+                        <select
+                            value={selectedOfficer || ""}
+                            onChange={(e) => setSelectedOfficer(e.target.value)}
+                            style={{
+                                padding: "0.5rem",
+                                borderRadius: "6px",
+                                border: "1px solid #ccc",
+                                marginTop: "0.5rem",
+                                width: "250px"
+                            }}
+                        >
+                            <option value="">-- Select an Officer --</option>
+                            {officers.map(officer => (
+                                <option 
+                                    key={officer.id} 
+                                    value={officer.id}
+                                >
+                                    {officer.username}
+                                </option>
+                            ))}
+                        </select>
 
-                    { /* Buttons to accept or reject the report */}
+                        {error && <p style={{ color: "red" }}>{error}</p>}
+                    </div>
+
+
+                    {/* Approve Button */}
                     <button
                         style={{
                             marginTop: "1rem",
@@ -78,11 +138,12 @@ function InspectReportPage() {
                             borderRadius: "4px",
                             cursor: "pointer"
                         }}
-                        onClick={() => API.updateReportStatus(selectedReport.id, 2).then(() => navigate(-1))}
+                        onClick={approveReport}
                     >
                         Approve Report
                     </button>
 
+                    {/* Reject Button */}
                     <button
                         style={{
                             marginTop: "1rem",
@@ -99,9 +160,7 @@ function InspectReportPage() {
                         Reject Report
                     </button>
 
-
                     {/* Reject Modal */}
-
                     {showRejectModal && (
                         <div>
                             <h3>Reject Report</h3>
@@ -114,8 +173,7 @@ function InspectReportPage() {
                                 <button onClick={() => setShowRejectModal(false)}>Cancel</button>
                             </div>
                         </div>
-                        )}
-
+                    )}
                 </div>
             )}
         </div>
