@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -9,13 +9,21 @@ import {
   Popup,
   LayersControl,
 } from "react-leaflet";
+import MarkerClusterGroup from "react-leaflet-markercluster";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
 import { setLocation, clearLocation } from "../../../store/locationSlice";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import searchIcon from "../../../images/search.svg";
 import styles from "./mapPage.module.css";
+
+import { GeoJSON } from "react-leaflet";
+import * as turf from "@turf/turf";
+import API from "../../../API/API.js";
+import { loadCityBoundaries } from "./cityBoundaries.js";
 
 // Fix for default marker icons in Leaflet with React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -71,6 +79,26 @@ function MapClickHandler({ onMapClick }) {
 }
 
 /**
+ * Center map on marker position
+ * @param {Object} map - Leaflet map instance
+ * @param {Array<number>} position - Marker position [lat, lng]
+ */
+function centerMapOnMarker(map, position) {
+  if (!map || !position) return;
+
+  // Get current zoom level and increase it slightly for better view
+  const currentZoom = map.getZoom();
+  const targetZoom = Math.min(currentZoom + 1, 18); // Increase zoom by 1 level, max 18
+
+  // Center map on marker with smooth animation
+  map.setView(position, targetZoom, {
+    animate: true,
+    duration: 1.0,
+    easeLinearity: 0.25,
+  });
+}
+
+/**
  * Marker component that automatically opens popup
  * @param {Object} props - Component props
  * @param {Array<number>} props.position - Marker position [lat, lng]
@@ -78,6 +106,7 @@ function MapClickHandler({ onMapClick }) {
  * @param {React.ReactNode} props.children - Popup content
  */
 function MarkerWithAutoOpen({ position, icon, children }) {
+  const map = useMap();
   const markerRef = useRef(null);
 
   useEffect(() => {
@@ -92,6 +121,8 @@ function MarkerWithAutoOpen({ position, icon, children }) {
             typeof markerInstance.openPopup === "function"
           ) {
             markerInstance.openPopup();
+            // Center map on marker with offset
+            centerMapOnMarker(map, position);
           }
         } catch (error) {
           console.error("Error opening popup:", error);
@@ -100,7 +131,7 @@ function MarkerWithAutoOpen({ position, icon, children }) {
     }, 200);
 
     return () => clearTimeout(timer);
-  }, [position]);
+  }, [position, map]);
 
   return (
     <Marker
@@ -114,8 +145,13 @@ function MarkerWithAutoOpen({ position, icon, children }) {
             const marker = e.target;
             if (marker && typeof marker.openPopup === "function") {
               marker.openPopup();
+              centerMapOnMarker(map, position);
             }
           }, 150);
+        },
+        click: () => {
+          // Center map when marker is clicked
+          centerMapOnMarker(map, position);
         },
       }}
     >
@@ -142,6 +178,71 @@ export function MapPage(props) {
   const [mapZoom, setMapZoom] = useState(defaultZoom);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(null);
+
+  const [reports, setReports] = useState([]);
+  const [error, setError] = useState("");
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [cityBoundaries, setCityBoundaries] = useState(null);
+  const [cityBounds, setCityBounds] = useState(null);
+  const [maskPolygon, setMaskPolygon] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [reportsLoaded, setReportsLoaded] = useState(false);
+  const [boundariesLoaded, setBoundariesLoaded] = useState(false);
+  const hasLoadedRef = useRef(false);
+
+  useEffect(() => {
+    // Prevent double execution in StrictMode
+    if (hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
+
+    loadReports();
+    handleLoadCityBoundaries();
+  }, []);
+
+  // Check if both reports and boundaries are loaded
+  useEffect(() => {
+    if (reportsLoaded && boundariesLoaded) {
+      setIsLoading(false);
+    }
+  }, [reportsLoaded, boundariesLoaded]);
+
+  /**
+   * Load city boundaries and create mask
+   */
+  const handleLoadCityBoundaries = useCallback(async () => {
+    try {
+      const result = await loadCityBoundaries();
+      setCityBoundaries(result.cityBoundaries);
+      setCityBounds(result.cityBounds);
+      setMaskPolygon(result.maskPolygon);
+    } catch (error) {
+      console.error("Error loading city boundaries:", error);
+    } finally {
+      setBoundariesLoaded(true);
+    }
+  }, []);
+
+  const loadReports = useCallback(async () => {
+    try {
+      const data = await API.getAllApprovedReports();
+      setReports(data);
+    } catch (error) {
+      setError("Failed to load reports");
+    } finally {
+      setReportsLoaded(true);
+    }
+  }, []);
+
+  const handleViewDetails = (report) => {
+    setSelectedReport(report);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedReport(null);
+  };
 
   /**
    * Reverse geocoding: get address from coordinates
@@ -173,12 +274,28 @@ export function MapPage(props) {
     const lng = latlng.lng;
     const coordinates = [lat, lng];
 
+    // Check if the clicked point is inside Turin city limits
+    if (cityBoundaries) {
+      const point = turf.point([latlng.lng, latlng.lat]);
+      const polygon = cityBoundaries;
+
+      // Check if the point is inside the boundaries of the city polygon
+      const isInside = turf.booleanPointInPolygon(point, polygon);
+      if (!isInside) {
+        dispatch(clearLocation());
+        return;
+      }
+    } else if (cityBounds) {
+      // Fallback: check if point is within bounding box
+      const [sw, ne] = cityBounds;
+      if (lat < sw[0] || lat > ne[0] || lng < sw[1] || lng > ne[1]) {
+        dispatch(clearLocation());
+        return;
+      }
+    }
+
     // Get address using reverse geocoding
     const address = await reverseGeocode(lat, lng);
-
-    // Log to console
-    //console.log("Coordinates:", { lat, lng });
-    //console.log("Address:", address);
 
     // Save to Redux store
     dispatch(
@@ -195,7 +312,6 @@ export function MapPage(props) {
    */
   const handleCreateReport = () => {
     if (location.position && location.address) {
-      //console.log("Create report for:", location);
       navigate("/create_report");
     }
   };
@@ -259,88 +375,329 @@ export function MapPage(props) {
   return (
     <div className={styles.mapWrapper}>
       <div className={styles.mapContainer}>
-        <div className={styles.searchBar}>
-          <form onSubmit={handleSearch} className={styles.searchForm}>
-            <div className={styles.searchInputWrapper}>
-              <img
-                src={searchIcon}
-                alt="Search"
-                className={styles.searchIcon}
-              />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search"
-                className={styles.searchInput}
+        {isLoading && (
+          <div className={styles.loaderContainer}>
+            <div className={styles.loaderSpinner}></div>
+            <div className={styles.loaderText}>Loading map...</div>
+          </div>
+        )}
+        {!isLoading && (
+          <div className={styles.searchBar}>
+            <form onSubmit={handleSearch} className={styles.searchForm}>
+              <div className={styles.searchInputWrapper}>
+                <img
+                  src={searchIcon}
+                  alt="Search"
+                  className={styles.searchIcon}
+                />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search"
+                  className={styles.searchInput}
+                  disabled={isSearching}
+                />
+              </div>
+              <button
+                type="submit"
+                className={styles.searchButton}
                 disabled={isSearching}
+              >
+                {isSearching ? "Searching..." : "Search"}
+              </button>
+            </form>
+            {searchError && (
+              <div className={styles.searchError}>{searchError}</div>
+            )}
+          </div>
+        )}
+        {!isLoading && (
+          <MapContainer
+            center={mapCenter}
+            zoom={mapZoom}
+            scrollWheelZoom={true}
+            className={styles.map}
+            zoomControl={false}
+            maxBounds={
+              cityBounds || [
+                [45.0, 7.5],
+                [45.15, 7.8],
+              ]
+            }
+            maxBoundsViscosity={1.0}
+          >
+            <MapView center={mapCenter} zoom={mapZoom} />
+            <MapClickHandler onMapClick={handleMapClick} />
+            {maskPolygon && (
+              <GeoJSON
+                key={JSON.stringify(maskPolygon)}
+                data={maskPolygon}
+                style={{
+                  fillColor: "#666666",
+                  fillOpacity: 0.6,
+                  color: "transparent",
+                  weight: 0,
+                }}
               />
+            )}
+            <LayersControl position="bottomleft">
+              <LayersControl.BaseLayer checked name="OpenStreetMap">
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+              </LayersControl.BaseLayer>
+
+              <LayersControl.BaseLayer name="Google">
+                <TileLayer
+                  url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+                  attribution="Map data © Google"
+                />
+              </LayersControl.BaseLayer>
+
+              <LayersControl.BaseLayer name="Satellite">
+                <TileLayer
+                  url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+                  attribution="Map data © Google"
+                />
+              </LayersControl.BaseLayer>
+            </LayersControl>
+
+            <ApprovedReportsLayer
+              reports={reports}
+              onViewDetails={handleViewDetails}
+            />
+
+            {location.position && location.address && (
+              <MarkerWithAutoOpen position={location.position} icon={redIcon}>
+                <div>
+                  <p>
+                    <strong>Address:</strong> {location.address}
+                  </p>
+                  <p>
+                    <strong>Coordinates:</strong>{" "}
+                    {location.coordinates.lat.toFixed(6)},{" "}
+                    {location.coordinates.lng.toFixed(6)}
+                  </p>
+                  <button
+                    onClick={handleCreateReport}
+                    className={styles.createReportButton}
+                  >
+                    Create report
+                  </button>
+                </div>
+              </MarkerWithAutoOpen>
+            )}
+            <ZoomControl position="bottomright" />
+          </MapContainer>
+        )}
+      </div>
+
+      {isModalOpen && selectedReport && (
+        <ReportDetailsModal
+          report={selectedReport}
+          onClose={handleCloseModal}
+        />
+      )}
+    </div>
+  );
+}
+
+// Blue Icon for existing reports (to distinguish them from the user's red selection)
+const blueIcon = new L.Icon({
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+/**
+ * Report popup component
+ * @param {Object} props - Component props
+ * @param {Object} props.report - Report object
+ * @param {Function} props.onViewDetails - Callback when details button is clicked
+ */
+function ReportPopup({ report, onViewDetails }) {
+  return (
+    <div className={styles.reportPopup}>
+      <h4 className={styles.reportPopupTitle}>{report.title}</h4>
+      <p className={styles.reportPopupInfo}>
+        <strong>Category:</strong> {report.category.name}
+      </p>
+      <p className={styles.reportPopupInfo}>
+        <strong>Status:</strong> {report.status.name}
+      </p>
+      <button className={styles.reportPopupButton} onClick={onViewDetails}>
+        Details
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Custom icon create function for clusters with formatted count
+ * @param {Object} cluster - Cluster object from markercluster
+ * @returns {L.DivIcon} Cluster icon
+ */
+function createClusterIcon(cluster) {
+  const count = cluster.getChildCount();
+  // Format count: 2-9 show number, 10+ show "9+"
+  const displayCount = count >= 10 ? "9+" : count.toString();
+
+  return L.divIcon({
+    html: `<div style="
+      background-color:rgb(58, 124, 217);
+      color: white;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 14px;
+      border: 3px solid white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    ">${displayCount}</div>`,
+    className: "marker-cluster-custom",
+    iconSize: L.point(40, 40),
+  });
+}
+
+/**
+ * Marker component with click handler to center map
+ * @param {Object} props - Component props
+ * @param {Array<number>} props.position - Marker position [lat, lng]
+ * @param {Object} props.icon - Marker icon
+ * @param {React.ReactNode} props.children - Popup content
+ */
+function CenteredMarker({ position, icon, children }) {
+  const map = useMap();
+
+  return (
+    <Marker
+      position={position}
+      icon={icon}
+      eventHandlers={{
+        click: () => {
+          // Center map when marker is clicked
+          centerMapOnMarker(map, position);
+        },
+        popupopen: () => {
+          // Also center when popup opens
+          centerMapOnMarker(map, position);
+        },
+      }}
+    >
+      {children}
+    </Marker>
+  );
+}
+
+/**
+ * Component that creates a marker cluster group for reports
+ * @param {Object} props - Component props
+ * @param {Array} props.reports - Array of report objects
+ * @param {Function} props.onViewDetails - Callback when report is clicked
+ */
+function ApprovedReportsLayer({ reports, onViewDetails }) {
+  if (!reports || reports.length === 0) {
+    return null;
+  }
+
+  // Filter valid reports
+  const validReports = reports.filter(
+    (report) => report.latitude && report.longitude && report.id
+  );
+
+  if (validReports.length === 0) {
+    return null;
+  }
+
+  return (
+    <MarkerClusterGroup
+      iconCreateFunction={createClusterIcon}
+      maxClusterRadius={80}
+      spiderfyOnMaxZoom={true}
+      showCoverageOnHover={false}
+      zoomToBoundsOnClick={true}
+    >
+      {validReports.map((report) => (
+        <CenteredMarker
+          key={report.id}
+          position={[report.latitude, report.longitude]}
+          icon={blueIcon}
+        >
+          <Popup>
+            <ReportPopup
+              report={report}
+              onViewDetails={() => onViewDetails(report)}
+            />
+          </Popup>
+        </CenteredMarker>
+      ))}
+    </MarkerClusterGroup>
+  );
+}
+
+function ReportDetailsModal({ report, onClose }) {
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <h2>{report.title}</h2>
+          <button className={styles.closeButton} onClick={onClose}>
+            ×
+          </button>
+        </div>
+
+        <div className={styles.modalBody}>
+          <div className={styles.detailRow}>
+            <strong>Description:</strong>
+            <p>{report.description}</p>
+          </div>
+
+          <div className={styles.detailRow}>
+            <strong>Category:</strong>
+            <p>{report.category.name}</p>
+          </div>
+
+          <div className={styles.detailRow}>
+            <strong>Status:</strong>
+            <p>{report.status.name}</p>
+          </div>
+
+          <div className={styles.detailRow}>
+            <strong>Reported by:</strong>
+            <p>{report.citizen.username || "Anonymous"}</p>
+          </div>
+
+          <div className={styles.detailRow}>
+            <strong>Created:</strong>
+            <p>{new Date(report.created_at).toLocaleString()}</p>
+          </div>
+
+          {report.photos && report.photos.length > 0 && (
+            <div className={styles.detailRow}>
+              <strong>Images:</strong>
+              <div className={styles.photoGrid}>
+                {report.photos.map((photo, index) => (
+                  <img
+                    key={photo.photo_id || index}
+                    src={photo.image_url}
+                    alt={`Report Image ${index + 1}`}
+                    className={styles.reportPhoto}
+                  />
+                ))}
+              </div>
             </div>
-            <button
-              type="submit"
-              className={styles.searchButton}
-              disabled={isSearching}
-            >
-              {isSearching ? "Searching..." : "Search"}
-            </button>
-          </form>
-          {searchError && (
-            <div className={styles.searchError}>{searchError}</div>
           )}
         </div>
-        <MapContainer
-          center={mapCenter}
-          zoom={mapZoom}
-          scrollWheelZoom={true}
-          className={styles.map}
-          zoomControl={false}
-        >
-          <MapView center={mapCenter} zoom={mapZoom} />
-          <MapClickHandler onMapClick={handleMapClick} />
-          <LayersControl position="bottomleft">
-            <LayersControl.BaseLayer checked name="OpenStreetMap">
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-            </LayersControl.BaseLayer>
-
-            <LayersControl.BaseLayer name="Google">
-              <TileLayer
-                url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
-                attribution="Map data © Google"
-              />
-            </LayersControl.BaseLayer>
-
-            <LayersControl.BaseLayer name="Satellite">
-              <TileLayer
-                url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
-                attribution="Map data © Google"
-              />
-            </LayersControl.BaseLayer>
-          </LayersControl>
-          {location.position && location.address && (
-            <MarkerWithAutoOpen position={location.position} icon={redIcon}>
-              <div>
-                <p>
-                  <strong>Address:</strong> {location.address}
-                </p>
-                <p>
-                  <strong>Coordinates:</strong>{" "}
-                  {location.coordinates.lat.toFixed(6)},{" "}
-                  {location.coordinates.lng.toFixed(6)}
-                </p>
-                <button
-                  onClick={handleCreateReport}
-                  className={styles.createReportButton}
-                >
-                  Create report
-                </button>
-              </div>
-            </MarkerWithAutoOpen>
-          )}
-          <ZoomControl position="bottomright" />
-        </MapContainer>
       </div>
     </div>
   );

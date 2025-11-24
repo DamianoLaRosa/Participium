@@ -157,9 +157,10 @@
 }
 
 
-.users-table thead tr th:nth-child(1) { width: 349px; } 
-.users-table thead tr th:nth-child(2) { width: 356px; } 
-.users-table thead tr th:nth-child(3) { width: 220px; } 
+.users-table thead tr th:nth-child(1) { width: 150px; } 
+.users-table thead tr th:nth-child(2) { width: 250px; } 
+.users-table thead tr th:nth-child(3) { width: 180px; } 
+.users-table thead tr th:nth-child(4) { width: 230px; } 
 
 
 .users-table td {
@@ -203,13 +204,18 @@
   color: var(--static-white);
 }
 
-.role-organization {
+.role-municipal-relations {
   background-color: #6C5CE7;
   color: var(--static-white);
 }
 
 .role-technical {
   background-color: #0984E3;
+  color: var(--static-white);
+}
+
+.role-municipal-administrator {
+  background-color: #f98bd4;
   color: var(--static-white);
 }
 
@@ -340,25 +346,32 @@
 
   .users-table {
     width: auto;
-    min-width: 600px;
+    min-width: 800px;
   }
 
   .users-table thead tr th:nth-child(1),
   .users-table tbody tr td:nth-child(1) {
     width: auto;
-    min-width: 150px;
-    max-width: 200px;
+    min-width: 120px;
+    max-width: 160px;
   }
 
   .users-table thead tr th:nth-child(2),
   .users-table tbody tr td:nth-child(2) {
     width: auto;
-    min-width: 180px;
-    max-width: 220px;
+    min-width: 150px;
+    max-width: 200px;
   }
 
   .users-table thead tr th:nth-child(3),
   .users-table tbody tr td:nth-child(3) {
+    width: auto;
+    min-width: 100px;
+    max-width: 130px;
+  }
+
+  .users-table thead tr th:nth-child(4),
+  .users-table tbody tr td:nth-child(4) {
     width: auto;
     min-width: 120px;
     max-width: 150px;
@@ -376,10 +389,10 @@
     min-height: 60px;
   }
 
-  .role-cell span {
-    padding: 0 10px;
-    font-size: 12px;
-    min-width: 70px;
+  .role-cell span,
+  .office-cell span {
+    padding: 4px 8px;
+    font-size: 11px;
   }
 
   .alert {

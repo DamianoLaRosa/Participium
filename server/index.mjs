@@ -5,7 +5,7 @@ import registration from './router/registration_route.mjs';
 import getAll from './router/get-all_route.mjs';
 import forms from './router/forms_route.mjs';
 import { check, validationResult } from 'express-validator';
-import { getUser, getAllReports, updateReportStatus, getApprovedReports } from "./dao.mjs";
+import { getUser, getAllReports, updateReportStatus, getAllApprovedReports } from "./dao.mjs";
 import cors from 'cors';
 
 import passport from 'passport';
@@ -90,7 +90,7 @@ app.put('/api/reports/:id/status', async (req, res) => {
     if (req.user.role !== 'Admin' && req.user.role !== 'Municipal public relations officer' && req.user.role !== "Technical office staff member"  ) return res.status(403).json({ error: 'Forbidden' });
 
     const reportId = parseInt(req.params.id, 10);
-    if (isNaN(reportId)) return res.status(422).json({ error: 'Invalid report id' });
+    if (isNaN(reportId)) return res.status(423).json({ error: 'Invalid report id' });
 
     const { status_id, rejection_reason } = req.body;
     if (typeof status_id !== 'number') return res.status(422).json({ error: 'status_id must be a number' });
@@ -104,10 +104,29 @@ app.put('/api/reports/:id/status', async (req, res) => {
   }
 });
 
+//PUT /api/reports/:id/operator -> set operator for a report (requires operator/admin)
+app.put('/api/reports/:id/operator', async (req, res) => {
+  try {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: 'Not authenticated' });
+    if (req.user.role !== 'Admin' && req.user.role !== 'Municipal public relations officer' && req.user.role !== "Technical office staff member"  ) return res.status(403).json({ error: 'Forbidden' });  
+    const reportId = parseInt(req.params.id, 10);
+    if (isNaN(reportId)) return res.status(423).json({ error: 'Invalid report id' });
+    const { operatorId } = req.body;
+    if (typeof operatorId !== 'number') return res.status(422).json({ error: 'operatorId must be a number' });
+    // TODO: implement setOperatorInReport in dao.mjs
+    //const updated = await setOperatorByReport(reportId, operatorId);
+    //if (!updated) return res.status(404).json({ error: 'Report not found' });
+    //res.status(200).json(updated);
+    res.status(200).json({ message: 'Operator assigned (stub response)' });
+  } catch (err) {
+    res.status(503).json({ error: 'Database error during operator assignment' });
+  }
+});
+
 // GET /api/reports/approved -> approved reports for map (public - no auth required)
 app.get('/api/reports/approved', async (req, res) => {
   try {
-    const reports = await getApprovedReports();
+    const reports = await getAllApprovedReports();
     res.status(200).json(reports);
   } catch (err) {
     console.error('Error fetching approved reports:', err);

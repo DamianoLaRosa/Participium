@@ -7,6 +7,55 @@ retrospective: cd retrospective; node calculate.mjs
 
 commads to reset and restart postgreSQL db : docker compose down; Remove-Item -Recurse -Force .\db_data; docker compose up -d
 
+
+# Docker compose using participium image exampl
+
+```yaml
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: participium_db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: participium
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - participium_network
+    restart: unless-stopped
+  
+  participium:
+    image: participium:1.0.0
+    container_name: participium_app
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: admin
+      DB_PASSWORD: changeme
+      DB_NAME: participium
+      SUPABASE_URL: https://your-supabase-url.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: your-supabase-service-role-key
+      SUPABASE_BUCKET_NAME: your-bucket-name
+    ports:
+      - "3001:3001"
+      - "5173:5173"
+    depends_on:
+      - postgres
+    networks:
+      - participium_network
+    restart: unless-stopped
+
+networks:
+  participium_network:
+    driver: bridge
+```
+
 # mail - password
 admin@participium.local -  participium
 
@@ -77,3 +126,4 @@ notifications (notification_id, citizen_id, report_id, message,sent_at, seen)
 telegram_users(
     telegram_user_id, citizen_id, chat_id, linked_at
 )
+

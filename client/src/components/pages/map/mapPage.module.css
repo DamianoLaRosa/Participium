@@ -147,7 +147,6 @@
   box-shadow: var(--shadow-hover);
 }
 
-
 :global(.leaflet-control-layers),
 :global(.leaflet-control-zoom) {
   background: var(--static-white) !important;
@@ -192,7 +191,6 @@
   margin-right: 6px !important;
 }
 
-
 :global(.leaflet-popup-content) p {
   margin: 4px 0;
   font-size: 13px;
@@ -200,4 +198,203 @@
 
 :global(.leaflet-popup-content) strong {
   font-weight: 600;
+  color: var(--static-black);
+}
+
+/* Report popup styles */
+.reportPopup {
+  min-width: 150px;
+}
+
+.reportPopupTitle {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--static-black);
+}
+
+.reportPopupInfo {
+  margin: 0 0 8px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.reportPopupButton {
+  width: 100%;
+  padding: 8px 16px;
+  margin-top: 10px;
+  background: var(--gradient-primary);
+  color: var(--static-white);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.reportPopupButton:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+/* Modal styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.modalContent {
+  background: var(--static-white);
+  border-radius: var(--radius-lg);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--static-black);
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  line-height: 1;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+}
+
+.closeButton:hover {
+  color: var(--static-black);
+}
+
+.modalBody {
+  padding: 20px;
+}
+
+.detailRow {
+  margin-bottom: 15px;
+}
+
+.detailRow strong {
+  display: block;
+  color: var(--static-black);
+  margin-bottom: 5px;
+}
+
+.detailRow p {
+  margin: 0;
+  color: var(--text-secondary);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.photoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.reportPhoto {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.reportPhoto:hover {
+  opacity: 0.8;
+}
+
+.modalFooter {
+  padding: 20px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.closeModalButton {
+  width: 100%;
+  padding: 8px 16px;
+  margin-top: 8px;
+  background: var(--gradient-primary);
+  color: var(--static-white);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.closeModalButton:hover {
+  opacity: 0.9;
+}
+
+/* Loader styles */
+.loaderContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--static-white);
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+}
+
+.loaderSpinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--border-light);
+  border-top: 4px solid var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loaderText {
+  margin-top: 20px;
+  font-size: 16px;
+  color: var(--foreground-default);
+  font-weight: 500;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
