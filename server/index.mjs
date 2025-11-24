@@ -5,7 +5,7 @@ import registration from './router/registration_route.mjs';
 import getAll from './router/get-all_route.mjs';
 import forms from './router/forms_route.mjs';
 import { check, validationResult } from 'express-validator';
-import { getUser, getAllReports, updateReportStatus, getAllApprovedReports } from "./dao.mjs";
+import { getUser, getAllReports, updateReportStatus, getAllApprovedReports,setOperatorByReport  } from "./dao.mjs";
 import cors from 'cors';
 
 import passport from 'passport';
@@ -113,11 +113,9 @@ app.put('/api/reports/:id/operator', async (req, res) => {
     if (isNaN(reportId)) return res.status(423).json({ error: 'Invalid report id' });
     const { operatorId } = req.body;
     if (typeof operatorId !== 'number') return res.status(422).json({ error: 'operatorId must be a number' });
-    // TODO: implement setOperatorInReport in dao.mjs
-    //const updated = await setOperatorByReport(reportId, operatorId);
-    //if (!updated) return res.status(404).json({ error: 'Report not found' });
-    //res.status(200).json(updated);
-    res.status(200).json({ message: 'Operator assigned (stub response)' });
+    const updated = await setOperatorByReport(reportId, operatorId);
+    if (!updated) return res.status(404).json({ error: 'Report not found' });
+    res.sendStatus(200);
   } catch (err) {
     res.status(503).json({ error: 'Database error during operator assignment' });
   }
