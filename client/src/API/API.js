@@ -15,6 +15,8 @@ import {
   setOperatorByReport
 } from "./report.js";
 import { getImageUploadUrl, uploadImageToSignedUrl } from "./image.js";
+import { getAllReportsForTechOfficer} from "./techofficer.js";
+import { getCitizenProfile, updateCitizenProfile } from "./citizen.js";
 
 const API = {
   // Admin methods
@@ -43,6 +45,14 @@ const API = {
   // Image methods
   getImageUploadUrl,
   uploadImageToSignedUrl,
+
+
+  // Tech Officer methods 
+  getAllReportsForTechOfficer,
+
+  // Citizen methods
+  getCitizenProfile,
+  updateCitizenProfile,
 };
 
 export default API;

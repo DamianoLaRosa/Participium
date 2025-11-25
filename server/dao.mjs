@@ -21,13 +21,13 @@ export const getTechnicalOfficersByOffice = async (officerId, officeId) => {
     if (officerId && !officeId) {
       const sqlGetOfficer = 'SELECT * FROM operators WHERE operator_id = $1';
       const result = await pool.query(sqlGetOfficer, [officerId]);
-      if(result.rows.length === 0) {
+      if (result.rows.length === 0) {
         throw new Error('Either valid officer_id or office_id must be provided');
       }
       console.log(result.rows[0]);
       const operatorRoleSql = 'SELECT role_id FROM roles WHERE name = \'Municipal public relations officer\'  AND role_id = $1';
       const operatorRoleResult = await pool.query(operatorRoleSql, [result.rows[0].role_id]);
-      if(operatorRoleResult.rows.length === 0) {
+      if (operatorRoleResult.rows.length === 0) {
         throw new Error('Operatot not allowed, he is not a Municipal public relations officer');
       }
       const sqlGetTechnicalOfficers = 'SELECT * FROM operators WHERE office_id = $1 AND role_id = (SELECT role_id FROM roles WHERE name = \'Technical office staff member\')';
@@ -48,9 +48,8 @@ export const getTechnicalOfficersByOffice = async (officerId, officeId) => {
       email: e.email,
       username: e.username,
       office_id: e.office_id
-      }));
+    }));
 }
-
 
 //given username (email) and password does the login -> searches in citizen and then operators tables
 export const getUser = async (username, password) => {
@@ -279,7 +278,6 @@ export const createMunicipalityUser = async (email, username, password, office_i
   });
 };
 
-
 // returns all categories
 export const getAllCategories = async () => {
   try {
@@ -332,6 +330,69 @@ export const getAllReports = async () => {
     `;
 
     const result = await pool.query(sql);
+    return result.rows.map((row) => ({
+      id: row.report_id,
+      title: row.title,
+      description: row.description,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      anonymous: row.anonymous,
+      rejection_reason: row.rejection_reason,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+      citizen: row.citizen_id ? {
+        id: row.citizen_id,
+        username: row.citizen_username,
+        first_name: row.citizen_first_name,
+        last_name: row.citizen_last_name
+      } : null,
+      category: { id: row.category_id, name: row.category_name },
+      office: { id: row.office_id, name: row.office_name },
+      status: { id: row.status_id, name: row.status_name },
+      photos: row.photos || []
+    }));
+  } catch (err) {
+    throw err;
+  }
+};
+
+// returns all reports assigned to a specific operator (technical staff)
+export const getReportsAssigned = async (operator_id) => {
+  try {
+    const sql = `
+          SELECT
+            r.report_id,
+            r.title,
+            r.description,
+            r.latitude,
+            r.longitude,
+            r.anonymous,
+            r.rejection_reason,
+            r.created_at,
+            r.updated_at,
+            r.citizen_id,
+            c.username as citizen_username,
+            c.first_name as citizen_first_name,
+            c.last_name as citizen_last_name,
+            r.category_id,
+            cat.name as category_name,
+            r.office_id,
+            off.name as office_name,
+            r.status_id,
+            s.name as status_name,
+            COALESCE(json_agg(DISTINCT jsonb_build_object('photo_id', p.photo_id, 'image_url', p.image_url)) FILTER (WHERE p.photo_id IS NOT NULL), '[]') AS photos
+          FROM reports r
+          LEFT JOIN citizens c ON r.citizen_id = c.citizen_id
+          LEFT JOIN categories cat ON r.category_id = cat.category_id
+          LEFT JOIN offices off ON r.office_id = off.office_id
+          LEFT JOIN statuses s ON r.status_id = s.status_id
+          LEFT JOIN photos p ON r.report_id = p.report_id
+          WHERE r.assigned_to_operator_id = $1
+          GROUP BY r.report_id, c.citizen_id, c.username, c.first_name, c.last_name, cat.name, off.name, s.name
+          ORDER BY r.updated_at DESC
+        `;
+
+    const result = await pool.query(sql, [operator_id]);
     return result.rows.map((row) => ({
       id: row.report_id,
       title: row.title,
@@ -512,9 +573,6 @@ export const getAllApprovedReports = async () => {
 };
 
 export const setOperatorByReport = async (report_id, operator_id) => {
-
-  
-
   try {
     const sql = `UPDATE reports
       SET assigned_to_operator_id = $2,
@@ -527,7 +585,7 @@ export const setOperatorByReport = async (report_id, operator_id) => {
         status_id,
         updated_at
     `;
-    const result = await pool.query(sql, [report_id, operator_id]); 
+    const result = await pool.query(sql, [report_id, operator_id]);
     if (result.rows.length === 0) {
       return null;
     }
@@ -536,4 +594,44 @@ export const setOperatorByReport = async (report_id, operator_id) => {
   } catch (err) {
     throw err;
   }
-};  
+};
+
+export const getUserInfoById = async (userId) => {
+  try {
+    const sql = 'SELECT email, username, first_name, last_name, profile_photo_url, telegram_username, email_notifications from citizens WHERE citizen_id = $1';
+    const result = await pool.query(sql, [userId]);
+    if (result.rows.length === 0) {
+      return null;
+    }
+    return result.rows[0];
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const updateUserById = async (userId, updates) => {
+  try {
+    const keys = Object.keys(updates);
+    if (keys.length === 0) return null;
+
+    const setClause = keys
+      .map((key, i) => `${key} = $${i + 1}`)
+      .join(", ");
+
+    const values = keys.map(key => updates[key]);
+
+    const sql = `
+      UPDATE citizens
+      SET ${setClause}
+      WHERE citizen_id = $${keys.length + 1}
+      RETURNING *;
+    `;
+
+    values.push(userId);
+
+    const result = await pool.query(sql, values);
+    return result.rows[0];
+  } catch (err) {
+    throw err;
+  }
+};

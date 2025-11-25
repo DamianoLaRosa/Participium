@@ -5,7 +5,7 @@ import registration from './router/registration_route.mjs';
 import getAll from './router/get-all_route.mjs';
 import forms from './router/forms_route.mjs';
 import { check, validationResult } from 'express-validator';
-import { getUser, getAllReports, updateReportStatus, getAllApprovedReports,setOperatorByReport  } from "./dao.mjs";
+import { getUser, getAllReports, updateReportStatus, getAllApprovedReports, setOperatorByReport, getReportsAssigned, updateUserById } from "./dao.mjs";
 import cors from 'cors';
 
 import passport from 'passport';
@@ -78,7 +78,7 @@ app.get('/api/reports', async (req, res) => {
     const reports = await getAllReports();
     res.status(200).json(reports);
   } catch (err) {
-    console.error('Error fetching reports:', err);
+  
     res.status(503).json({ error: 'Database error during report retrieval' });
   }
 });
@@ -127,10 +127,64 @@ app.get('/api/reports/approved', async (req, res) => {
     const reports = await getAllApprovedReports();
     res.status(200).json(reports);
   } catch (err) {
-    console.error('Error fetching approved reports:', err);
+  
     res.status(503).json({ error: 'Database error during report retrieval' });
   }
 });
+
+
+// GET /api/reports/assigned -> reports assigned to the logged-in technical staff (requires Technical office staff member)
+app.get('/api/reports/assigned', async (req, res) => {
+  try {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: 'Not authenticated' });
+    if (req.user.role !== 'Technical office staff member') return res.status(403).json({ error: 'Forbidden' });
+
+    const operatorId = req.user.id;
+    const reports = await getReportsAssigned(operatorId);
+    res.status(200).json(reports);
+  } catch (err) {
+  
+    res.status(503).json({ error: 'Database error during assigned report retrieval' });
+  }
+});
+
+// Get /api/users/:id -> get user profile of logged-in user (requires authentication)
+app.get('/api/citizens', async (req, res) => {
+  try {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: 'Not authenticated' });
+    const userId = req.user.id;
+    if (isNaN(userId)) return res.status(423).json({ error: 'Invalid user id' });
+    const user = await getUserInfoById(userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.status(200).json(user);
+  } catch (err) {
+    res.status(503).json({ error: 'Database error during user retrieval' });
+  }
+});
+
+// PUT /api/citizens -> update profile of currently logged-in user (requires authentication)
+app.put("/api/citizens", async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const updates = req.body;
+
+    if (!updates || Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: "No update fields provided" });
+    }
+
+    const updatedUser = await updateUserById(userId, updates);
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found or no changes applied" });
+    }
+
+    res.json(updatedUser);
+  } catch (err) {
+ 
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 
 
 
