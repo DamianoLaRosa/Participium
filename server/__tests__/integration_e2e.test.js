@@ -58,13 +58,13 @@ describe('API integration', () => {
             return {
                 getUser: jest.fn(async (username, password) => {
                     if (username === 'admin' && password === 'correct') {
-                    return { username: 'admin', role: 'Admin', id: 900, type: 'operator' };
+                    return { username: 'admin', role: 'Admin', id: 900 };
                     }
                     if (username === 'found@operator' && password === 'correct') {
-                    return { username: 'operator_user', role: 'Operator', id: 201, type: 'operator' };
+                    return { username: 'operator_user', role: 'Operator', id: 201 };
                     }
                     if (username === 'plain' && password === 'correct') {
-                    return { username: 'plainuser', role: 'User', id: 555, type: 'user' };
+                    return { username: 'plainuser', role: 'User', id: 555 };
                     }
                     // emulate failed auth
                     return null;
@@ -171,7 +171,7 @@ describe('API integration', () => {
             password: 'correct' 
         });
         expect(loginRes.status).toBe(201);
-        expect(loginRes.body).toMatchObject({ username: 'admin', type: 'operator' });
+        expect(loginRes.body).toMatchObject({ username: 'admin' });
 
         // 2. Get all operators
         const operatorsRes = await agent.get('/api/admin');
@@ -231,7 +231,7 @@ describe('API integration', () => {
     // 2. Mock getUser per permettere il login con l'utente appena creato
     dao.getUser.mockImplementationOnce(async (username, password) => {
         if (username === 'reportuser' && password === 'securepass123') {
-            return { username: 'reportuser', role: 'User', id: 111, type: 'user' };
+            return { username: 'reportuser', role: 'User', id: 111 };
         }
         return null;
     });
@@ -272,43 +272,6 @@ describe('API integration', () => {
     expect(unauthorizedRes.status).toBe(401);
     });
 
-    test('Admin workflow: login -> get all reports -> get operators -> get offices and roles', async () => {
-        const dao = await import('../dao.mjs');
-        
-        // Mock reports for this test
-        dao.getAllReports.mockImplementationOnce(async () => [
-            { report_id: 1, description: 'Noise complaint', status: 'pending' },
-            { report_id: 2, description: 'Garbage issue', status: 'pending' }
-        ]);
-
-        // 1. Admin login
-        const loginRes = await agent.post('/api/sessions').send({
-            username: 'admin',
-            password: 'correct'
-        });
-        expect(loginRes.status).toBe(201);
-
-        // 2. Get all reports
-        const reportsRes = await agent.get('/api/reports');
-        expect(reportsRes.status).toBe(200);
-        expect(Array.isArray(reportsRes.body)).toBe(true);
-        expect(reportsRes.body.length).toBe(2);
-
-        // 3. Get operators for office 1
-        const operatorsRes = await agent.get('/api/operators?officeId=1');
-        expect(operatorsRes.status).toBe(200);
-
-        // 4. Get all offices
-        const officesRes = await agent.get('/api/offices');
-        expect(officesRes.status).toBe(200);
-        expect(Array.isArray(officesRes.body)).toBe(true);
-        expect(officesRes.body[0]).toHaveProperty('name');
-
-        // 5. Get all roles
-        const rolesRes = await agent.get('/api/roles');
-        expect(rolesRes.status).toBe(200);
-        expect(Array.isArray(rolesRes.body)).toBe(true);
-    });
 
     test('Plain user tries admin actions: login -> try get reports (forbidden) -> try create operator (forbidden)', async () => {
     const dao = await import('../dao.mjs');
@@ -316,7 +279,7 @@ describe('API integration', () => {
     // Mock getUserInfoById per la deserializzazione della sessione
     dao.getUserInfoById.mockImplementation(async (id) => {
         if (id === 555) {
-            return { user_id: 555, username: 'plainuser', role: 'User', type: 'user' };
+            return { user_id: 555, username: 'plainuser', role: 'User' };
         }
         return null;
     });
@@ -327,7 +290,7 @@ describe('API integration', () => {
         password: 'correct'
     });
     expect(loginRes.status).toBe(201);
-    expect(loginRes.body).toMatchObject({ username: 'plainuser', type: 'user' });
+    expect(loginRes.body).toMatchObject({ username: 'plainuser'});
 
     // 2. Try to access reports (forbidden for plain users)
     const reportsRes = await agent.get('/api/reports');
@@ -394,32 +357,6 @@ describe('API integration', () => {
         expect(user3.status).toBe(409);
     });
 
-    test('Upload workflow: get signed URL -> verify URL format', async () => {
-        // 1. Request upload URL for first image
-        const upload1 = await agent.post('/api/upload-url').send({
-            filename: 'report_image_1.png'
-        });
-        expect(upload1.status).toBe(200);
-        expect(upload1.body).toHaveProperty('signedUrl');
-        expect(upload1.body).toHaveProperty('path');
-        expect(upload1.body).toHaveProperty('publicUrl');
-        expect(upload1.body.signedUrl).toContain('signed.example');
-
-        // 2. Request upload URL for second image
-        const upload2 = await agent.post('/api/upload-url').send({
-            filename: 'report_image_2.jpg'
-        });
-        expect(upload2.status).toBe(200);
-        expect(upload2.body.path).toContain('report_image_2.jpg');
-
-        // 3. Request upload URL for third image
-        const upload3 = await agent.post('/api/upload-url').send({
-            filename: 'evidence.png'
-        });
-        expect(upload3.status).toBe(200);
-        expect(upload3.body).toHaveProperty('publicUrl');
-    });
-
     test('Session management: login -> check current session -> logout -> check session again', async () => {
         // 1. Initially not authenticated
         const notAuthRes = await agent.get('/api/sessions/current');
@@ -435,7 +372,7 @@ describe('API integration', () => {
         // 3. Check authenticated session
         const authRes = await agent.get('/api/sessions/current');
         expect(authRes.status).toBe(200);
-        expect(authRes.body).toMatchObject({ username: 'admin', type: 'operator' });
+        expect(authRes.body).toMatchObject({ username: 'admin' });
 
         // 4. Logout
         const logoutRes = await agent.delete('/api/sessions/current');

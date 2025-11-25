@@ -59,13 +59,13 @@ describe('API (index.mjs) - improved coverage', () => {
             return {
                 getUser: jest.fn(async (username, password) => {
                     if (username === 'admin' && password === 'correct') {
-                    return { username: 'admin', role: 'Admin', id: 900, type: 'operator' };
+                    return { username: 'admin', role: 'Admin', id: 900 };
                     }
                     if (username === 'found@operator' && password === 'correct') {
-                    return { username: 'operator_user', role: 'Operator', id: 201, type: 'operator' };
+                    return { username: 'operator_user', role: 'Operator', id: 201 };
                     }
                     if (username === 'plain' && password === 'correct') {
-                    return { username: 'plainuser', role: 'User', id: 555, type: 'user' };
+                    return { username: 'plainuser', role: 'User', id: 555 };
                     }
                     // emulate failed auth
                     return null;
@@ -185,7 +185,7 @@ describe('API (index.mjs) - improved coverage', () => {
         test('login as admin, access /api/admin and create user', async () => {
             const loginRes = await agent.post('/api/sessions').send({ username: 'admin', password: 'correct' });
             expect(loginRes.status).toBe(201);
-            expect(loginRes.body).toMatchObject({ username: 'admin', type: 'operator' });
+            expect(loginRes.body).toMatchObject({ username: 'admin' });
 
             const adminRes = await agent.get('/api/admin');
             expect(adminRes.status).toBe(200);
@@ -352,7 +352,7 @@ describe('API (index.mjs) - improved coverage', () => {
             let res = await agent.post('/api/sessions').send({ username: 'admin', password: 'correct' });
             res = await agent.get('/api/sessions/current');
             expect(res.status).toBe(200);
-            expect(res.body).toMatchObject({ username: 'admin', type: 'operator' });
+            expect(res.body).toMatchObject({ username: 'admin'});
         });
 
         test('GET /api/sessions/current unauthenticated -> 401', async () => {
