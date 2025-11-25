@@ -1,4 +1,3 @@
-import "bootstrap/dist/css/bootstrap.min.css";
 import { Routes, Route, Navigate } from "react-router";
 import { DefaultLayout } from "./components/common/layout/Layout";
 import InsertReportPage from "./components/pages/report/InsertReportPage";
