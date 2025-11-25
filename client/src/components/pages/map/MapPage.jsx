@@ -213,11 +213,8 @@ export function MapPage(props) {
     }
   }, [reportsLoaded, boundariesLoading]);
 
-  // Determine if there's an error loading city boundaries
-  // Show error if: query failed OR loading completed but cityBoundaries is null
-  const hasBoundariesError =
-    boundariesError ||
-    (!boundariesLoading && (!cityBoundariesData || !cityBoundaries));
+  // Check if there's an error loading city boundaries
+  const hasBoundariesError = !!boundariesError;
 
   const loadReports = useCallback(async () => {
     try {
@@ -270,24 +267,12 @@ export function MapPage(props) {
     const lng = latlng.lng;
     const coordinates = [lat, lng];
 
-    // Check if the clicked point is inside Turin city limits
-    if (cityBoundaries) {
-      const point = turf.point([latlng.lng, latlng.lat]);
-      const polygon = cityBoundaries;
-
-      // Check if the point is inside the boundaries of the city polygon
-      const isInside = turf.booleanPointInPolygon(point, polygon);
-      if (!isInside) {
-        dispatch(clearLocation());
-        return;
-      }
-    } else if (cityBounds) {
-      // Fallback: check if point is within bounding box
-      const [sw, ne] = cityBounds;
-      if (lat < sw[0] || lat > ne[0] || lng < sw[1] || lng > ne[1]) {
-        dispatch(clearLocation());
-        return;
-      }
+      // Check if the clicked point is inside Turin city limits
+    const point = turf.point([latlng.lng, latlng.lat]);
+    const isInside = turf.booleanPointInPolygon(point, cityBoundaries);
+    if (!isInside) {
+      dispatch(clearLocation());
+      return;
     }
 
     // Get address using reverse geocoding
@@ -422,12 +407,7 @@ export function MapPage(props) {
             scrollWheelZoom={true}
             className={styles.map}
             zoomControl={false}
-            maxBounds={
-              cityBounds || [
-                [45.0, 7.5],
-                [45.15, 7.8],
-              ]
-            }
+            maxBounds={cityBounds}
             maxBoundsViscosity={1.0}
           >
             <MapView center={mapCenter} zoom={mapZoom} />

@@ -256,15 +256,6 @@ export const loadCityBoundaries = async () => {
       throw new Error("No relation found in Overpass response");
     }
 
-    // Get bounding box from relation
-    let cityBounds = null;
-    if (relation.bounds) {
-      cityBounds = [
-        [relation.bounds.minlat, relation.bounds.minlon], // Southwest corner
-        [relation.bounds.maxlat, relation.bounds.maxlon], // Northeast corner
-      ];
-    }
-
     // Build ways map for quick lookup
     const waysMap = new Map();
     overpassData.elements.forEach((el) => {
@@ -371,28 +362,24 @@ export const loadCityBoundaries = async () => {
       // Could not clean polygon, using as-is
     }
 
+    // Calculate bounding box from the polygon
+    const bbox = turf.bbox(geoJSON);
+    const cityBounds = [
+      [bbox[1], bbox[0]], // Southwest corner [minLat, minLon]
+      [bbox[3], bbox[2]], // Northeast corner [maxLat, maxLon]
+    ];
+
     // Create mask polygon
     const maskPolygon = createMaskPolygon(geoJSON);
 
     return {
       cityBoundaries: geoJSON,
-      cityBounds: cityBounds || [
-        [45.0, 7.5],
-        [45.15, 7.8],
-      ],
-      maskPolygon: maskPolygon,
+      cityBounds,
+      maskPolygon,
     };
   } catch (error) {
-    // Error loading city boundaries
-    // Return fallback values
-    return {
-      cityBoundaries: null,
-      cityBounds: [
-        [45.0, 7.5],
-        [45.15, 7.8],
-      ],
-      maskPolygon: null,
-    };
+    // Re-throw error to let TanStack Query handle it
+    throw error;
   }
 };
 

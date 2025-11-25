@@ -126,6 +126,19 @@
   width: 100%;
   height: 100%;
   border-radius: var(--radius-md);
+  outline: none;
+}
+
+.map:focus {
+  outline: none;
+}
+
+:global(.leaflet-container) {
+  outline: none !important;
+}
+
+:global(.leaflet-container:focus) {
+  outline: none !important;
 }
 
 .createReportButton {

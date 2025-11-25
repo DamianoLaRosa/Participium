@@ -8,11 +8,9 @@ export function Header(props) {
       <div className={styles.headerLogoContainer}>
         <img src={logo} alt="Logo" className={styles.headerLogo} />
 
-        <span className={styles.headerBrand}>
-          <Link to={"/"} className="navbar-brand">
-            Participium
-          </Link>
-        </span>
+        <Link to={"/"} className={styles.headerBrand}>
+          Participium
+        </Link>
       </div>
       {props.user && (
         <div className={styles.userSection}>

@@ -1,5 +1,5 @@
 .admin-page {
-  font-family: 'Public Sans', sans-serif;
+  font-family: inherit;
   background-color: var(--static-white); 
   min-height: 100vh;
   display: flex;

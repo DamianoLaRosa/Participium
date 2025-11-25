@@ -201,7 +201,7 @@
 }
 
 .category-item p {
-  font-size: 13px;
+  font-size: 14px;
   color: #666;
   margin: 0;
 }
@@ -217,12 +217,13 @@
   position: relative;
 }
 
+/* Single vertical line behind all badges */
 .lifecycle-timeline::before {
   content: "";
   position: absolute;
-  left: 60px;
-  top: 25px;
-  bottom: 25px;
+  left: 60px; /* Center of 120px badge */
+  top: 50px; /* Start from bottom of first badge */
+  bottom: 100px; /* Stop near top of last badge (accounts for content height) */
   width: 2px;
   background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
   opacity: 0.3;
@@ -231,10 +232,15 @@
 
 .timeline-item {
   display: flex;
+  align-items: flex-start;
   gap: 30px;
   margin-bottom: 40px;
   position: relative;
   z-index: 1;
+}
+
+.timeline-item:last-child {
+  margin-bottom: 0;
 }
 
 .timeline-badge {
@@ -245,9 +251,11 @@
   justify-content: center;
   border-radius: 25px;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px;
   color: white;
   text-align: center;
+  position: relative;
+  z-index: 1;
 }
 
 .badge-pending {
@@ -273,8 +281,9 @@
 .timeline-content h4 {
   font-size: 20px;
   color: #2c3e50;
-  margin-bottom: 10px;
+  margin: 0 0 10px 0;
   font-weight: 600;
+  line-height: 50px;
 }
 
 .timeline-content p {
@@ -401,9 +410,7 @@
   }
 
   .lifecycle-timeline::before {
-    left: 60px;
-    top: 25px;
-    bottom: 25px;
+    left: 50px; /* Center of 100px badge on mobile */
   }
 
   .timeline-item {
