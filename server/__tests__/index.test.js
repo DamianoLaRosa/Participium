@@ -52,27 +52,33 @@ describe('API (index.mjs) - improved coverage', () => {
         await jest.unstable_mockModule('../dao.mjs', () => {
             return {
                 getUser: async (username, password) => {
-                    if (username === 'admin' && password === 'correct') {
-                      return { username: 'admin', role: 'Admin', id: 900, type: 'operator' };
-                    }
-                    if (username === 'found@operator' && password === 'correct') {
-                      return { username: 'operator_user', role: 'Operator', id: 201, type: 'operator' };
-                    }
-                    if (username === 'plain' && password === 'correct') {
-                      return { username: 'plainuser', role: 'User', id: 555, type: 'user' };
-                    }
-                    // emulate failed auth
+                    if (username === 'admin' && password === 'correct') return { username: 'admin', role: 'Admin', id: 900, type: 'operator' };
+                    if (username === 'found@operator' && password === 'correct') return { username: 'operator_user', role: 'Operator', id: 201, type: 'operator' };
+                    if (username === 'plain' && password === 'correct') return { username: 'plainuser', role: 'User', id: 555, type: 'user' };
                     return null;
                 },
-                createUser: async (username, email, first_name, last_name, email_notifications, password) => {
-                    return { id: 111, username };
-                },
-                getAllOffices: async () => [{ id: 1, name: 'Office A' }, { id: 2, name: 'Office B' }],
+                createUser: async (username, email, first_name, last_name, email_notifications, password) => ({ id: 111, username }),
                 createMunicipalityUser: async (email, username, password, office_id, role_id) => ({ id: 222, username }),
-                getAllOperators: async () => [{ operator_id: 301, email: 'op1@example.com', username: 'op1', office_id: 1, role: 'municipality_user' }],
+                getTechnicalOfficersByOffice: async (officerId, officeId) => [{ operator_id: 301, username: 'tec', office_id: officeId || 1 }],
+                getAllOffices: async () => [{ id: 1, name: 'Office A' }, { id: 2, name: 'Office B' }],
                 getAllRoles: async () => [{ role_id: 1, name: 'municipality_user' }],
                 getAllCategories: async () => [{ category_id: 1, name: 'Noise' }],
-                insertReport: async (obj) => ({ report_id: 555, description: obj.description || 'desc', image_name: (obj.image_urls && obj.image_urls[0]) || 'img.png' })
+                getAllOperators: async () => [
+                  { operator_id: 301, email: 'op1@example.com', username: 'op1', office_id: 1, role: 'municipality_user' },
+                  { operator_id: 302, email: 'op2@example.com', username: 'op2', office_id: 2, role: 'municipality_user' }
+                ],
+                updateReportStatus: async (report_id, status_id, rejection_reason = null) => ({ report_id, status_id, rejection_reason }),
+                getAllReports: async () => [],
+                getAllApprovedReports: async () => [
+                  { report_id: 10, title: 'Approved', description: 'ok', citizen_id: 1, image_urls: [], category_id: 1, office_id: 1, status_id: 3 }
+                ],
+                getReportsAssigned: async () => [
+                  { report_id: 11, title: 'Assigned', description: 'ok', citizen_id: 2, image_urls: [], category_id: 1, office_id: 1, status_id: 2 }
+                ],
+                insertReport: async (obj) => ({ report_id: 555, description: obj.description || 'desc', image_name: (obj.image_urls && obj.image_urls[0]) || 'img.png' }),
+                setOperatorByReport: async (report_id, operator_id) => ({ report_id, assigned_to_operator_id: operator_id }),
+                getUserInfoById: async (id) => (id ? { id, username: 'user'+id, first_name: 'FN', last_name: 'LN' } : null),
+                updateUserById: async (userId, updates) => ({ ...updates, citizen_id: userId })
             };
         });
 
