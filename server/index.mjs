@@ -148,11 +148,11 @@ app.get('/api/reports/assigned', async (req, res) => {
   }
 });
 
-// Get /api/users/:id -> get user by ID (requires authentication)
-app.get('/api/citizens/:id', async (req, res) => {
+// Get /api/users/:id -> get user profile of logged-in user (requires authentication)
+app.get('/api/citizens', async (req, res) => {
   try {
     if (!req.isAuthenticated()) return res.status(401).json({ error: 'Not authenticated' });
-    const userId = parseInt(req.params.id, 10);
+    const userId = req.user.id;
     if (isNaN(userId)) return res.status(423).json({ error: 'Invalid user id' });
     const user = await getUserInfoById(userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
@@ -162,10 +162,10 @@ app.get('/api/citizens/:id', async (req, res) => {
   }
 });
 
-// PUT /api/citizens/:id -> update user by ID (requires authentication)
-app.put("/api/citizens/:id", async (req, res) => {
+// PUT /api/citizens -> update profile of currently logged-in user (requires authentication)
+app.put("/api/citizens", async (req, res) => {
   try {
-    const userId = req.params.id;
+    const userId = req.user.id;
     const updates = req.body;
 
     if (!updates || Object.keys(updates).length === 0) {
