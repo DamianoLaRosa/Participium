@@ -123,7 +123,7 @@
 - Report is not submitted
 
 **Actual Result:** I am redirected to the map page
-**Status:** [PASS/FAIL]  
+**Status:** [PASS]  
 **Notes:** [The selected location is still pinpointed on the map, but the report is not submitted]  
 
 ---
