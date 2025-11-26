@@ -42,33 +42,43 @@
   cursor: default;
 }
 
-.settingsContainer {
+.avatarContainer {
   position: relative;
 }
 
-.settingsIconButton {
-  background: none;
-  border: none;
+.headerAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
   cursor: pointer;
-  padding: 4px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.headerAvatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.headerAvatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.headerAvatarInitials {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--static-black);
-  transition: all 0.3s ease;
-  border-radius: var(--radius-sm);
+  background: var(--gradient-primary);
+  color: var(--static-white);
+  font-size: 14px;
+  font-weight: 600;
 }
 
-.settingsIconButton:hover {
-  background-color: var(--border-light);
-}
-
-.settingsIcon {
-  width: 20px;
-  height: 20px;
-}
-
-.settingsDropdown {
+.avatarDropdown {
   position: absolute;
   top: 100%;
   right: 0;
@@ -91,6 +101,17 @@
   color: var(--static-black);
   cursor: pointer;
   transition: background-color 0.2s ease;
+}
+
+.dropdownItem:first-child {
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.dropdownItem:last-child {
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.dropdownItem:only-child {
   border-radius: var(--radius-md);
 }
 

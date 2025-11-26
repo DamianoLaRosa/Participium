@@ -24,6 +24,7 @@ export function DefaultLayout(props) {
       />
       <Header
         user={props.user}
+        citizenProfile={props.citizenProfile}
         onLogoutClick={() => setShowLogoutModal(true)}
       />
 

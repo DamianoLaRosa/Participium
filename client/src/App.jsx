@@ -22,6 +22,8 @@ function App() {
   const dispatch = useDispatch();
 
   const [user, setUser] = useState(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [citizenProfile, setCitizenProfile] = useState(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -30,10 +32,29 @@ function App() {
         setUser(user);
       } catch (err) {
         setUser(null);
+      } finally {
+        setIsAuthLoading(false);
       }
     };
     checkAuth();
   }, []);
+
+  // Fetch citizen profile when user is a citizen
+  useEffect(() => {
+    const fetchCitizenProfile = async () => {
+      if (user?.role === "user") {
+        try {
+          const profile = await API.getCitizenProfile();
+          setCitizenProfile(profile);
+        } catch (err) {
+          setCitizenProfile(null);
+        }
+      } else {
+        setCitizenProfile(null);
+      }
+    };
+    fetchCitizenProfile();
+  }, [user]);
 
   const handleLogout = async () => {
     await API.logOut();
@@ -45,7 +66,7 @@ function App() {
   return (
     <Routes>
       <Route
-        element={<DefaultLayout user={user} handleLogout={handleLogout} />}
+        element={<DefaultLayout user={user} handleLogout={handleLogout} citizenProfile={citizenProfile} />}
       >
         <Route
           path="/"
@@ -87,7 +108,9 @@ function App() {
 
         <Route
           path="/profile"
-          element={user ? <ProfilePage user={user} /> : <Navigate to="/login" />}
+          element={
+            isAuthLoading ? null : (user?.role === "user" ? <ProfilePage user={user} citizenProfile={citizenProfile} setCitizenProfile={setCitizenProfile} /> : <Navigate to="/" />)
+          }
         />
 
         <Route
