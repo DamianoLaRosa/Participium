@@ -8,6 +8,7 @@ import RelationOfficerPage from "./components/pages/relation-officer/RelatioOffi
 import TechnicalOfficerPage from "./components/pages/technical-officer/TechnicalOfficerPage";
 import CreateUserPage from "./components/pages/admin/CreateUserPage";
 import InspectReportPage from "./components/pages/inspectReport/inspectReportPage.jsx";
+import ProfilePage from "./components/pages/profile/ProfilePage";
 import { MapPage } from "./components/pages/map/MapPage";
 import { useNavigate } from "react-router";
 import { useEffect, useState } from "react";
@@ -83,6 +84,11 @@ function App() {
         <Route path="/technicalOfficer" element={<TechnicalOfficerPage />} />
 
         <Route path="/map" element={user ? <MapPage /> : <Navigate to="/" />} />
+
+        <Route
+          path="/profile"
+          element={user ? <ProfilePage user={user} /> : <Navigate to="/login" />}
+        />
 
         <Route
           path="/create_report"
