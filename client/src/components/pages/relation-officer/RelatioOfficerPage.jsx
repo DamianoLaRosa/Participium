@@ -13,13 +13,14 @@ function RelationOfficerPage() {
   const navigate = useNavigate();
 
   const STATUS_MAP = {
-    1: { label: 1, color: "#ffcc00" },
-    2: { label: 2, color: "#4caf50" },
-    3: { label: 3, color: "#673ab7" },
-    4: { label: 4, color: "#2196f3" },
-    5: { label: 5, color: "#ff4d4d" },
-    6: { label: 6, color: "#9e9e9e" },
+    1: { label: "Pending Approval", color: "#ffcc00" },
+    2: { label: "Assigned", color: "#4caf50" },
+    3: { label: "In Progress", color: "#673ab7" },
+    4: { label: "Suspended", color: "#2196f3" },
+    5: { label: "Rejected", color: "#ff4d4d" },
+    6: { label: "Resolved", color: "#9e9e9e" },
   };
+
 
   useEffect(() => {
     loadReports();
@@ -89,10 +90,9 @@ function RelationOfficerPage() {
                   </td>
                   <td>
                     <span
+                      className="status-pill"
                       style={{
-                        color: "white",
-                        backgroundColor:
-                          STATUS_MAP[report.status.id]?.color || "gray",
+                        backgroundColor: STATUS_MAP[report.status.id]?.color || "gray",
                       }}
                     >
                       {STATUS_MAP[report.status.id]?.label || "Unknown"}
