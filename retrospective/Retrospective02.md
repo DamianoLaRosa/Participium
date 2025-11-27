@@ -17,7 +17,7 @@ sections:
 - Total points committed vs. done 
   > 19 vs 19 (story points)
 - Nr of hours planned vs. spent (as a team)
-  > 95h 30m vs 
+  > 95h 30m vs 95h 5m
 
 **Remember**
  a story is done ONLY if it fits the Definition of Done:
@@ -31,25 +31,25 @@ sections:
 
 | Story  | # Tasks | Points | Hours est. | Hours actual |
 |--------|---------|--------|------------|--------------|
-| _Uncategorized_   |    15    |   -    | 52 h 45m        |             |
-| 6    |   10     |   5     | 11 h 30 m      |           | 
-| 7    |    7    |    8   |  9 h 15 m    |          |  
+| _Uncategorized_   |    15    |   -    | 52 h 45 m        |    51 h 15 m         |
+| 6    |   10     |   5     | 11 h 30 m      |    12 h       | 
+| 7    |    7    |    8   |  9 h 15 m    |   9 h 50 m       |  
 | 8   |  9      |   3    |  10 h     |    10 h       | 
-| 9   |    10    |   3    |   12 h       |           | 
+| 9   |    10    |   3    |   12 h       |   12 h        | 
 
 
 - Hours per task average, standard deviation (estimate and actual)
 
 |            | Mean | StDev |
 |------------|------|-------|
-| Estimation |     |      | 
-| Actual     |   |     |
+| Estimation |  1.89   |  2.79    | 
+| Actual     |  1.90 |  2.73   |
 
-- Total estimation error ratio: sum of total hours spent / sum of total hours effort - 1 = **0.43%**
+- Total estimation error ratio: sum of total hours spent / sum of total hours effort - 1 = **0.62%**
 
     $$\frac{\sum_i spent_{task_i}}{\sum_i estimation_{task_i}} - 1$$
     
-- Absolute relative task estimation error: sum( abs( spent-task-i / estimation-task-i - 1))/n = **6.02%**
+- Absolute relative task estimation error: sum( abs( spent-task-i / estimation-task-i - 1))/n = **11.22%**
 
     $$\frac{1}{n}\sum_i^n \left| \frac{spent_{task_i}}{estimation_task_i}-1 \right| $$
   
@@ -57,25 +57,25 @@ sections:
 
 - Unit Testing and Integration Testing:
   - Total hours estimated 
-    > 7 h
+    > 9 h
   - Total hours spent
-    > 7 h
+    > 9 h
   - Nr of automated unit test cases 
     > 153 tests
   - Coverage
     > 96 % lines coverage
 - E2E testing:
   - Total hours estimated
-    > 
+    > 3 h 15 m
   - Total hours spent
-    > 
+    > 3 h 50 m
   - Nr of test cases
     >  
 - Code review 
   - Total hours estimated 
-    > 
+    > 18 h
   - Total hours spent
-    > 
+    > 18 h
   
 ## ASSESSMENT
 - What did go wrong in the sprint?
