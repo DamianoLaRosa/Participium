@@ -9,7 +9,12 @@ commads to reset and restart postgreSQL db : docker compose down; Remove-Item -R
 commands to remove a container named participium_db: docker rm -f participium_db
 
 
-# Docker compose using participium image exampl
+# Docker compose using participium image example
+
+Copy file in a compose.yaml file
+
+docker compose up 
+
 
 ```yaml
 version: "3.9"
@@ -32,7 +37,7 @@ services:
     restart: unless-stopped
   
   participium:
-    image: participium:1.0.0
+    image: gubc29/participium:1.0.1
     container_name: participium_app
     environment:
       DB_HOST: postgres
