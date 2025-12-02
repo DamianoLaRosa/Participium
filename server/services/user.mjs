@@ -16,7 +16,7 @@ const pool = new Pool({
 export const getUser = async (username, password) => {
   try {
     // First try to find in operators table
-    const operatorSql = 'SELECT o.*, r.name as role_name FROM operators o JOIN roles r ON o.role_id = r.role_id WHERE o.email = $1';
+    const operatorSql = 'SELECT o.*, r.name as role_name FROM operators o JOIN roles r ON o.role_id = r.role_id WHERE o.email = $1 OR o.username = $1';
     const operatorResult = await pool.query(operatorSql, [username]);
 
     if (operatorResult.rows.length > 0) {
@@ -42,7 +42,7 @@ export const getUser = async (username, password) => {
     }
 
     // If not found in operators, try citizens
-    const citizenSql = 'SELECT * FROM citizens WHERE email = $1';
+    const citizenSql = 'SELECT * FROM citizens WHERE email = $1 OR username = $1';
     const citizenResult = await pool.query(citizenSql, [username]);
 
     const row = citizenResult.rows[0];

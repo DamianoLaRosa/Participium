@@ -6,7 +6,9 @@ const router = Router();
 
 // POST /api/admin/createuser -> admin creates municipality user
 router.post('/admin/createuser', [
-  check('username').notEmpty().withMessage('Username is required'),
+  check('username')
+    .not().isEmail().withMessage('Username cannot be an email')
+    .notEmpty().withMessage('Username is required'),
   check('email').isEmail().withMessage('Invalid email format'),
   check('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
   check('office_id').isInt().withMessage('Office ID must be an integer'),

@@ -36,7 +36,7 @@ CREATE TABLE roles (
 CREATE TABLE operators (
     operator_id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
-    username VARCHAR(100) NOT NULL,
+    username VARCHAR(100) UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     salt TEXT NOT NULL,
     office_id INT REFERENCES offices(office_id),
@@ -176,6 +176,36 @@ CREATE TRIGGER check_email_on_operators
 BEFORE INSERT OR UPDATE ON operators
 FOR EACH ROW
 EXECUTE FUNCTION check_email_uniqueness();
+
+-- Trigger per controllare unique username
+CREATE OR REPLACE FUNCTION check_username_uniqueness()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_TABLE_NAME = 'citizens' THEN
+        IF EXISTS (SELECT 1 FROM operators WHERE username = NEW.username) THEN
+            RAISE EXCEPTION USING
+                MESSAGE = format('Username already in use: %s', NEW.username),
+                ERRCODE = '23505';
+        END IF;
+    ELSIF TG_TABLE_NAME = 'operators' THEN
+        IF EXISTS (SELECT 1 FROM citizens WHERE username = NEW.username) THEN
+            RAISE EXCEPTION USING
+                MESSAGE = format('Username already in use: %s', NEW.username),
+                ERRCODE = '23505';
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER check_username_on_citizens
+BEFORE INSERT OR UPDATE ON citizens
+FOR EACH ROW
+EXECUTE FUNCTION check_username_uniqueness();
+CREATE TRIGGER check_username_on_operators
+BEFORE INSERT OR UPDATE ON operators
+FOR EACH ROW
+EXECUTE FUNCTION check_username_uniqueness();
 
 
 -- 4. Operatore admin
