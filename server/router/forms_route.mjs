@@ -25,7 +25,15 @@ router.post('/admin/createuser', [
   }
 
   try {
-    const { username, email, password, office_id, role } = req.body;
+    let { username, email, password, office_id, role } = req.body;
+
+    if ((role !== 3 && role !== 5) && office_id !== 1){
+      // 3 = Technical office staff member
+      // 5 = External maintainer
+      // 1 = Organization office
+      office_id = 1; // corrects the input without giving an error
+    }
+
     const user = await createMunicipalityUser(email, username, password, office_id, role);
     res.status(201).json(user);
   } catch (err) {
