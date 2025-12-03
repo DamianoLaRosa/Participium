@@ -22,6 +22,12 @@ CREATE TABLE categories (
     name VARCHAR(255) UNIQUE NOT NULL,
     office_id INT REFERENCES offices(office_id)
 );
+CREATE TABLE companies (
+    company_id SERIAL PRIMARY KEY,
+    name VARCHAR(255) UNIQUE NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+);
 
 CREATE TABLE statuses (
     status_id SERIAL PRIMARY KEY,
@@ -32,7 +38,9 @@ CREATE TABLE roles (
     name VARCHAR(50) UNIQUE NOT NULL,
     description TEXT
 );
-
+-- per adesso lasciamo che la catecoria sia associato alla persona anche se c'è una doppia informazione con l'ufficio
+-- valutare se togliere questa corrispondenza ufficio-categoria nella tabella categories
+-- dopo verrà comunque cambiata perchè ogni operatore può avere più categorie di competenza -> tabella di associazione N-N
 CREATE TABLE operators (
     operator_id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -40,7 +48,9 @@ CREATE TABLE operators (
     password_hash TEXT NOT NULL,
     salt TEXT NOT NULL,
     office_id INT REFERENCES offices(office_id),
-    role_id INT REFERENCES roles(role_id) NOT NULL
+    role_id INT REFERENCES roles(role_id) NOT NULL,
+    company_id INT REFERENCES companies(company_id),
+    category_id INT REFERENCES categories(category_id)
 );
 
 CREATE TABLE reports (
@@ -50,6 +60,7 @@ CREATE TABLE reports (
     office_id INT REFERENCES offices(office_id),
     status_id INT REFERENCES statuses(status_id),
     assigned_to_operator_id INT REFERENCES operators(operator_id),
+    assigned_to_external_id INT REFERENCES operators(operator_id),
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     latitude DOUBLE PRECISION NOT NULL,
@@ -68,10 +79,10 @@ CREATE TABLE photos (
 );
 
 
-CREATE TABLE comments (
-    comment_id SERIAL PRIMARY KEY,
+CREATE TABLE internal_comments (
+    internal_comment_id SERIAL PRIMARY KEY,
     report_id INT REFERENCES reports(report_id) ON DELETE CASCADE,
-    operator_id INT REFERENCES operators(operator_id),
+    sender_operator_id INT REFERENCES operators(operator_id) NOT NULL,
     content TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT NOW()
 );
@@ -141,8 +152,17 @@ INSERT INTO roles (name, description) VALUES
 ('Admin', 'Administrator with full system access and user management capabilities'),
 ('Municipal public relations officer', 'Handles preliminary report verification and approval/rejection'),
 ('Technical office staff member', 'Manages assigned reports, updates status, and resolves issues'),
-('Municipal administrator', 'Studies statistics');
+('Municipal administrator', 'Studies statistics'),
+('External maintainer', 'External company staff member who handles specific maintenance tasks');
 
+
+-- -- 5. Companies
+INSERT INTO companies (name, description) VALUES
+('Participium', 'Municipality of Turin - Internal staff'),
+('Enel X', 'Public lighting maintenance and energy services'),
+('SMAT', 'Water and sewage system management'),
+('AMIAT', 'Waste management and street cleaning'),
+('GTT Infrastrutture', 'Public transport infrastructure maintenance');
 
 -- Funzione per controllare email duplicate tra citizens e operators
 CREATE OR REPLACE FUNCTION check_email_uniqueness()
@@ -209,77 +229,98 @@ EXECUTE FUNCTION check_username_uniqueness();
 
 
 -- 4. Operatore admin
-INSERT INTO operators (email, username, password_hash, salt, office_id, role_id)
+INSERT INTO operators (email, username, password_hash, salt, office_id, role_id,company_id, category_id)
 VALUES (
   'admin@participium.local',
   'admin',
   'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af',
   '4c999d4a2a78113f997cc7fd2cd05043',
   (SELECT office_id FROM offices WHERE name = 'Organization Office'),
-  (SELECT role_id FROM roles WHERE name = 'Admin')
+  (SELECT role_id FROM roles WHERE name = 'Admin'),
+  (SELECT company_id FROM companies WHERE name = 'Participium'),
+  (SELECT category_id FROM categories WHERE name = 'Organization Office')
 );
 
 -- 5. Operatori: 2 per ogni ufficio (tranne organization office che non ha il tecnico)
 -- Organization Office
-INSERT INTO operators (email, username, password_hash, salt, office_id, role_id) VALUES
+INSERT INTO operators (email, username, password_hash, salt, office_id, role_id,company_id, category_id) VALUES
 ('off.org@participium.local', 'off_organization', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
   (SELECT office_id FROM offices WHERE name = 'Organization Office'), 
-  (SELECT role_id FROM roles WHERE name = 'Municipal public relations officer'));
-
+  (SELECT role_id FROM roles WHERE name = 'Municipal public relations officer'),
+  (SELECT company_id FROM companies WHERE name = 'Participium'),
+  (SELECT category_id FROM categories WHERE name = 'Organization Office'));
 
 -- Water Department
-INSERT INTO operators (email, username, password_hash, salt, office_id, role_id) VALUES
+INSERT INTO operators (email, username, password_hash, salt, office_id, role_id,company_id, category_id) VALUES
 ('tec.water@participium.local', 'tec_water', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
   (SELECT office_id FROM offices WHERE name = 'Water Department'), 
-  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'));
+  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'),
+  (SELECT company_id FROM companies WHERE name = 'Participium'),
+  (SELECT category_id FROM categories WHERE name = 'Water Department'));
 
 -- Accessibility Office
-INSERT INTO operators (email, username, password_hash, salt, office_id, role_id) VALUES
+INSERT INTO operators (email, username, password_hash, salt, office_id, role_id,company_id, category_id) VALUES
 ('tec.accessibility@participium.local', 'tec_accessibility', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
   (SELECT office_id FROM offices WHERE name = 'Accessibility Office'), 
-  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'));
+  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'),
+  (SELECT company_id FROM companies WHERE name = 'Participium'),
+  (SELECT category_id FROM categories WHERE name = 'Accessibility Office'));
 
 -- Sewage Department
-INSERT INTO operators (email, username, password_hash, salt, office_id, role_id) VALUES
+INSERT INTO operators (email, username, password_hash, salt, office_id, role_id,company_id, category_id) VALUES
 ('tec.sewage@participium.local', 'tec_sewage', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
   (SELECT office_id FROM offices WHERE name = 'Sewage Department'), 
-  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'));
+  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'),
+  (SELECT company_id FROM companies WHERE name = 'Participium'),
+  (SELECT category_id FROM categories WHERE name = 'Sewage Department'));
 
 -- Lighting Department
-INSERT INTO operators (email, username, password_hash, salt, office_id, role_id) VALUES
+INSERT INTO operators (email, username, password_hash, salt, office_id, role_id,company_id, category_id) VALUES
 ('tec.lighting@participium.local', 'tec_lighting', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
   (SELECT office_id FROM offices WHERE name = 'Lighting Department'), 
-  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'));
+  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'),
+  (SELECT company_id FROM companies WHERE name = 'Participium'),
+  (SELECT category_id FROM categories WHERE name = 'Lighting Department'));
 
 -- Waste Management
-INSERT INTO operators (email, username, password_hash, salt, office_id, role_id) VALUES
+INSERT INTO operators (email, username, password_hash, salt, office_id, role_id,company_id, category_id) VALUES
 ('tec.waste@participium.local', 'tec_waste', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
   (SELECT office_id FROM offices WHERE name = 'Waste Management'), 
-  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'));
+  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'),
+  (SELECT company_id FROM companies WHERE name = 'Participium'),
+  (SELECT category_id FROM categories WHERE name = 'Waste Management'));
 
 -- Traffic Department
-INSERT INTO operators (email, username, password_hash, salt, office_id, role_id) VALUES
+INSERT INTO operators (email, username, password_hash, salt, office_id, role_id,company_id, category_id) VALUES
 ('tec.traffic@participium.local', 'tec_traffic', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
   (SELECT office_id FROM offices WHERE name = 'Traffic Department'), 
-  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'));
+  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'),
+  (SELECT company_id FROM companies WHERE name = 'Participium'),
+  (SELECT category_id FROM categories WHERE name = 'Traffic Department'));
 
 -- Public Works
-INSERT INTO operators (email, username, password_hash, salt, office_id, role_id) VALUES
+INSERT INTO operators (email, username, password_hash, salt, office_id, role_id,company_id, category_id) VALUES
 ('tec.publicworks@participium.local', 'tec_publicworks', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
   (SELECT office_id FROM offices WHERE name = 'Public Works'), 
-  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'));
+  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'),
+  (SELECT company_id FROM companies WHERE name = 'Participium'),
+  (SELECT category_id FROM categories WHERE name = 'Public Works'));
 
 -- Parks Department
-INSERT INTO operators (email, username, password_hash, salt, office_id, role_id) VALUES
+INSERT INTO operators (email, username, password_hash, salt, office_id, role_id,company_id, category_id) VALUES
 ('tec.parks@participium.local', 'tec_parks', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
   (SELECT office_id FROM offices WHERE name = 'Parks Department'), 
-  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'));
+  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'),
+  (SELECT company_id FROM companies WHERE name = 'Participium'),
+  (SELECT category_id FROM categories WHERE name = 'Parks Department'));
 
 -- General Services
-INSERT INTO operators (email, username, password_hash, salt, office_id, role_id) VALUES
+INSERT INTO operators (email, username, password_hash, salt, office_id, role_id,company_id, category_id) VALUES
 ('tec.general@participium.local', 'tec_general', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
   (SELECT office_id FROM offices WHERE name = 'General Services'), 
-  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'));
+  (SELECT role_id FROM roles WHERE name = 'Technical office staff member'),
+  (SELECT company_id FROM companies WHERE name = 'Participium'),
+  (SELECT category_id FROM categories WHERE name = 'General Services'));
 
 -- 6. Citizen test
 INSERT INTO citizens (email, username, first_name, last_name, password_hash, salt, profile_photo_url, telegram_username, email_notifications) VALUES
