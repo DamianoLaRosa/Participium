@@ -5,7 +5,7 @@ import registration from './router/registration_route.mjs';
 import getAll from './router/get-all_route.mjs';
 import forms from './router/forms_route.mjs';
 import { check, validationResult } from 'express-validator';
-import { getUser, getAllReports, updateReportStatus, getAllApprovedReports, setOperatorByReport, getReportsAssigned, updateUserById, getUserInfoById } from "./dao.mjs";
+import { getUser, getAllReports, updateReportStatus, getAllApprovedReports, setOperatorByReport, getReportsAssigned, updateUserById, getUserInfoById, setMainteinerByReport } from "./dao.mjs";
 import cors from 'cors';
 
 import passport from 'passport';
@@ -108,7 +108,7 @@ app.put('/api/reports/:id/status', async (req, res) => {
 app.put('/api/reports/:id/operator', async (req, res) => {
   try {
     if (!req.isAuthenticated()) return res.status(401).json({ error: 'Not authenticated' });
-    if (req.user.role === 'user' || req.user.role === 'Municipal administrator') return res.status(403).json({ error: 'Forbidden' });  
+    if (req.user.role !== 'Municipal public relations officer' && req.user.role !== 'Admin') return res.status(403).json({ error: 'Forbidden' });  
     const reportId = parseInt(req.params.id, 10);
     if (isNaN(reportId)) return res.status(423).json({ error: 'Invalid report id' });
     const { operatorId } = req.body;
@@ -121,9 +121,28 @@ app.put('/api/reports/:id/operator', async (req, res) => {
   }
 });
 
-// GET /api/reports/approved -> approved reports for map (public - no auth required)
+//PUT /api/reports/:id/mainteiner -> set mainteiner for a report (requires tec.officer/admin)
+app.put('/api/reports/:id/mainteiner', async (req, res) => {
+  try {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: 'Not authenticated' });
+    if (req.user.role !== 'Technical office staff member' && req.user.role !== 'Admin') return res.status(403).json({ error: 'Forbidden' });  
+    const reportId = parseInt(req.params.id, 10);
+    if (isNaN(reportId)) return res.status(423).json({ error: 'Invalid report id' });
+
+    const { operatorId } = req.body;
+    if (typeof operatorId !== 'number') return res.status(422).json({ error: 'operatorId must be a number' });
+    const updated = await setMainteinerByReport(reportId, operatorId);
+    if (!updated) return res.status(404).json({ error: 'Report not found' });
+    res.sendStatus(200);
+  } catch (err) {
+    res.status(503).json({ error: 'Database error during operator assignment' });
+  }
+});
+
+// GET /api/reports/approved -> approved reports for map (public only to registered user)
 app.get('/api/reports/approved', async (req, res) => {
   try {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: 'Not authenticated' });
     const reports = await getAllApprovedReports();
     res.status(200).json(reports);
   } catch (err) {
@@ -131,7 +150,6 @@ app.get('/api/reports/approved', async (req, res) => {
     res.status(503).json({ error: 'Database error during report retrieval' });
   }
 });
-
 
 // GET /api/reports/assigned -> reports assigned to the logged-in technical staff (requires Technical office staff member/External maintainer)
 app.get('/api/reports/assigned', async (req, res) => {

@@ -364,3 +364,32 @@ export const setOperatorByReport = async (report_id, operator_id) => {
     throw err;
   }
 };  
+
+
+// Assegna un mainteiner (operator) a un report
+export const setMainteinerByReport = async (report_id, operator_id) => {
+  const sql = `
+    UPDATE reports
+    SET assigned_to_external_id = $2,
+        updated_at = NOW()
+    WHERE report_id = $1
+    RETURNING 
+      report_id,
+      assigned_to_external_id,
+      title,
+      status_id,
+      updated_at
+  `;
+
+  try {
+    const result = await pool.query(sql, [report_id, operator_id]);
+
+    if (result.rows.length === 0) {
+      return null; // Nessun report trovato con quell'ID
+    }
+
+    return result.rows[0];
+  } catch (err) {
+    throw err;
+  }
+};

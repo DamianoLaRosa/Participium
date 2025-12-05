@@ -8,6 +8,7 @@ const CreateUserPage = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [offices, setOffices] = useState([]);
+  const [companies,setCompanies] = useState([]);
   const [roles, setRoles] = useState([]);
   const [newUser, setNewUser] = useState({
     username: "",
@@ -15,6 +16,7 @@ const CreateUserPage = () => {
     password: "",
     office_id: "",
     role: "",
+    company: "",
   });
 
   // Find id of the restricted roles
@@ -28,10 +30,17 @@ const CreateUserPage = () => {
   // Return the list of visible offices
   const filteredOffices = isRestrictedOffice? offices.filter(o => o.name === "Organization Office"): offices;
 
+  const participium = companies.find(c => c.name === "Participium");
+  const filteredRoles = participium && newUser.company === participium.id.toString()
+  ? roles.filter(r => r.name !== "External maintainer")
+  : roles.filter(r => r.name === "External maintainer");
+
+
 
   useEffect(() => {
     loadOffices();
     loadRoles();
+    loadCompanies();
   }, []);
 
   const loadOffices = async () => {
@@ -40,6 +49,15 @@ const CreateUserPage = () => {
       setOffices(data);
     } catch (err) {
       setError("Failed to load offices");
+    }
+  };
+
+  const loadCompanies = async () => {
+    try {
+      const data = await API.getAllCompanies();
+      setCompanies(data);
+    } catch (err) {
+      setError("Failed to load companies");
     }
   };
 
@@ -86,7 +104,9 @@ const CreateUserPage = () => {
             Add a new municipality user or urban planner
           </p>
 
-          {error && <div className="alert alert-error">{error}</div>}
+          {error && (
+          <div className="alert alert-error">{typeof error === "string" ? error : error.msg || JSON.stringify(error)}</div>)}
+
 
           <form onSubmit={handleSubmit} className="createuser-form">
             <div className="form-field">
@@ -130,6 +150,30 @@ const CreateUserPage = () => {
             </div>
 
             <div className="form-field">
+              <label htmlFor="role">Company</label>
+              <select
+                id="company"
+                name="company"
+                value={newUser.company}
+                onChange={handleInputChange}
+                required
+                className={!newUser.company ? "placeholder" : ""}
+              >
+                <option value="" disabled>
+                  Select operator company
+                </option>
+                {companies.map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name}
+                  </option>
+                ))}
+              </select>
+              <small className="form-text">
+                Note: Companies cannot be modified after user creation.
+              </small>
+            </div>
+
+            <div className="form-field">
               <label htmlFor="role">Role</label>
               <select
                 id="role"
@@ -140,16 +184,16 @@ const CreateUserPage = () => {
                 className={!newUser.role ? "placeholder" : ""}
               >
                 <option value="" disabled>
-                  Select user role
+                  Select operator role
                 </option>
-                {roles.map((role) => (
+                {filteredRoles.map((role) => (
                   <option key={role.id} value={role.id}>
                     {role.name}
                   </option>
                 ))}
               </select>
               <small className="form-text">
-                Note: Role and office cannot be modified after user creation.
+                Note: Roles cannot be modified after user creation.
               </small>
             </div>
 
@@ -164,7 +208,7 @@ const CreateUserPage = () => {
                 className={!newUser.office_id ? "placeholder" : ""}
               >
                 <option value="" disabled>
-                  Select user office
+                  Select operator office
                 </option>
                 {filteredOffices.map((office) => (
                   <option key={office.id} value={office.id}>
@@ -172,6 +216,9 @@ const CreateUserPage = () => {
                   </option>
                 ))}
               </select>
+              <small className="form-text">
+                Note: Offices cannot be modified after user creation.
+              </small>
             </div>
 
             <div className="button-group">

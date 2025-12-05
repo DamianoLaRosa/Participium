@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { check, validationResult } from 'express-validator';
-import { getAllOffices, getAllRoles, getAllCategories, getAllOperators, getTechnicalOfficersByOffice } from '../dao.mjs';
+import { getAllOffices, getAllRoles, getAllCategories, getAllOperators, getTechnicalOfficersByOffice, getMainteinerByOffice, getAllCompanies } from '../dao.mjs';
 
 const router = Router();
 
@@ -27,6 +27,19 @@ router.get('/roles', async (req, res) => {
     res.status(200).json(roles);
   } catch (err) {
     res.status(503).json({ error: 'Database error during role retrieval' });
+  }
+});
+
+//GET /api/companies -> all companies
+router.get('/companies', async (req, res) => {
+  try {
+    if (!req.isAuthenticated() ) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    const roles = await getAllCompanies();
+    res.status(200).json(roles);
+  } catch (err) {
+    res.status(503).json({ error: 'Database error during company retrieval' });
   }
 });
 
@@ -88,9 +101,8 @@ router.get('/operators', [
 
     if (req.user.role === 'Technical office staff member') {
       // do the same thing for assigning external maintainer
-
-      //const operators = await getTechnicalOfficersByOffice( officeId );
-      //res.status(200).json(operators);
+      const maintainers = await getMainteinerByOffice( office_id );
+      res.status(200).json(maintainers);
     }
   
     return res.status(422).json({ error: 'Forbidden' }); // if not authorized

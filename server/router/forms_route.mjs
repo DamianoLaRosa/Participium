@@ -12,6 +12,7 @@ router.post('/admin/createuser', [
   check('email').isEmail().withMessage('Invalid email format'),
   check('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
   check('office_id').isInt().withMessage('Office ID must be an integer'),
+  check('company').isInt().withMessage('Company ID must be an integer'),
   check('role').isInt().withMessage('Role ID must be an integer')
 ], async (req, res) => {
 
@@ -25,7 +26,7 @@ router.post('/admin/createuser', [
   }
 
   try {
-    let { username, email, password, office_id, role } = req.body;
+    let { username, email, password, office_id, role, company } = req.body;
 
     if ((role !== 3 && role !== 5) && office_id !== 1){
       // 3 = Technical office staff member
@@ -34,7 +35,13 @@ router.post('/admin/createuser', [
       office_id = 1; // corrects the input without giving an error
     }
 
-    const user = await createMunicipalityUser(email, username, password, office_id, role);
+    if((company!==1 && role===5) || (company===1 && role!==5)){
+      // 1 = Participium
+      return res.status(400).json({ error: 'Needs to be External mainteiner' });
+    }
+
+
+    const user = await createMunicipalityUser(email, username, password, office_id, role, company);
     res.status(201).json(user);
   } catch (err) {
     if (err.code === '23505') {
