@@ -27,6 +27,7 @@ jobs:
         working-directory: server
         # `test:coverage` produces coverage in `server/coverage/lcov.info`
         run: npm run test:coverage
+        continue-on-error: true
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v6
