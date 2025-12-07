@@ -222,7 +222,7 @@ export const getAllReports = async () => {
           WHERE report_id = $1
           RETURNING *
         `;
-        const updateResult = await client.query(updateSql, [report_id, status_id, rejection_reason]);
+        const updateResult = await client.query(updateSql, [report_id, status_id, rejection]);
     
         if (updateResult.rows.length === 0) {
           //await client.query('ROLLBACK');
