@@ -17,7 +17,12 @@ import {
 } from "./report.js";
 import { getImageUploadUrl, uploadImageToSignedUrl } from "./image.js";
 import { getAllReportsForTechOfficer} from "./techofficer.js";
-import { getCitizenProfile, updateCitizenProfile } from "./citizen.js";
+import {
+  getCitizenProfile,
+  updateCitizenProfile,
+  requestVerificationCode,
+  verifyEmail,
+} from "./citizen.js";
 
 const API = {
   // Admin methods
@@ -55,6 +60,8 @@ const API = {
   // Citizen methods
   getCitizenProfile,
   updateCitizenProfile,
+  requestVerificationCode,
+  verifyEmail,
 };
 
 export default API;

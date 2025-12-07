@@ -9,6 +9,7 @@ import TechnicalOfficerPage from "./components/pages/technical-officer/Technical
 import CreateUserPage from "./components/pages/admin/CreateUserPage";
 import InspectReportPage from "./components/pages/inspectReport/inspectReportPage.jsx";
 import ProfilePage from "./components/pages/profile/ProfilePage";
+import VerifyEmailPage from "./components/pages/verify-email/VerifyEmailPage";
 import { MapPage } from "./components/pages/map/MapPage";
 import { useNavigate } from "react-router";
 import { useEffect, useState } from "react";
@@ -94,6 +95,10 @@ function App() {
         <Route
           path="/signup"
           element={<LoginPage user={user} setUser={setUser} />}
+        />
+        <Route
+          path="/verify-email"
+          element={<VerifyEmailPage user={user} setUser={setUser} />}
         />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/admin/createuser" element={<CreateUserPage />} />
