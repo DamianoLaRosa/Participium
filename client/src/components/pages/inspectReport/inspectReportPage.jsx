@@ -15,6 +15,7 @@ function InspectReportPage() {
   const [officers, setOfficers] = useState([]);
   const [selectedOfficer, setSelectedOfficer] = useState(null);
   const [error, setError] = useState("");
+  const [warning, setWarning] = useState("");
   const [address, setAddress] = useState("Loading address...");
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
 
@@ -66,7 +67,8 @@ function InspectReportPage() {
 
   const approveReport = async () => {
     if (!selectedOfficer) {
-      alert("Please select an officer.");
+      setWarning("Please select an officer.");
+      setTimeout(() => setWarning(""), 3000);
       return;
     }
 
@@ -102,6 +104,13 @@ function InspectReportPage() {
 
   return (
     <div className={styles.container}>
+      {/* Warning Notification */}
+      {warning && (
+        <div className={`${styles.notification} ${styles.warning}`}>
+          {warning}
+        </div>
+      )}
+
       <div className={styles.card}>
         <h1 className={styles.title}>Inspect Report</h1>
 
