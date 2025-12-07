@@ -38,4 +38,11 @@ export const setOperatorByReport = async (reportId, operatorId) => {
   return await axiosInstance.put(`/api/reports/${reportId}/operator`, {
     operatorId: operatorId
   });
-}
+};
+
+// Set external maintainer for a report
+export const setMaintainerByReport = async (reportId, operatorId) => {
+  return await axiosInstance.put(`/api/reports/${reportId}/mainteiner`, {
+    operatorId: operatorId
+  });
+};

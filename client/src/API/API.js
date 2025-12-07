@@ -13,7 +13,8 @@ import {
   updateReportStatus,
   getAllPendingReports,
   getOperatorsByOffice,
-  setOperatorByReport
+  setOperatorByReport,
+  setMaintainerByReport,
 } from "./report.js";
 import { getImageUploadUrl, uploadImageToSignedUrl } from "./image.js";
 import { getAllReportsForTechOfficer} from "./techofficer.js";
@@ -48,6 +49,7 @@ const API = {
   getAllPendingReports,
   getOperatorsByOffice,
   setOperatorByReport,
+  setMaintainerByReport,
 
   // Image methods
   getImageUploadUrl,
