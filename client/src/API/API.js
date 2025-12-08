@@ -28,6 +28,12 @@ import {
   requestVerificationCode,
   verifyEmail,
 } from "./citizen.js";
+import {
+  getMessages,
+  addMessage,
+  getInternalComments,
+  addInternalComment
+} from "./comment.js";
 
 const API = {
   // Admin methods
@@ -69,6 +75,12 @@ const API = {
   updateCitizenProfile,
   requestVerificationCode,
   verifyEmail,
+
+  //comments methods
+  getMessages,
+  addMessage,
+  getInternalComments,
+  addInternalComment,
 };
 
 export default API;
