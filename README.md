@@ -12,6 +12,7 @@ commands to remove a container named participium_db: docker rm -f participium_db
 # Docker compose using participium image example
 
 Copy file in a compose.yaml file
+Copy init.sql in a folder called init.sql
 
 docker compose up 
 
