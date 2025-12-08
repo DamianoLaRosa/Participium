@@ -38,7 +38,7 @@ services:
     restart: unless-stopped
   
   participium:
-    image: gubc29/participium:1.0.1
+    image: gubc29/participium:latest
     container_name: participium_app
     environment:
       DB_HOST: postgres
