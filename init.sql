@@ -332,6 +332,16 @@ INSERT INTO operators (email, username, password_hash, salt, office_id, role_id,
   (SELECT company_id FROM companies WHERE name = 'Participium'),
   (SELECT category_id FROM categories WHERE name = 'General Services'));
 
+
+INSERT INTO operators (email,username, password_hash,salt,office_id,role_id,company_id,category_id)
+VALUES ('maint.lighting@enelx.com','ext_lighting_enelx', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af','4c999d4a2a78113f997cc7fd2cd05043',
+    (SELECT office_id FROM offices WHERE name = 'Lighting Department'),
+    (SELECT role_id FROM roles WHERE name = 'External maintainer'),
+    (SELECT company_id FROM companies WHERE name = 'Enel X'),
+    (SELECT category_id FROM categories WHERE name = 'Public Lighting')
+);
+
+
 -- 6. Citizen test
 INSERT INTO citizens (email, username, first_name, last_name, password_hash, salt, profile_photo_url, telegram_username, email_notifications) VALUES
 ('melo@participium.local', 'melo', 'Carmelo', 'Locali', '858461e61ed6a0863bb44c4541e7bdcb33f9dd8d4401095ea6016bb4645b1239', '50ca648a1d5bbd29454d4a19efd9775b', NULL, NULL, TRUE);

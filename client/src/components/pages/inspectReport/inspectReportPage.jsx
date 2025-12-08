@@ -9,23 +9,38 @@ import styles from "./inspectReportPage.module.css";
 function InspectReportPage() {
   const selectedReport = useSelector((state) => state.report.selected);
   const navigate = useNavigate();
+  
+  const [loggedUser, setLoggedUser] = useState(null);
+  const isTechnicalOfficer = loggedUser?.role === "Technical office staff member";
+
 
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [officers, setOfficers] = useState([]);
   const [selectedOfficer, setSelectedOfficer] = useState(null);
+  const [selectedMaintainer, setSelectedMaintainer] = useState(null);
   const [error, setError] = useState("");
   const [warning, setWarning] = useState("");
   const [address, setAddress] = useState("Loading address...");
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
 
   useEffect(() => {
-    if (selectedReport) {
-      loadOfficers();
-      loadAddress();
+  const load = async () => {
+    try {
+      const user = await API.getUserInfo();
+      setLoggedUser(user);
+      if (selectedReport) {
+        loadOfficers();
+        loadAddress();
+      }
+    } catch (err) {
+      console.error("Failed to load user", err);
     }
-  }, [selectedReport]);
+  };
+  load();
+}, [selectedReport]);
+
 
   const loadAddress = async () => {
     if (!selectedReport?.latitude || !selectedReport?.longitude) {
@@ -73,6 +88,11 @@ function InspectReportPage() {
       return;
     }
     setShowApproveModal(true);
+  };
+
+  const handleAssignMaintainer = async () => {
+    await API.setMaintainerByReport(selectedReport.id, selectedMaintainer);
+    navigate(-1);
   };
 
   const confirmApproveReport = async () => {
@@ -224,6 +244,34 @@ function InspectReportPage() {
             {error && <p className={styles.error}>{error}</p>}
           </div>
         )}
+
+        {isTechnicalOfficer && selectedReport.assigned_to_external == null &&(
+            <div className={`${styles.section} ${styles.sectionNoBorder}`}>
+            <h3 className={styles.sectionTitle}>Assign External Maintainer</h3>
+
+    <select
+      value={selectedMaintainer || ""}
+      onChange={(e) => setSelectedMaintainer(Number(e.target.value))}
+      className={styles.select}
+    >
+      <option value="">Select a maintainer...</option>
+      {officers.map((maintainer) => (
+        <option key={maintainer.id} value={maintainer.id}>
+          {maintainer.username} — {maintainer.company}
+        </option>
+      ))}
+      </select>
+
+          <button
+            className={styles.primaryButton}
+            onClick={handleAssignMaintainer}
+            disabled={!selectedMaintainer}
+             >
+        Assign Maintainer
+           </button>
+         </div>
+        )}
+
 
         {/* Action Buttons */}
         {selectedReport.status.id === 1 && (
