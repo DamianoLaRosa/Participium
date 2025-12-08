@@ -196,7 +196,7 @@ router.post("/reports/:id/internal-comments", async (req, res) => {
     if (!req.isAuthenticated())
       return res.status(401).json({ error: "Not authenticated" });
 
-    if (req.user.type !== "operator") {
+    if (req.user.role !== "Technical office staff member" && req.user.role !== "External maintainer") {
       return res.status(403).json({ error: "Forbidden - operators only" });
     }
 
@@ -227,7 +227,7 @@ router.get("/reports/:id/internal-comments", async (req, res) => {
     if (!req.isAuthenticated())
       return res.status(401).json({ error: "Not authenticated" });
 
-    if (req.user.type !== "operator") {
+    if (req.user.role !== "Technical office staff member" && req.user.role !== "External maintainer") {
       return res.status(403).json({ error: "Forbidden - operators only" });
     }
 

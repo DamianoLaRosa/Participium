@@ -87,14 +87,19 @@ export const getAllReports = async () => {
         off.name as office_name,
         r.status_id,
         s.name as status_name,
+        r.assigned_to_external_id,
+        ext_op.username as external_username,
+        ext_comp.name as external_company_name,
         COALESCE(json_agg(DISTINCT jsonb_build_object('photo_id', p.photo_id, 'image_url', p.image_url)) FILTER (WHERE p.photo_id IS NOT NULL), '[]') AS photos
       FROM reports r
       LEFT JOIN citizens c ON r.citizen_id = c.citizen_id
       LEFT JOIN categories cat ON r.category_id = cat.category_id
       LEFT JOIN offices off ON r.office_id = off.office_id
       LEFT JOIN statuses s ON r.status_id = s.status_id
+      LEFT JOIN operators ext_op ON r.assigned_to_external_id = ext_op.operator_id
+      LEFT JOIN companies ext_comp ON ext_op.company_id = ext_comp.company_id
       LEFT JOIN photos p ON r.report_id = p.report_id
-      GROUP BY r.report_id, c.citizen_id, c.username, c.first_name, c.last_name, cat.name, off.name, s.name
+      GROUP BY r.report_id, c.citizen_id, c.username, c.first_name, c.last_name, cat.name, off.name, s.name, ext_op.username, ext_comp.name
       ORDER BY r.created_at DESC
     `;
 
@@ -118,6 +123,11 @@ export const getAllReports = async () => {
       category: { id: row.category_id, name: row.category_name },
       office: { id: row.office_id, name: row.office_name },
       status: { id: row.status_id, name: row.status_name },
+      maintainer: row.assigned_to_external_id ? {
+        id: row.assigned_to_external_id,
+        username: row.external_username,
+        company: row.external_company_name
+      } : null,
       photos: row.photos || []
     }));
   } catch (err) {

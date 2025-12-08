@@ -314,6 +314,17 @@
   background-color: #388e3c;
 }
 
+.status-btn.comments {
+  background-color: #9c27b0;
+  flex: 0 0 auto;
+  width: fit-content;
+  min-width: 140px;
+}
+
+.status-btn.comments:hover:not(:disabled) {
+  background-color: #7b1fa2;
+}
+
 /* Modal */
 .modal-overlay {
   position: fixed;

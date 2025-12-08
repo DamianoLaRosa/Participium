@@ -1,10 +1,15 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
+import { useDispatch } from "react-redux";
+import { setSelectedReport as setReduxReport } from "../../../store/reportSlice.js";
 import API from "../../../API/API.js";
 import { STATUS_MAP } from "../../../constants/statusMap";
 import { ImagePreviewModal } from "../../common/imagePreviewModal/ImagePreviewModal";
 import "./MaintainerPage.css";
 
 function MaintainerPage() {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [reports, setReports] = useState([]);
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -239,6 +244,16 @@ function MaintainerPage() {
                   </div>
                 </div>
               )}
+
+              <button
+                className="status-btn comments"
+                onClick={() => {
+                  dispatch(setReduxReport(selectedReport));
+                  navigate("/comments");
+                }}
+              >
+                View comments
+              </button>
 
               {/* Status Update Section */}
               <div className="status-update-section">

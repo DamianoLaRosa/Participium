@@ -12,7 +12,7 @@ function InspectReportPage() {
   
   const [loggedUser, setLoggedUser] = useState(null);
   const isTechnicalOfficer = loggedUser?.role === "Technical office staff member";
-
+  const isExternalMaintainer = loggedUser?.role === "External Maintainers";
 
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showApproveModal, setShowApproveModal] = useState(false);
@@ -24,6 +24,7 @@ function InspectReportPage() {
   const [warning, setWarning] = useState("");
   const [address, setAddress] = useState("Loading address...");
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
+  const [maintainer, setMaintainer] = useState(null);
 
   useEffect(() => {
   const load = async () => {
@@ -34,6 +35,7 @@ function InspectReportPage() {
         loadOfficers();
         loadAddress();
       }
+      
     } catch (err) {
       console.error("Failed to load user", err);
     }
@@ -69,6 +71,10 @@ function InspectReportPage() {
         selectedReport.office.id
       );
       setOfficers(officersData);
+      if(selectedReport.assigned_to_external){
+        const reportMaintainer =officersData.find((o) => o.id === selectedReport.assigned_to_external); 
+        setMaintainer(reportMaintainer);
+      }
     } catch (err) {
       setError("Failed to load officers: " + err);
     }
@@ -155,6 +161,17 @@ function InspectReportPage() {
               </span>
             </span>
           </div>
+
+          {/* Show assigned maintainer if exists   */}
+          {(selectedReport.assigned_to_external) && (
+            <div className={styles.row}>
+              <span className={styles.label}>Assigned Maintainer</span>
+              <span className={styles.value}>
+                {maintainer?.username}
+                {maintainer?.company && ` (${maintainer.company})`}
+              </span>
+            </div>
+          )}
 
           {selectedReport.status.id === 5 && (
             <div className={styles.row}>
@@ -292,9 +309,18 @@ function InspectReportPage() {
         )}
 
         {/* Back Button */}
-        <button className={styles.backButton} onClick={() => navigate(-1)}>
-          Back
-        </button>
+        <div className={styles.footerButtons}>
+          <button className={styles.backButton} onClick={() => navigate(-1)}>
+            Back
+          </button>
+
+          {/*Comment page button */}
+          {(isTechnicalOfficer || isExternalMaintainer) &&
+          <button className={styles.backButton} onClick={() => navigate('/comments')}>
+              View Comments
+            </button>
+          }
+        </div>
       </div>
 
       {/* Approve Confirmation Modal */}
