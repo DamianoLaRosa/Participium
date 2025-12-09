@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router";
 import API from "../../../API/API.js";
 import styles from "./verifyEmailPage.module.css";
 
-export default function VerifyEmailPage({ user, setUser }) {
+export default function VerifyEmailPage({ user, setUser, setIsUnverifiedSession }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [code, setCode] = useState("");
@@ -45,6 +45,7 @@ export default function VerifyEmailPage({ user, setUser }) {
       // Get user info and set user state (now verified)
       const userInfo = await API.getUserInfo();
       setUser(userInfo);
+      setIsUnverifiedSession(false);
 
       // Redirect to home after short delay
       setTimeout(() => {

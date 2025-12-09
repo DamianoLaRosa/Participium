@@ -43,7 +43,7 @@
 }
 
 .codeInput {
-  width: 200px;
+  width: 280px;
   padding: 16px 24px;
   font-size: 32px;
   font-weight: 600;
@@ -163,7 +163,7 @@
 
   .codeInput {
     width: 100%;
-    max-width: 200px;
+    max-width: 280px;
   }
 }
 

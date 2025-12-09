@@ -29,6 +29,7 @@ export function LoginPage(props) {
       if (user.role === "user" && !user.verified) {
         // Don't set user state - keep them "not logged in" on frontend
         // But session exists on server for verification API calls
+        props.setIsUnverifiedSession(true);
         try {
           await API.requestVerificationCode();
         } catch (verifyErr) {
@@ -40,6 +41,7 @@ export function LoginPage(props) {
 
       // Only set user if verified (or not a citizen)
       props.setUser(user);
+      props.setIsUnverifiedSession(false);
       dispatch(clearLocation());
       setMessage({ msg: `Welcome, ${user.username}!`, type: "success" });
       navigate("/");
@@ -74,6 +76,7 @@ export function LoginPage(props) {
       await API.logIn(credentials);
       // Don't set user state - new users need to verify email first
       // Session exists on server for verification API calls
+      props.setIsUnverifiedSession(true);
 
       // Request verification code and redirect to verification page
       try {

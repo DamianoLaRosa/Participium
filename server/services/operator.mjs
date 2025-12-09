@@ -47,7 +47,7 @@ export const getUser = async (username, password) => {
     const row = citizenResult.rows[0];
     if (!row) return false;
 
-    const user = { id: row.citizen_id, username: row.username, role: "user" };
+    const user = { id: row.citizen_id, username: row.username, role: "user", verified: row.verified };
 
     return new Promise((resolve, reject) => {
       crypto.scrypt(password, row.salt, 32, (err, hashedPassword) => {
