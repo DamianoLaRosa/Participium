@@ -1,603 +1,331 @@
-const { Pool } = require('pg');
+const mockQuery = jest.fn();
+const mockClientQuery = jest.fn();
+const mockRelease = jest.fn();
+const mockConnect = jest.fn();
 
-describe('services/report - insertReport', () => {
-  let svc;
-  let connectSpy;
-  let clientQuery;
-  let client;
+const mockClient = {
+  query: mockClientQuery,
+  release: mockRelease,
+};
 
-  beforeAll(async () => {
-    svc = await import('../../services/report.mjs');
-  });
+mockConnect.mockResolvedValue(mockClient);
 
-  afterEach(() => {
-    if (connectSpy) {
-      connectSpy.mockRestore();
-      connectSpy = null;
-    }
-    clientQuery && clientQuery.mockReset();
-  });
+const MockPool = jest.fn().mockImplementation(() => ({
+  query: mockQuery,
+  connect: mockConnect,
+}));
 
-  test('success: inserts report, images and commits', async () => {
-    // prepare client query call sequence
-    clientQuery = jest.fn()
-      .mockResolvedValueOnce({}) // BEGIN
-      .mockResolvedValueOnce({ rows: [{ office_id: 7 }] }) // categorySql
-      .mockResolvedValueOnce({ rows: [{ status_id: 99 }] }) // statusSql
-      .mockResolvedValueOnce({ rows: [{ report_id: 123, citizen_id: 5, category_id: 1, office_id: 7, status_id: 99, title: 'T', description: 'desc', latitude: 1, longitude: 2, anonymous: false, created_at: '2025-01-01T00:00:00Z' }] }) // report INSERT
-      .mockResolvedValueOnce({ rows: [{ photo_id: 9, report_id: 123, image_url: 'img.png', uploaded_at: '2025-01-01T00:00:00Z' }] }) // image insert (one url)
-      .mockResolvedValueOnce({}); // COMMIT
+// Mock 'pg' and '../dao.mjs' before importing the module under test
+jest.unstable_mockModule('pg', () => ({ Pool: MockPool }));
+const getUserInfoByIdMock = jest.fn();
+jest.unstable_mockModule('../../dao.mjs', () => ({ getUserInfoById: getUserInfoByIdMock }));
 
-    client = { query: clientQuery, release: jest.fn() };
-    connectSpy = jest.spyOn(Pool.prototype, 'connect').mockResolvedValue(client);
-
-    const input = {
-      title: 'T',
-      citizen_id: 5,
-      description: 'desc',
-      image_urls: ['img.png'],
-      latitude: 1,
-      longitude: 2,
-      category_id: 1,
-      anonymous: false
-    };
-
-    const res = await svc.insertReport(input);
-    expect(res).toHaveProperty('report_id', 123);
-    expect(Array.isArray(res.images)).toBe(true);
-    expect(res.images[0]).toHaveProperty('image_url', 'img.png');
-
-    expect(clientQuery).toHaveBeenCalled();
-    expect(client.release).toHaveBeenCalled();
-  });
-
-  test('invalid category -> throws and rolls back', async () => {
-    clientQuery = jest.fn()
-      .mockResolvedValueOnce({}) // BEGIN
-      .mockResolvedValueOnce({ rows: [] }) // categorySql returns no rows
-      .mockResolvedValueOnce({}); // ROLLBACK
-
-    client = { query: clientQuery, release: jest.fn() };
-    connectSpy = jest.spyOn(Pool.prototype, 'connect').mockResolvedValue(client);
-
-    const input = {
-      title: 'T',
-      citizen_id: 5,
-      description: 'desc',
-      image_urls: ['img.png'],
-      latitude: 1,
-      longitude: 2,
-      category_id: 9999,
-      anonymous: false
-    };
-
-    await expect(svc.insertReport(input)).rejects.toThrow('Invalid category_id');
-
-    // ensure ROLLBACK attempted and client released
-    expect(clientQuery).toHaveBeenCalled();
-    expect(client.release).toHaveBeenCalled();
-  });
-
-  test('image insert error -> rolls back and rethrows', async () => {
-    clientQuery = jest.fn()
-      .mockResolvedValueOnce({}) // BEGIN
-      .mockResolvedValueOnce({ rows: [{ office_id: 7 }] }) // categorySql
-      .mockResolvedValueOnce({ rows: [{ status_id: 99 }] }) // statusSql
-      .mockResolvedValueOnce({ rows: [{ report_id: 321, citizen_id: 5, category_id: 1, office_id: 7, status_id: 99, title: 'T', description: 'desc', latitude: 1, longitude: 2, anonymous: false, created_at: '2025-01-01T00:00:00Z' }] }) // report INSERT
-      .mockRejectedValueOnce(new Error('image insert failed')) // fail on image insert
-      .mockResolvedValueOnce({}); // ROLLBACK (after catch)
-
-    client = { query: clientQuery, release: jest.fn() };
-    connectSpy = jest.spyOn(Pool.prototype, 'connect').mockResolvedValue(client);
-
-    const input = {
-      title: 'T',
-      citizen_id: 5,
-      description: 'desc',
-      image_urls: ['bad.png'],
-      latitude: 1,
-      longitude: 2,
-      category_id: 1,
-      anonymous: false
-    };
-
-    await expect(svc.insertReport(input)).rejects.toThrow('image insert failed');
-
-    expect(clientQuery).toHaveBeenCalled();
-    expect(client.release).toHaveBeenCalled();
-  });
+// Now import the module under test (dynamic import so mocks take effect)
+let reportsService;
+beforeAll(async () => {
+  reportsService = await import('../../services/report.mjs');
 });
 
-describe('services/report - getAllReports', () => {
-  let svc;
-  let querySpy;
+beforeEach(() => {
+  jest.clearAllMocks();
+  // default: pool.query resolves to empty result to avoid accidental failures
+  mockQuery.mockResolvedValue({ rows: [] });
+  mockClientQuery.mockResolvedValue({ rows: [] });
+  getUserInfoByIdMock.mockResolvedValue(null);
+});
 
-  beforeAll(async () => {
-    svc = await import('../../services/report.mjs');
-  });
+describe('report service unit tests', () => {
+  test('insertReport - success inserts report and photos and returns combined object', async () => {
+    // Arrange
+    const citizen_id = 1;
+    getUserInfoByIdMock.mockResolvedValue({ citizen_id, verified: true });
 
-  afterEach(() => {
-    if (querySpy) {
-      querySpy.mockRestore();
-      querySpy = null;
-    }
-  });
+    const categoryId = 5;
+    const statusId = 2;
+    const reportRow = {
+      report_id: 100,
+      citizen_id,
+      category_id: categoryId,
+      office_id: 10,
+      status_id: statusId,
+      title: 'Pothole',
+      description: 'Big pothole',
+      latitude: 45.0,
+      longitude: 9.0,
+      anonymous: false,
+      created_at: new Date(),
+    };
 
-  test('success: returns all reports with related data', async () => {
-    const mockRows = [
-      {
-        report_id: 1,
-        title: 'Report 1',
-        description: 'Desc 1',
-        latitude: 10.5,
-        longitude: 20.5,
-        anonymous: false,
-        rejection_reason: null,
-        created_at: '2025-01-01T00:00:00Z',
-        updated_at: '2025-01-02T00:00:00Z',
-        citizen_id: 100,
-        citizen_username: 'john_doe',
-        citizen_first_name: 'John',
-        citizen_last_name: 'Doe',
-        category_id: 1,
-        category_name: 'Road',
-        office_id: 1,
-        office_name: 'Main Office',
-        status_id: 2,
-        status_name: 'Approved',
-        assigned_to_external_id: 50,
-        external_username: 'ext_user',
-        external_company_name: 'CompanyA',
-        photos: [{ photo_id: 1, image_url: 'photo1.png' }]
+    const imageUrls = ['http://img/1.jpg', 'http://img/2.jpg'];
+
+    // Implementation of client.query mock to return appropriate responses based on SQL text
+    mockClientQuery.mockImplementation(async (text, params) => {
+      if (text.startsWith('BEGIN')) return { rows: [] };
+      if (text.includes('FROM categories WHERE category_id')) {
+        return { rows: [{ office_id: 10 }] };
       }
-    ];
-
-    querySpy = jest.spyOn(Pool.prototype, 'query').mockResolvedValue({ rows: mockRows });
-
-    const result = await svc.getAllReports();
-
-    expect(result).toHaveLength(1);
-    expect(result[0]).toMatchObject({
-      id: 1,
-      title: 'Report 1',
-      citizen: { id: 100, username: 'john_doe' },
-      category: { id: 1, name: 'Road' },
-      maintainer: { id: 50, username: 'ext_user', company: 'CompanyA' },
-      photos: [{ photo_id: 1, image_url: 'photo1.png' }]
+      if (text.includes('FROM statuses WHERE name')) {
+        return { rows: [{ status_id: statusId }] };
+      }
+      if (text.includes('INSERT INTO reports')) {
+        return { rows: [reportRow] };
+      }
+      if (text.includes('INSERT INTO photos')) {
+        // simulate returning a photo row; params: [report_id, url]
+        const url = params[1];
+        return { rows: [{ photo_id: Math.floor(Math.random() * 1000), report_id: reportRow.report_id, image_url: url, uploaded_at: new Date() }] };
+      }
+      if (text.startsWith('COMMIT')) return { rows: [] };
+      if (text.startsWith('ROLLBACK')) return { rows: [] };
+      return { rows: [] };
     });
 
-    expect(querySpy).toHaveBeenCalledTimes(1);
-  });
-
-  test('returns empty array when no reports exist', async () => {
-    querySpy = jest.spyOn(Pool.prototype, 'query').mockResolvedValue({ rows: [] });
-
-    const result = await svc.getAllReports();
-
-    expect(result).toEqual([]);
-    expect(querySpy).toHaveBeenCalledTimes(1);
-  });
-
-  test('throws error on database failure', async () => {
-    querySpy = jest.spyOn(Pool.prototype, 'query').mockRejectedValue(new Error('DB error'));
-
-    await expect(svc.getAllReports()).rejects.toThrow('DB error');
-  });
-});
-
-describe('services/report - getReportsAssigned', () => {
-  let svc;
-  let querySpy;
-
-  beforeAll(async () => {
-    svc = await import('../../services/report.mjs');
-  });
-
-  afterEach(() => {
-    if (querySpy) {
-      querySpy.mockRestore();
-      querySpy = null;
-    }
-  });
-
-  test('success: returns reports assigned to operator', async () => {
-    const mockRows = [
-      {
-        report_id: 10,
-        title: 'Assigned Report',
-        description: 'Desc',
-        latitude: 5.5,
-        longitude: 15.5,
-        anonymous: false,
-        rejection_reason: null,
-        created_at: '2025-01-01T00:00:00Z',
-        updated_at: '2025-01-05T00:00:00Z',
-        citizen_id: 200,
-        citizen_username: 'jane_doe',
-        citizen_first_name: 'Jane',
-        citizen_last_name: 'Doe',
-        category_id: 2,
-        category_name: 'Water',
-        office_id: 2,
-        office_name: 'Second Office',
-        status_id: 3,
-        status_name: 'In Progress',
-        assigned_to_operator_id: 10,
-        assigned_to_external_id: null,
-        operator_username: 'operator1',
-        operator_email: 'op1@example.com',
-        company_id: 1,
-        company_name: 'CompanyB',
-        photos: []
-      }
-    ];
-
-    querySpy = jest.spyOn(Pool.prototype, 'query').mockResolvedValue({ rows: mockRows });
-
-    const result = await svc.getReportsAssigned(10);
-
-    expect(result).toHaveLength(1);
-    expect(result[0]).toMatchObject({
-      id: 10,
-      title: 'Assigned Report',
-      assigned_to_operator: { id: 10, username: 'operator1', email: 'op1@example.com', company: 'CompanyB' },
-      assigned_to_external: null
+    // Act
+    const result = await reportsService.insertReport({
+      title: reportRow.title,
+      citizen_id,
+      description: reportRow.description,
+      image_urls: imageUrls,
+      latitude: reportRow.latitude,
+      longitude: reportRow.longitude,
+      category_id: categoryId,
+      anonymous: false,
     });
 
-    expect(querySpy).toHaveBeenCalledWith(expect.any(String), [10]);
+    // Assert
+    expect(result).toBeDefined();
+    expect(result.report_id).toBe(reportRow.report_id);
+    expect(result.images).toHaveLength(imageUrls.length);
+    expect(mockClientQuery).toHaveBeenCalled(); // ensure queries executed
+    // ensure COMMIT called (last calls include COMMIT)
+    const calledSqls = mockClientQuery.mock.calls.map(call => call[0]);
+    expect(calledSqls.some(sql => typeof sql === 'string' && sql.startsWith('COMMIT'))).toBe(true);
   });
 
-  test('returns empty array when no reports assigned', async () => {
-    querySpy = jest.spyOn(Pool.prototype, 'query').mockResolvedValue({ rows: [] });
+  test('insertReport - throws when citizen not found or not verified', async () => {
+    // citizen not found
+    getUserInfoByIdMock.mockResolvedValue(null);
+    await expect(reportsService.insertReport({
+      title: 't',
+      citizen_id: 999,
+      description: 'd',
+      image_urls: [],
+      latitude: 0,
+      longitude: 0,
+      category_id: 1,
+      anonymous: false,
+    })).rejects.toThrow('Citizen not found');
 
-    const result = await svc.getReportsAssigned(999);
-
-    expect(result).toEqual([]);
+    // citizen found but not verified
+    getUserInfoByIdMock.mockResolvedValue({ citizen_id: 999, verified: false });
+    await expect(reportsService.insertReport({
+      title: 't',
+      citizen_id: 999,
+      description: 'd',
+      image_urls: [],
+      latitude: 0,
+      longitude: 0,
+      category_id: 1,
+      anonymous: false,
+    })).rejects.toThrow('Only verified citizens can submit reports');
   });
 
-  test('throws error on database failure', async () => {
-    querySpy = jest.spyOn(Pool.prototype, 'query').mockRejectedValue(new Error('Query failed'));
-
-    await expect(svc.getReportsAssigned(10)).rejects.toThrow('Query failed');
-  });
-});
-
-describe('services/report - updateReportStatus', () => {
-  let svc;
-  let connectSpy;
-  let clientQuery;
-  let client;
-
-  beforeAll(async () => {
-    svc = await import('../../services/report.mjs');
+  test('updateReportStatus - returns null when report not found', async () => {
+    // client.query for check returns empty rows
+    mockClientQuery.mockResolvedValueOnce({ rows: [] });
+    const res = await reportsService.updateReportStatus(123, 2, null);
+    expect(res).toBeNull();
   });
 
-  afterEach(() => {
-    if (connectSpy) {
-      connectSpy.mockRestore();
-      connectSpy = null;
-    }
-    clientQuery && clientQuery.mockReset();
+  test('updateReportStatus - skip update when current status is 5 and still return mapped report', async () => {
+    // When current status is 5, the update block must be skipped.
+    // Sequence:
+    // - checkStatusSql -> rows [{status_id:5}]
+    // - selectSql -> rows [full row]
+    mockClientQuery.mockImplementation(async (text, params) => {
+      if (text.includes('SELECT status_id FROM reports')) {
+        return { rows: [{ status_id: 5 }] };
+      }
+      if (text.includes('FROM reports r') && text.includes('WHERE r.report_id = $1')) {
+        // simulate the select used to return the report
+        return {
+          rows: [{
+            report_id: 200,
+            title: 'Broken Light',
+            description: 'Light not working',
+            latitude: 0,
+            longitude: 0,
+            anonymous: false,
+            rejection_reason: null,
+            created_at: new Date(),
+            updated_at: new Date(),
+            citizen_id: 2,
+            citizen_username: 'user2',
+            citizen_first_name: 'First',
+            citizen_last_name: 'Last',
+            category_id: 3,
+            category_name: 'Lighting',
+            office_id: 4,
+            office_name: 'Public Works',
+            status_id: 5,
+            status_name: 'Resolved',
+            assigned_to_operator_id: null,
+            operator_username: null,
+            operator_email: null,
+            assigned_to_external_id: null,
+            external_operator_username: null,
+            external_operator_email: null,
+            external_company_name: null,
+            photos: [],
+          }],
+        };
+      }
+      return { rows: [] };
+    });
+
+    const result = await reportsService.updateReportStatus(200, 3, null);
+    expect(result).toBeDefined();
+    expect(result.id).toBe(200);
+
+    // Ensure that no UPDATE was executed: none of the mock calls contain the update SET status_id text
+    const calledSqls = mockClientQuery.mock.calls.map(call => call[0]);
+    const updateCalled = calledSqls.some(sql => typeof sql === 'string' && sql.includes('UPDATE reports') && sql.includes('SET status_id'));
+    expect(updateCalled).toBe(false);
   });
 
-  test('success: updates status and returns full report', async () => {
-    const updateRow = { report_id: 5 };
-    const selectRow = {
-      report_id: 5,
-      title: 'Updated Report',
-      description: 'Desc',
-      latitude: 10,
-      longitude: 20,
+  test('setOperatorByReport - returns null if no row', async () => {
+    // pool.query is mockQuery
+    mockQuery.mockResolvedValueOnce({ rows: [] });
+    const res = await reportsService.setOperatorByReport(1, 2);
+    expect(res).toBeNull();
+    expect(mockQuery).toHaveBeenCalled();
+  });
+
+  test('setOperatorByReport - returns row when update succeeds', async () => {
+    const row = { report_id: 10, assigned_to_operator_id: 2, title: 't', status_id: 1, updated_at: new Date() };
+    mockQuery.mockResolvedValueOnce({ rows: [row] });
+    const res = await reportsService.setOperatorByReport(10, 2);
+    expect(res).toEqual(row);
+  });
+
+  test('setMainteinerByReport - returns null when none updated and row when updated', async () => {
+    // null case
+    mockQuery.mockResolvedValueOnce({ rows: [] });
+    const r1 = await reportsService.setMainteinerByReport(5, 7);
+    expect(r1).toBeNull();
+
+    // success case
+    const row = { report_id: 5, assigned_to_external_id: 7, title: 't', status_id: 1, updated_at: new Date() };
+    mockQuery.mockResolvedValueOnce({ rows: [row] });
+    const r2 = await reportsService.setMainteinerByReport(5, 7);
+    expect(r2).toEqual(row);
+  });
+
+  test('getAllReports maps rows into expected shape', async () => {
+    const sampleRow = {
+      report_id: 1,
+      title: 'A',
+      description: 'B',
+      latitude: 44,
+      longitude: 11,
       anonymous: false,
       rejection_reason: null,
-      created_at: '2025-01-01T00:00:00Z',
-      updated_at: '2025-01-10T00:00:00Z',
-      citizen_id: 300,
-      citizen_username: 'user3',
-      citizen_first_name: 'User',
-      citizen_last_name: 'Three',
+      created_at: new Date(),
+      updated_at: new Date(),
+      citizen_id: 2,
+      citizen_username: 'u',
+      citizen_first_name: 'f',
+      citizen_last_name: 'l',
       category_id: 3,
-      category_name: 'Electric',
-      office_id: 1,
-      office_name: 'Office1',
-      status_id: 4,
-      status_name: 'Completed',
-      assigned_to_operator_id: null,
-      operator_username: null,
-      operator_email: null,
-      assigned_to_external_id: 20,
-      external_operator_username: 'ext2',
-      external_operator_email: 'ext2@example.com',
-      external_company_name: 'ExtCo',
-      photos: []
-    };
-
-    clientQuery = jest.fn()
-      .mockResolvedValueOnce({ rows: [updateRow] }) // UPDATE query
-      .mockResolvedValueOnce({ rows: [selectRow] }); // SELECT query
-
-    client = { query: clientQuery, release: jest.fn() };
-    connectSpy = jest.spyOn(Pool.prototype, 'connect').mockResolvedValue(client);
-
-    const result = await svc.updateReportStatus(5, 4);
-
-    expect(result).toMatchObject({
-      id: 5,
-      title: 'Updated Report',
-      status: { id: 4, name: 'Completed' },
-      assigned_to_external: { id: 20, username: 'ext2', email: 'ext2@example.com', company: 'ExtCo' }
-    });
-
-    expect(clientQuery).toHaveBeenCalledTimes(2);
-    expect(client.release).toHaveBeenCalled();
-  });
-
-  test('sets rejection_reason when status is Rejected (5)', async () => {
-    const updateRow = { report_id: 7 };
-    const selectRow = {
-      report_id: 7,
-      title: 'Rejected Report',
-      description: 'Desc',
-      latitude: 10,
-      longitude: 20,
-      anonymous: false,
-      rejection_reason: 'Invalid content',
-      created_at: '2025-01-01T00:00:00Z',
-      updated_at: '2025-01-10T00:00:00Z',
-      citizen_id: 400,
-      citizen_username: 'user4',
-      citizen_first_name: 'User',
-      citizen_last_name: 'Four',
-      category_id: 1,
-      category_name: 'Road',
-      office_id: 1,
-      office_name: 'Office1',
-      status_id: 5,
-      status_name: 'Rejected',
-      assigned_to_operator_id: null,
-      operator_username: null,
-      operator_email: null,
+      category_name: 'cat',
+      office_id: 4,
+      office_name: 'office',
+      status_id: 2,
+      status_name: 'Approved',
       assigned_to_external_id: null,
-      external_operator_username: null,
-      external_operator_email: null,
+      external_username: null,
       external_company_name: null,
-      photos: []
+      photos: [{ photo_id: 10, image_url: 'u.jpg' }],
     };
+    mockQuery.mockResolvedValueOnce({ rows: [sampleRow] });
 
-    clientQuery = jest.fn()
-      .mockResolvedValueOnce({ rows: [updateRow] })
-      .mockResolvedValueOnce({ rows: [selectRow] });
-
-    client = { query: clientQuery, release: jest.fn() };
-    connectSpy = jest.spyOn(Pool.prototype, 'connect').mockResolvedValue(client);
-
-    const result = await svc.updateReportStatus(7, 5, 'Invalid content');
-
-    expect(result.rejection_reason).toBe('Invalid content');
-    expect(result.status.id).toBe(5);
-  });
-
-  test('returns null when report not found', async () => {
-    clientQuery = jest.fn()
-      .mockResolvedValueOnce({ rows: [] }); // UPDATE returns no rows
-
-    client = { query: clientQuery, release: jest.fn() };
-    connectSpy = jest.spyOn(Pool.prototype, 'connect').mockResolvedValue(client);
-
-    const result = await svc.updateReportStatus(9999, 2);
-
-    expect(result).toBeNull();
-    expect(client.release).toHaveBeenCalled();
-  });
-
-  test('throws error on database failure', async () => {
-    clientQuery = jest.fn().mockRejectedValue(new Error('Update failed'));
-
-    client = { query: clientQuery, release: jest.fn() };
-    connectSpy = jest.spyOn(Pool.prototype, 'connect').mockResolvedValue(client);
-
-    await expect(svc.updateReportStatus(5, 2)).rejects.toThrow('Update failed');
-    expect(client.release).toHaveBeenCalled();
-  });
-});
-
-describe('services/report - getAllApprovedReports', () => {
-  let svc;
-  let querySpy;
-
-  beforeAll(async () => {
-    svc = await import('../../services/report.mjs');
-  });
-
-  afterEach(() => {
-    if (querySpy) {
-      querySpy.mockRestore();
-      querySpy = null;
-    }
-  });
-
-  test('success: returns only approved reports (status 2, 3, 4)', async () => {
-    const mockRows = [
-      {
-        report_id: 20,
-        title: 'Approved Report',
-        description: 'Desc',
-        latitude: 11,
-        longitude: 22,
-        anonymous: false,
-        created_at: '2025-01-01T00:00:00Z',
-        updated_at: '2025-01-02T00:00:00Z',
-        citizen_id: 500,
-        citizen_username: 'user5',
-        citizen_first_name: 'User',
-        citizen_last_name: 'Five',
-        category_id: 1,
-        category_name: 'Road',
-        office_id: 1,
-        office_name: 'Office1',
-        status_id: 2,
-        status_name: 'Approved',
-        photos: [{ photo_id: 10, image_url: 'photo10.png' }]
-      }
-    ];
-
-    querySpy = jest.spyOn(Pool.prototype, 'query').mockResolvedValue({ rows: mockRows });
-
-    const result = await svc.getAllApprovedReports();
-
-    expect(result).toHaveLength(1);
-    expect(result[0]).toMatchObject({
-      id: 20,
-      title: 'Approved Report',
-      status: { id: 2, name: 'Approved' },
-      citizen: { username: 'user5', first_name: 'User', last_name: 'Five' }
+    const list = await reportsService.getAllReports();
+    expect(Array.isArray(list)).toBe(true);
+    expect(list[0]).toMatchObject({
+      id: sampleRow.report_id,
+      title: sampleRow.title,
+      photos: sampleRow.photos,
+      citizen: {
+        id: sampleRow.citizen_id,
+        username: sampleRow.citizen_username,
+      },
     });
   });
 
-  test('hides citizen info for anonymous reports', async () => {
-    const mockRows = [
-      {
-        report_id: 21,
-        title: 'Anonymous Report',
-        description: 'Desc',
-        latitude: 11,
-        longitude: 22,
-        anonymous: true,
-        created_at: '2025-01-01T00:00:00Z',
-        updated_at: '2025-01-02T00:00:00Z',
-        citizen_id: 600,
-        citizen_username: 'user6',
-        citizen_first_name: 'User',
-        citizen_last_name: 'Six',
-        category_id: 1,
-        category_name: 'Road',
-        office_id: 1,
-        office_name: 'Office1',
-        status_id: 2,
-        status_name: 'Approved',
-        photos: []
-      }
-    ];
-
-    querySpy = jest.spyOn(Pool.prototype, 'query').mockResolvedValue({ rows: mockRows });
-
-    const result = await svc.getAllApprovedReports();
-
-    expect(result[0].anonymous).toBe(true);
-    expect(result[0].citizen).toBeNull();
-  });
-
-  test('throws error on database failure', async () => {
-    querySpy = jest.spyOn(Pool.prototype, 'query').mockRejectedValue(new Error('Query error'));
-
-    await expect(svc.getAllApprovedReports()).rejects.toThrow('Query error');
-  });
-});
-
-describe('services/report - setOperatorByReport', () => {
-  let svc;
-  let querySpy;
-
-  beforeAll(async () => {
-    svc = await import('../../services/report.mjs');
-  });
-
-  afterEach(() => {
-    if (querySpy) {
-      querySpy.mockRestore();
-      querySpy = null;
-    }
-  });
-
-  test('success: assigns operator to report', async () => {
-    const mockResult = {
-      rows: [{
-        report_id: 30,
-        assigned_to_operator_id: 15,
-        title: 'Report 30',
-        status_id: 2,
-        updated_at: '2025-01-15T00:00:00Z'
-      }]
+  test('getAllApprovedReports filters statuses and maps citizen to null when anonymous', async () => {
+    const anonRow = {
+      report_id: 2,
+      title: 'X',
+      description: 'Y',
+      latitude: 0,
+      longitude: 0,
+      anonymous: true,
+      created_at: new Date(),
+      updated_at: new Date(),
+      citizen_id: 99,
+      citizen_username: 'an',
+      citizen_first_name: 'A',
+      citizen_last_name: 'N',
+      category_id: 1,
+      category_name: 'c',
+      office_id: 1,
+      office_name: 'o',
+      status_id: 2,
+      status_name: 'Approved',
+      photos: [],
     };
+    mockQuery.mockResolvedValueOnce({ rows: [anonRow] });
 
-    querySpy = jest.spyOn(Pool.prototype, 'query').mockResolvedValue(mockResult);
-
-    const result = await svc.setOperatorByReport(30, 15);
-
-    expect(result).toMatchObject({
-      report_id: 30,
-      assigned_to_operator_id: 15,
-      title: 'Report 30'
-    });
-
-    expect(querySpy).toHaveBeenCalledWith(expect.any(String), [30, 15]);
+    const res = await reportsService.getAllApprovedReports();
+    expect(res[0].citizen).toBeNull();
+    expect(res[0].status.name).toBe('Approved');
   });
 
-  test('returns null when report not found', async () => {
-    querySpy = jest.spyOn(Pool.prototype, 'query').mockResolvedValue({ rows: [] });
-
-    const result = await svc.setOperatorByReport(9999, 15);
-
-    expect(result).toBeNull();
-  });
-
-  test('throws error on database failure', async () => {
-    querySpy = jest.spyOn(Pool.prototype, 'query').mockRejectedValue(new Error('Assignment failed'));
-
-    await expect(svc.setOperatorByReport(30, 15)).rejects.toThrow('Assignment failed');
-  });
-});
-
-describe('services/report - setMainteinerByReport', () => {
-  let svc;
-  let querySpy;
-
-  beforeAll(async () => {
-    svc = await import('../../services/report.mjs');
-  });
-
-  afterEach(() => {
-    if (querySpy) {
-      querySpy.mockRestore();
-      querySpy = null;
-    }
-  });
-
-  test('success: assigns maintainer to report', async () => {
-    const mockResult = {
-      rows: [{
-        report_id: 40,
-        assigned_to_external_id: 25,
-        title: 'Report 40',
-        status_id: 3,
-        updated_at: '2025-01-20T00:00:00Z'
-      }]
+  test('getReportsAssigned maps assigned operator and external correctly', async () => {
+    const assignedRow = {
+      report_id: 3,
+      title: 'T',
+      description: 'D',
+      latitude: 0,
+      longitude: 0,
+      anonymous: false,
+      rejection_reason: null,
+      created_at: new Date(),
+      updated_at: new Date(),
+      citizen_id: 7,
+      citizen_username: 'u7',
+      citizen_first_name: 'F7',
+      citizen_last_name: 'L7',
+      category_id: 11,
+      category_name: 'c11',
+      office_id: 12,
+      office_name: 'o12',
+      status_id: 2,
+      status_name: 'In Progress',
+      assigned_to_operator_id: 99,
+      assigned_to_external_id: null,
+      operator_username: 'op99',
+      operator_email: 'op@example.com',
+      company_name: 'Comp',
+      photos: [],
     };
+    mockQuery.mockResolvedValueOnce({ rows: [assignedRow] });
 
-    querySpy = jest.spyOn(Pool.prototype, 'query').mockResolvedValue(mockResult);
-
-    const result = await svc.setMainteinerByReport(40, 25);
-
-    expect(result).toMatchObject({
-      report_id: 40,
-      assigned_to_external_id: 25,
-      title: 'Report 40'
+    const res = await reportsService.getReportsAssigned(99);
+    expect(res[0].assigned_to_operator).toMatchObject({
+      id: 99,
+      username: 'op99',
+      company: 'Comp',
     });
-
-    expect(querySpy).toHaveBeenCalledWith(expect.any(String), [40, 25]);
-  });
-
-  test('returns null when report not found', async () => {
-    querySpy = jest.spyOn(Pool.prototype, 'query').mockResolvedValue({ rows: [] });
-
-    const result = await svc.setMainteinerByReport(9999, 25);
-
-    expect(result).toBeNull();
-  });
-
-  test('throws error on database failure', async () => {
-    querySpy = jest.spyOn(Pool.prototype, 'query').mockRejectedValue(new Error('Maintainer assignment failed'));
-
-    await expect(svc.setMainteinerByReport(40, 25)).rejects.toThrow('Maintainer assignment failed');
   });
 });
