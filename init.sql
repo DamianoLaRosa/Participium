@@ -197,7 +197,8 @@ INSERT INTO offices (name, description) VALUES
 ('Traffic Department', 'Handles road signs and traffic lights'),
 ('Public Works', 'Manages roads and urban furnishings'),
 ('Parks Department', 'Manages public green areas and playgrounds'),
-('General Services', 'Handles miscellaneous issues');
+('General Services', 'Handles miscellaneous issues'),
+('External Services', 'Manages external maintenance tasks');
 
 -- 2. Categories
 INSERT INTO categories (name, office_id) VALUES
@@ -229,7 +230,7 @@ INSERT INTO roles (name, description) VALUES
 ('External maintainer', 'External company staff member who handles specific maintenance tasks');
 
 
--- -- 5. Companies
+-- 5. Companies
 INSERT INTO companies (name, description) VALUES
 ('Participium', 'Municipality of Turin - Internal staff'),
 ('Enel X', 'Public lighting maintenance and energy services'),
@@ -238,7 +239,7 @@ INSERT INTO companies (name, description) VALUES
 ('GTT Infrastrutture', 'Public transport infrastructure maintenance');
 
 
--- 4. Operatore admin
+-- 6. Operatore admin
 INSERT INTO operators (email, username, password_hash, salt, office_id, role_id,company_id, category_id)
 VALUES (
   'admin@participium.local',
@@ -251,7 +252,7 @@ VALUES (
   (SELECT category_id FROM categories WHERE name = 'Organization Office')
 );
 
--- 5. Operatori: 2 per ogni ufficio (tranne organization office che non ha il tecnico)
+-- 7. Operatori: uno per ogni ufficio  + un external maintainer
 -- Organization Office
 INSERT INTO operators (email, username, password_hash, salt, office_id, role_id,company_id, category_id) VALUES
 ('off.org@participium.local', 'off_organization', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
@@ -341,12 +342,21 @@ VALUES ('maint.lighting@enelx.com','ext_lighting_enelx', 'f746cd28ba22bc7f3bbd4f
     (SELECT category_id FROM categories WHERE name = 'Public Lighting')
 );
 
+-- External maintainer for energy services
+INSERT INTO operators (email,username,password_hash,salt,office_id,role_id,company_id,category_id
+) VALUES ('maint.energy@enelx.com','ext_energy_enelx','f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af','4c999d4a2a78113f997cc7fd2cd05043',
+    (SELECT office_id FROM offices WHERE name = 'External Services'),
+    (SELECT role_id FROM roles WHERE name = 'External maintainer'),      
+    (SELECT company_id FROM companies WHERE name = 'Enel X'),            
+    (SELECT category_id FROM categories WHERE name = 'Public Lighting')  
+);
 
--- 6. Citizen test
+
+-- 8. Citizen
 INSERT INTO citizens (email, username, first_name, last_name, password_hash, salt, profile_photo_url, telegram_username, email_notifications, verified) VALUES
 ('melo@participium.local', 'melo', 'Carmelo', 'Locali', '858461e61ed6a0863bb44c4541e7bdcb33f9dd8d4401095ea6016bb4645b1239', '50ca648a1d5bbd29454d4a19efd9775b', NULL, NULL, TRUE, TRUE);
 
--- 7. Test report
+-- 9. Reports
 -- 1️⃣ Close reports cluster (around central area)
 WITH new_report AS (
     INSERT INTO reports (
