@@ -334,17 +334,10 @@ INSERT INTO operators (email, username, password_hash, salt, office_id, role_id,
   (SELECT category_id FROM categories WHERE name = 'General Services'));
 
 
-INSERT INTO operators (email,username, password_hash,salt,office_id,role_id,company_id,category_id)
-VALUES ('maint.lighting@enelx.com','ext_lighting_enelx', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af','4c999d4a2a78113f997cc7fd2cd05043',
-    (SELECT office_id FROM offices WHERE name = 'Lighting Department'),
-    (SELECT role_id FROM roles WHERE name = 'External maintainer'),
-    (SELECT company_id FROM companies WHERE name = 'Enel X'),
-    (SELECT category_id FROM categories WHERE name = 'Public Lighting')
-);
 
 -- External maintainer for energy services
 INSERT INTO operators (email,username,password_hash,salt,office_id,role_id,company_id,category_id
-) VALUES ('maint.energy@enelx.com','ext_energy_enelx','f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af','4c999d4a2a78113f997cc7fd2cd05043',
+) VALUES ('maint.energy@enelx.com','ext_enelx','f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af','4c999d4a2a78113f997cc7fd2cd05043',
     (SELECT office_id FROM offices WHERE name = 'External Services'),
     (SELECT role_id FROM roles WHERE name = 'External maintainer'),      
     (SELECT company_id FROM companies WHERE name = 'Enel X'),            
@@ -422,7 +415,8 @@ WITH new_report AS (
         (SELECT citizen_id FROM citizens WHERE email='melo@participium.local'),
         (SELECT category_id FROM categories WHERE name='Public Lighting'),
         (SELECT office_id FROM offices WHERE name='Lighting Department'),
-        (SELECT status_id FROM statuses WHERE name='Pending Approval'),
+        (SELECT status_id FROM statuses WHERE name='Assigned'),
+        (SELECT operator_id FROM operators WHERE username='tec_lighting'),
         NULL,
         'Streetlight completely broken',
         'The streetlight has been off for several days, the area is very dark at night.',
