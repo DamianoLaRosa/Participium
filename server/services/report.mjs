@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import {getUserInfoById} from "../dao.mjs";
 
 dotenv.config();
 
@@ -16,6 +17,17 @@ export const insertReport = async ({ title, citizen_id, description, image_urls,
 
   try {
     await client.query('BEGIN');
+
+    // Check if citizen is verified
+    const citizenInfo = await getUserInfoById(citizen_id);
+    
+    if (!citizenInfo) {
+      throw new Error('Citizen not found');
+    }
+    
+    if (!citizenInfo.verified) {
+      throw new Error('Only verified citizens can submit reports');
+    }
 
     // Get office_id from category
     const categorySql = 'SELECT office_id FROM categories WHERE category_id = $1';
@@ -209,28 +221,42 @@ export const getReportsAssigned = async (operator_id) => {
 export const updateReportStatus = async (report_id, status_id, rejection_reason = null) => {
   const client = await pool.connect();
   try {
-    //await client.query('BEGIN');
 
-    let rejection = null;
-    if (status_id === 5) {  // only if status is "Rejected"
-      rejection = rejection_reason || null;
+    // Check current status before updating
+    const checkStatusSql = `
+      SELECT status_id FROM reports WHERE report_id = $1
+    `;
+    const checkResult = await client.query(checkStatusSql, [report_id]);
+    
+    if (checkResult.rows.length === 0) {
+      return null;
     }
 
-    const updateSql = `
-          UPDATE reports
-          SET status_id = $2,
-              rejection_reason = $3,
-              updated_at = NOW()
-          WHERE report_id = $1
-          RETURNING *
-        `;
-
-        const updateResult = await client.query(updateSql, [report_id, status_id, rejection]);
+    const currentStatus = checkResult.rows[0].status_id;
     
-        if (updateResult.rows.length === 0) {
-          //await client.query('ROLLBACK');
-          return null;
-        }
+    // Prevent update if current status is 5 or 6 (resolved or rejected)
+    if (currentStatus !== 5 && currentStatus !== 6) {
+
+        let rejection = null;
+      if (status_id === 5) {  // only if new status is "Rejected"
+        rejection = rejection_reason || null;
+      }
+
+      const updateSql = `
+            UPDATE reports
+            SET status_id = $2,
+                rejection_reason = $3,
+                updated_at = NOW()
+            WHERE report_id = $1
+            RETURNING *
+          `;
+
+          const updateResult = await client.query(updateSql, [report_id, status_id, rejection]);
+      
+          if (updateResult.rows.length === 0) {
+            return null;
+          }
+    }
     
         // return the updated report with related info and photos
         const selectSql = `
@@ -276,7 +302,6 @@ export const updateReportStatus = async (report_id, status_id, rejection_reason 
         `;
 
     const selectResult = await client.query(selectSql, [report_id]);
-    //await client.query('COMMIT');
 
     const row = selectResult.rows[0];
     if (!row) return null;
@@ -314,7 +339,6 @@ export const updateReportStatus = async (report_id, status_id, rejection_reason 
       photos: row.photos || []
     };
   } catch (err) {
-    //await client.query('ROLLBACK');
     throw err;
   } finally {
     client.release();

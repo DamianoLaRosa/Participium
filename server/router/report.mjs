@@ -33,7 +33,7 @@ router.post('/reports',[
     .isBoolean().withMessage('Anonymous must be boolean'),
 ], async (req, res) => {
 
-  if (!req.isAuthenticated() || req.user.role !== 'user' ) {
+  if (!req.isAuthenticated() || req.user.role !== 'user'  ) { 
     return res.status(401).json({ error: 'Not authenticated or forbidden' });
   }
 
@@ -73,7 +73,6 @@ router.get("/reports", async (req, res) => {
   return res.status(503).json({ error: "Database error during report retrieval" });
   }
 });
-
 
 // PUT /reports/:id/status -> update status of a report without assigning (requires rel.officer/admin/technical staff/external maintainer)
 router.put("/reports/:id/status", async (req, res) => {

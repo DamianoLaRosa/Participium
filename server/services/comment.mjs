@@ -23,6 +23,23 @@ export const addInternalComment = async (
   sender_operator_id,
   content
 ) => {
+  // Check current status of the report
+  const checkStatusSql = `
+    SELECT status_id FROM reports WHERE report_id = $1
+  `;
+  const checkResult = await pool.query(checkStatusSql, [report_id]);
+  
+  if (checkResult.rows.length === 0) {
+    throw new Error('Report not found');
+  }
+
+  const currentStatus = checkResult.rows[0].status_id;
+  
+  // Prevent adding comments if status is 5 (Rejected) or 6 (Closed)
+  if (currentStatus === 5 || currentStatus === 6) {
+    throw new Error('Cannot add comments: report is already rejected or closed');
+  }
+
   const sql = `
     INSERT INTO internal_comment (report_id, sender_operator_id, content, created_at)
     VALUES ($1, $2, $3, NOW())

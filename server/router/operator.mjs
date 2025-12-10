@@ -59,6 +59,10 @@ router.get('/operators', [
       const maintainers = await getMainteinerByOffice( office_id );
       return res.status(200).json(maintainers);
     }
+
+    if(req.user.role === "External maintainer"){
+      return res.status(200).json([]); // to not have errrore in get report page
+    }
   
     return res.status(422).json({ error: 'Forbidden' }); // if not authorized
   } catch (err) {

@@ -15,6 +15,7 @@ export default function CommentsPage({ user }) {
     useEffect(() => {
         if(selectedReport)
             loadComments();
+      
     }, [selectedReport]);
 
     const loadComments = async () => {
@@ -88,10 +89,10 @@ export default function CommentsPage({ user }) {
             
             <button
                 onClick={handleSubmit}
-                disabled={!newComment.trim()}
+                disabled={!newComment.trim() || selectedReport.status.id===5 || selectedReport.status.id===6}
                 className={styles.primaryButton}
             >
-                Publish Comment
+                Publish Comment 
             </button>
             </div>
 

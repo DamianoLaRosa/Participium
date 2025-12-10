@@ -43,6 +43,7 @@ CREATE TABLE statuses (
     status_id SERIAL PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL
 );
+
 CREATE TABLE roles (
     role_id SERIAL PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL,
@@ -122,58 +123,6 @@ CREATE TABLE telegram_users (
     linked_at TIMESTAMP DEFAULT NOW()
 );
 
-
--- 1. Offices
-INSERT INTO offices (name, description) VALUES
-('Organization Office', 'Preliminary verification and approval of reports'),
-('Water Department', 'Manages water supply and drinking water issues'),
-('Accessibility Office', 'Handles architectural barriers'),
-('Sewage Department', 'Manages sewer system problems'),
-('Lighting Department', 'Handles public lighting issues'),
-('Waste Management', 'Manages waste collection and disposal'),
-('Traffic Department', 'Handles road signs and traffic lights'),
-('Public Works', 'Manages roads and urban furnishings'),
-('Parks Department', 'Manages public green areas and playgrounds'),
-('General Services', 'Handles miscellaneous issues');
-
--- 2. Categories
-INSERT INTO categories (name, office_id) VALUES
-('Water Supply – Drinking Water', (SELECT office_id FROM offices WHERE name = 'Water Department')),
-('Architectural Barriers', (SELECT office_id FROM offices WHERE name = 'Accessibility Office')),
-('Sewer System', (SELECT office_id FROM offices WHERE name = 'Sewage Department')),
-('Public Lighting', (SELECT office_id FROM offices WHERE name = 'Lighting Department')),
-('Waste', (SELECT office_id FROM offices WHERE name = 'Waste Management')),
-('Road Signs and Traffic Lights', (SELECT office_id FROM offices WHERE name = 'Traffic Department')),
-('Roads and Urban Furnishings', (SELECT office_id FROM offices WHERE name = 'Public Works')),
-('Public Green Areas and Playgrounds', (SELECT office_id FROM offices WHERE name = 'Parks Department')),
-('Other', (SELECT office_id FROM offices WHERE name = 'General Services'));
-
--- 3. Statuses
-INSERT INTO statuses (name) VALUES
-('Pending Approval'),
-('Assigned'),
-('In Progress'),
-('Suspended'),
-('Rejected'),
-('Resolved');
-
--- 4. Roles
-INSERT INTO roles (name, description) VALUES
-('Admin', 'Administrator with full system access and user management capabilities'),
-('Municipal public relations officer', 'Handles preliminary report verification and approval/rejection'),
-('Technical office staff member', 'Manages assigned reports, updates status, and resolves issues'),
-('Municipal administrator', 'Studies statistics'),
-('External maintainer', 'External company staff member who handles specific maintenance tasks');
-
-
--- -- 5. Companies
-INSERT INTO companies (name, description) VALUES
-('Participium', 'Municipality of Turin - Internal staff'),
-('Enel X', 'Public lighting maintenance and energy services'),
-('SMAT', 'Water and sewage system management'),
-('AMIAT', 'Waste management and street cleaning'),
-('GTT Infrastrutture', 'Public transport infrastructure maintenance');
-
 -- Funzione per controllare email duplicate tra citizens e operators
 CREATE OR REPLACE FUNCTION check_email_uniqueness()
 RETURNS TRIGGER AS $$
@@ -236,6 +185,57 @@ CREATE TRIGGER check_username_on_operators
 BEFORE INSERT OR UPDATE ON operators
 FOR EACH ROW
 EXECUTE FUNCTION check_username_uniqueness();
+
+-- 1. Offices
+INSERT INTO offices (name, description) VALUES
+('Organization Office', 'Preliminary verification and approval of reports'),
+('Water Department', 'Manages water supply and drinking water issues'),
+('Accessibility Office', 'Handles architectural barriers'),
+('Sewage Department', 'Manages sewer system problems'),
+('Lighting Department', 'Handles public lighting issues'),
+('Waste Management', 'Manages waste collection and disposal'),
+('Traffic Department', 'Handles road signs and traffic lights'),
+('Public Works', 'Manages roads and urban furnishings'),
+('Parks Department', 'Manages public green areas and playgrounds'),
+('General Services', 'Handles miscellaneous issues');
+
+-- 2. Categories
+INSERT INTO categories (name, office_id) VALUES
+('Water Supply – Drinking Water', (SELECT office_id FROM offices WHERE name = 'Water Department')),
+('Architectural Barriers', (SELECT office_id FROM offices WHERE name = 'Accessibility Office')),
+('Sewer System', (SELECT office_id FROM offices WHERE name = 'Sewage Department')),
+('Public Lighting', (SELECT office_id FROM offices WHERE name = 'Lighting Department')),
+('Waste', (SELECT office_id FROM offices WHERE name = 'Waste Management')),
+('Road Signs and Traffic Lights', (SELECT office_id FROM offices WHERE name = 'Traffic Department')),
+('Roads and Urban Furnishings', (SELECT office_id FROM offices WHERE name = 'Public Works')),
+('Public Green Areas and Playgrounds', (SELECT office_id FROM offices WHERE name = 'Parks Department')),
+('Other', (SELECT office_id FROM offices WHERE name = 'General Services'));
+
+-- 3. Statuses
+INSERT INTO statuses (name) VALUES
+('Pending Approval'),
+('Assigned'),
+('In Progress'),
+('Suspended'),
+('Rejected'),
+('Resolved');
+
+-- 4. Roles
+INSERT INTO roles (name, description) VALUES
+('Admin', 'Administrator with full system access and user management capabilities'),
+('Municipal public relations officer', 'Handles preliminary report verification and approval/rejection'),
+('Technical office staff member', 'Manages assigned reports, updates status, and resolves issues'),
+('Municipal administrator', 'Studies statistics'),
+('External maintainer', 'External company staff member who handles specific maintenance tasks');
+
+
+-- -- 5. Companies
+INSERT INTO companies (name, description) VALUES
+('Participium', 'Municipality of Turin - Internal staff'),
+('Enel X', 'Public lighting maintenance and energy services'),
+('SMAT', 'Water and sewage system management'),
+('AMIAT', 'Waste management and street cleaning'),
+('GTT Infrastrutture', 'Public transport infrastructure maintenance');
 
 
 -- 4. Operatore admin
@@ -343,8 +343,8 @@ VALUES ('maint.lighting@enelx.com','ext_lighting_enelx', 'f746cd28ba22bc7f3bbd4f
 
 
 -- 6. Citizen test
-INSERT INTO citizens (email, username, first_name, last_name, password_hash, salt, profile_photo_url, telegram_username, email_notifications) VALUES
-('melo@participium.local', 'melo', 'Carmelo', 'Locali', '858461e61ed6a0863bb44c4541e7bdcb33f9dd8d4401095ea6016bb4645b1239', '50ca648a1d5bbd29454d4a19efd9775b', NULL, NULL, TRUE);
+INSERT INTO citizens (email, username, first_name, last_name, password_hash, salt, profile_photo_url, telegram_username, email_notifications, verified) VALUES
+('melo@participium.local', 'melo', 'Carmelo', 'Locali', '858461e61ed6a0863bb44c4541e7bdcb33f9dd8d4401095ea6016bb4645b1239', '50ca648a1d5bbd29454d4a19efd9775b', NULL, NULL, TRUE, TRUE);
 
 -- 7. Test report
 -- 1️⃣ Close reports cluster (around central area)
