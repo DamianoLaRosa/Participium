@@ -198,7 +198,6 @@ INSERT INTO offices (name, description) VALUES
 ('Public Works', 'Manages roads and urban furnishings'),
 ('Parks Department', 'Manages public green areas and playgrounds'),
 ('General Services', 'Handles miscellaneous issues'),
-('External Services', 'Manages external maintenance tasks');
 
 -- 2. Categories
 INSERT INTO categories (name, office_id) VALUES
@@ -338,7 +337,7 @@ INSERT INTO operators (email, username, password_hash, salt, office_id, role_id,
 -- External maintainer for energy services
 INSERT INTO operators (email,username,password_hash,salt,office_id,role_id,company_id,category_id
 ) VALUES ('maint.energy@enelx.com','ext_enelx','f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af','4c999d4a2a78113f997cc7fd2cd05043',
-    (SELECT office_id FROM offices WHERE name = 'External Services'),
+    (SELECT office_id FROM offices WHERE name = 'Lighting Department'),
     (SELECT role_id FROM roles WHERE name = 'External maintainer'),      
     (SELECT company_id FROM companies WHERE name = 'Enel X'),            
     (SELECT category_id FROM categories WHERE name = 'Public Lighting')  
