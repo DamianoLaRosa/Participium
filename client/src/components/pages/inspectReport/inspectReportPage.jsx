@@ -327,6 +327,13 @@ function InspectReportPage() {
             <h3 className={styles.sectionTitle}>Update Status</h3>
             <div className={styles.actionButtons}>
               <button
+                className={styles.primaryButton}
+                onClick={() => handleStatusChange(3)}
+                disabled={selectedReport.status.id === 3}
+              >
+                Mark as In Progress
+              </button>
+              <button
                 className={styles.warningButton}
                 onClick={() => handleStatusChange(4)}
                 disabled={selectedReport.status.id === 4}
