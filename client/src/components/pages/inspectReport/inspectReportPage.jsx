@@ -177,7 +177,7 @@ function InspectReportPage() {
           </div>
 
           {/* Show assigned maintainer if exists   */}
-          {selectedReport.assigned_to_external && (
+          {(isTechnicalOfficer && selectedReport.assigned_to_external) && (
             <div className={styles.row}>
               <span className={styles.label}>Assigned Maintainer</span>
               <span className={styles.value}>
