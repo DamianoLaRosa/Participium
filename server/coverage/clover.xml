@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1765377256546" clover="3.2.0">
-  <project timestamp="1765377256546" name="All files">
-    <metrics statements="530" coveredstatements="497" conditionals="256" coveredconditionals="211" methods="75" coveredmethods="75" elements="861" coveredelements="783" complexity="0" loc="530" ncloc="530" packages="2" files="16" classes="16"/>
+<coverage generated="1765479488872" clover="3.2.0">
+  <project timestamp="1765479488872" name="All files">
+    <metrics statements="530" coveredstatements="489" conditionals="256" coveredconditionals="209" methods="75" coveredmethods="74" elements="861" coveredelements="772" complexity="0" loc="530" ncloc="530" packages="2" files="16" classes="16"/>
     <package name="router">
       <metrics statements="273" coveredstatements="252" conditionals="163" coveredconditionals="148" methods="23" coveredmethods="23"/>
       <file name="category.mjs" path="C:\Users\prici\Desktop\SE2\Participium\server\router\category.mjs">
@@ -300,7 +300,7 @@
       </file>
     </package>
     <package name="services">
-      <metrics statements="257" coveredstatements="245" conditionals="93" coveredconditionals="63" methods="52" coveredmethods="52"/>
+      <metrics statements="257" coveredstatements="237" conditionals="93" coveredconditionals="61" methods="52" coveredmethods="51"/>
       <file name="category.mjs" path="C:\Users\prici\Desktop\SE2\Participium\server\services\category.mjs">
         <metrics statements="6" coveredstatements="6" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
         <line num="4" count="1" type="stmt"/>
@@ -311,7 +311,7 @@
         <line num="19" count="2" type="stmt"/>
       </file>
       <file name="citizen.mjs" path="C:\Users\prici\Desktop\SE2\Participium\server\services\citizen.mjs">
-        <metrics statements="65" coveredstatements="64" conditionals="12" coveredconditionals="11" methods="10" coveredmethods="10"/>
+        <metrics statements="65" coveredstatements="56" conditionals="12" coveredconditionals="9" methods="10" coveredmethods="9"/>
         <line num="6" count="1" type="stmt"/>
         <line num="8" count="1" type="stmt"/>
         <line num="16" count="1" type="stmt"/>
@@ -327,12 +327,12 @@
         <line num="53" count="1" type="stmt"/>
         <line num="59" count="1" type="stmt"/>
         <line num="65" count="1" type="stmt"/>
-        <line num="66" count="6" type="stmt"/>
-        <line num="68" count="6" type="stmt"/>
-        <line num="69" count="6" type="stmt"/>
-        <line num="70" count="5" type="cond" truecount="2" falsecount="0"/>
-        <line num="71" count="2" type="stmt"/>
-        <line num="73" count="3" type="stmt"/>
+        <line num="66" count="3" type="stmt"/>
+        <line num="68" count="3" type="stmt"/>
+        <line num="69" count="3" type="stmt"/>
+        <line num="70" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="71" count="1" type="stmt"/>
+        <line num="73" count="1" type="stmt"/>
         <line num="75" count="1" type="stmt"/>
         <line num="79" count="1" type="stmt"/>
         <line num="80" count="3" type="stmt"/>
@@ -346,37 +346,37 @@
         <line num="98" count="1" type="stmt"/>
         <line num="100" count="1" type="stmt"/>
         <line num="104" count="1" type="stmt"/>
-        <line num="105" count="2" type="stmt"/>
-        <line num="106" count="2" type="stmt"/>
-        <line num="113" count="1" type="stmt"/>
-        <line num="115" count="1" type="stmt"/>
+        <line num="105" count="0" type="stmt"/>
+        <line num="106" count="0" type="stmt"/>
+        <line num="113" count="0" type="stmt"/>
+        <line num="115" count="0" type="stmt"/>
         <line num="119" count="1" type="stmt"/>
         <line num="120" count="5" type="stmt"/>
         <line num="121" count="5" type="stmt"/>
-        <line num="122" count="5" type="stmt"/>
+        <line num="124" count="5" type="stmt"/>
         <line num="125" count="5" type="stmt"/>
-        <line num="126" count="5" type="stmt"/>
-        <line num="129" count="4" type="stmt"/>
+        <line num="128" count="4" type="stmt"/>
         <line num="133" count="4" type="stmt"/>
-        <line num="136" count="3" type="stmt"/>
-        <line num="137" count="3" type="cond" truecount="2" falsecount="0"/>
-        <line num="138" count="2" type="stmt"/>
-        <line num="145" count="2" type="stmt"/>
-        <line num="147" count="3" type="stmt"/>
-        <line num="151" count="1" type="stmt"/>
-        <line num="152" count="5" type="stmt"/>
-        <line num="153" count="5" type="stmt"/>
-        <line num="157" count="5" type="stmt"/>
-        <line num="158" count="4" type="cond" truecount="2" falsecount="0"/>
-        <line num="159" count="1" type="stmt"/>
-        <line num="161" count="3" type="stmt"/>
-        <line num="166" count="3" type="stmt"/>
-        <line num="167" count="2" type="cond" truecount="1" falsecount="1"/>
-        <line num="168" count="0" type="stmt"/>
-        <line num="171" count="2" type="stmt"/>
-        <line num="172" count="2" type="stmt"/>
-        <line num="173" count="1" type="stmt"/>
-        <line num="175" count="3" type="stmt"/>
+        <line num="135" count="3" type="stmt"/>
+        <line num="138" count="0" type="stmt"/>
+        <line num="139" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="140" count="0" type="stmt"/>
+        <line num="147" count="0" type="stmt"/>
+        <line num="149" count="5" type="stmt"/>
+        <line num="153" count="1" type="stmt"/>
+        <line num="154" count="5" type="stmt"/>
+        <line num="155" count="5" type="stmt"/>
+        <line num="159" count="5" type="stmt"/>
+        <line num="160" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="161" count="1" type="stmt"/>
+        <line num="163" count="3" type="stmt"/>
+        <line num="168" count="3" type="stmt"/>
+        <line num="169" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="170" count="0" type="stmt"/>
+        <line num="173" count="2" type="stmt"/>
+        <line num="174" count="2" type="stmt"/>
+        <line num="175" count="1" type="stmt"/>
+        <line num="177" count="3" type="stmt"/>
       </file>
       <file name="comment.mjs" path="C:\Users\prici\Desktop\SE2\Participium\server\services\comment.mjs">
         <metrics statements="25" coveredstatements="23" conditionals="6" coveredconditionals="4" methods="6" coveredmethods="6"/>
