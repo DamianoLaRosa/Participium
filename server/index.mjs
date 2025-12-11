@@ -23,8 +23,12 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+import helmet from 'helmet';
+
 // init
 const app = express();
+app.use(helmet()); // Adds various security headers including hiding X-Powered-By
+
 const port = 3001;
 
 // middleware
