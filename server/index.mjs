@@ -107,18 +107,33 @@ app.post("/api/upload-url", async (req, res) => {
 /* SESSION ROUTES */
 // POST /api/sessions
 app.post("/api/sessions", passport.authenticate("local"), function (req, res) {
-  return res.status(201).json(req.user);
+  const user = req.user;
+
+  // Regenerate session to prevent session fixation attacks
+  req.session.regenerate(function (err) {
+    if (err) {
+      return res.status(500).json({ error: "Session regeneration failed" });
+    }
+
+    // Re-login user to the new session
+    req.login(user, function (err) {
+      if (err) {
+        return res.status(500).json({ error: "Login failed" });
+      }
+      return res.status(201).json(user);
+    });
+  });
 });
 // GET /api/sessions/current
 app.get("/api/sessions/current", (req, res) => {
   if (req.isAuthenticated()) {
-  return res.json(req.user);
+    return res.json(req.user);
   } else res.status(401).json({ error: "Not authenticated" });
 });
 // DELETE /api/session/current
 app.delete("/api/sessions/current", (req, res) => {
   req.logout(() => {
-  return res.end();
+    return res.end();
   });
 });
 // activate server
