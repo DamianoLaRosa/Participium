@@ -65,7 +65,7 @@ sections:
   - Nr of automated test cases 
     > 138 tests (sum of those of this sprint and the previous one - without differentiating between unit and integration tests)
   - Coverage 
-    > 92 % lines coverage (only related for the back-end)
+    > 93.5 % lines coverage (only related for the back-end)
 - Integration testing:
   - Total hours estimated
     > 6h 45m
@@ -87,15 +87,15 @@ sections:
   - Strategy adopted
     > Highest severity, shortest time
   - Total hours estimated estimated at sprint planning
-    > 2 h
+    > 2 h + (2 h refactoring)
   - Total hours spent
-    > 2 h
+    > 2 h + (2 h refactoring)
 
 ## ASSESSMENT
 
 - What caused your errors in estimation (if any)?
 
-  > We did not have enough time to do all the expected meetings. 
+  > We did not have enough time to hold all the planned meetings. The reason could be the difficulty of aligning six different schedules and working around both working hours and study hours.
 
 - What lessons did you learn (both positive and negative) in this sprint?
 

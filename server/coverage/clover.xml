@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1765481631284" clover="3.2.0">
-  <project timestamp="1765481631284" name="All files">
-    <metrics statements="530" coveredstatements="497" conditionals="256" coveredconditionals="211" methods="75" coveredmethods="75" elements="861" coveredelements="783" complexity="0" loc="530" ncloc="530" packages="2" files="16" classes="16"/>
+<coverage generated="1765526787049" clover="3.2.0">
+  <project timestamp="1765526787049" name="All files">
+    <metrics statements="530" coveredstatements="497" conditionals="258" coveredconditionals="213" methods="75" coveredmethods="75" elements="863" coveredelements="785" complexity="0" loc="530" ncloc="530" packages="2" files="16" classes="16"/>
     <package name="router">
       <metrics statements="273" coveredstatements="252" conditionals="163" coveredconditionals="148" methods="23" coveredmethods="23"/>
-      <file name="category.mjs" path="C:\Users\poffy\Desktop\Università\Magistrale\Software2\Participium\server\router\category.mjs">
+      <file name="category.mjs" path="C:\Users\prici\Desktop\SE2\Participium\server\router\category.mjs">
         <metrics statements="8" coveredstatements="8" conditionals="2" coveredconditionals="2" methods="1" coveredmethods="1"/>
         <line num="4" count="3" type="stmt"/>
         <line num="8" count="3" type="stmt"/>
@@ -15,7 +15,7 @@
         <line num="14" count="1" type="stmt"/>
         <line num="16" count="1" type="stmt"/>
       </file>
-      <file name="citizen.mjs" path="C:\Users\poffy\Desktop\Università\Magistrale\Software2\Participium\server\router\citizen.mjs">
+      <file name="citizen.mjs" path="C:\Users\prici\Desktop\SE2\Participium\server\router\citizen.mjs">
         <metrics statements="62" coveredstatements="62" conditionals="30" coveredconditionals="30" methods="5" coveredmethods="5"/>
         <line num="11" count="24" type="stmt"/>
         <line num="16" count="24" type="stmt"/>
@@ -80,7 +80,7 @@
         <line num="125" count="1" type="stmt"/>
         <line num="127" count="1" type="stmt"/>
       </file>
-      <file name="company.mjs" path="C:\Users\poffy\Desktop\Università\Magistrale\Software2\Participium\server\router\company.mjs">
+      <file name="company.mjs" path="C:\Users\prici\Desktop\SE2\Participium\server\router\company.mjs">
         <metrics statements="8" coveredstatements="8" conditionals="2" coveredconditionals="2" methods="1" coveredmethods="1"/>
         <line num="3" count="3" type="stmt"/>
         <line num="7" count="3" type="stmt"/>
@@ -91,7 +91,7 @@
         <line num="13" count="1" type="stmt"/>
         <line num="15" count="1" type="stmt"/>
       </file>
-      <file name="office.mjs" path="C:\Users\poffy\Desktop\Università\Magistrale\Software2\Participium\server\router\office.mjs">
+      <file name="office.mjs" path="C:\Users\prici\Desktop\SE2\Participium\server\router\office.mjs">
         <metrics statements="8" coveredstatements="8" conditionals="2" coveredconditionals="2" methods="1" coveredmethods="1"/>
         <line num="4" count="3" type="stmt"/>
         <line num="7" count="3" type="stmt"/>
@@ -102,7 +102,7 @@
         <line num="13" count="1" type="stmt"/>
         <line num="15" count="1" type="stmt"/>
       </file>
-      <file name="operator.mjs" path="C:\Users\poffy\Desktop\Università\Magistrale\Software2\Participium\server\router\operator.mjs">
+      <file name="operator.mjs" path="C:\Users\prici\Desktop\SE2\Participium\server\router\operator.mjs">
         <metrics statements="45" coveredstatements="43" conditionals="33" coveredconditionals="31" methods="3" coveredmethods="3"/>
         <line num="9" count="16" type="stmt"/>
         <line num="14" count="16" type="stmt"/>
@@ -150,7 +150,7 @@
         <line num="116" count="1" type="stmt"/>
         <line num="118" count="1" type="stmt"/>
       </file>
-      <file name="report.mjs" path="C:\Users\poffy\Desktop\Università\Magistrale\Software2\Participium\server\router\report.mjs">
+      <file name="report.mjs" path="C:\Users\prici\Desktop\SE2\Participium\server\router\report.mjs">
         <metrics statements="134" coveredstatements="115" conditionals="92" coveredconditionals="79" methods="11" coveredmethods="11"/>
         <line num="17" count="13" type="stmt"/>
         <line num="20" count="13" type="stmt"/>
@@ -287,7 +287,7 @@
         <line num="283" count="1" type="stmt"/>
         <line num="285" count="1" type="stmt"/>
       </file>
-      <file name="role.mjs" path="C:\Users\poffy\Desktop\Università\Magistrale\Software2\Participium\server\router\role.mjs">
+      <file name="role.mjs" path="C:\Users\prici\Desktop\SE2\Participium\server\router\role.mjs">
         <metrics statements="8" coveredstatements="8" conditionals="2" coveredconditionals="2" methods="1" coveredmethods="1"/>
         <line num="4" count="3" type="stmt"/>
         <line num="7" count="3" type="stmt"/>
@@ -300,8 +300,8 @@
       </file>
     </package>
     <package name="services">
-      <metrics statements="257" coveredstatements="245" conditionals="93" coveredconditionals="63" methods="52" coveredmethods="52"/>
-      <file name="category.mjs" path="C:\Users\poffy\Desktop\Università\Magistrale\Software2\Participium\server\services\category.mjs">
+      <metrics statements="257" coveredstatements="245" conditionals="95" coveredconditionals="65" methods="52" coveredmethods="52"/>
+      <file name="category.mjs" path="C:\Users\prici\Desktop\SE2\Participium\server\services\category.mjs">
         <metrics statements="6" coveredstatements="6" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
         <line num="4" count="1" type="stmt"/>
         <line num="6" count="1" type="stmt"/>
@@ -310,75 +310,75 @@
         <line num="17" count="3" type="stmt"/>
         <line num="19" count="2" type="stmt"/>
       </file>
-      <file name="citizen.mjs" path="C:\Users\poffy\Desktop\Università\Magistrale\Software2\Participium\server\services\citizen.mjs">
+      <file name="citizen.mjs" path="C:\Users\prici\Desktop\SE2\Participium\server\services\citizen.mjs">
         <metrics statements="65" coveredstatements="64" conditionals="12" coveredconditionals="11" methods="10" coveredmethods="10"/>
         <line num="6" count="1" type="stmt"/>
         <line num="8" count="1" type="stmt"/>
-        <line num="16" count="1" type="stmt"/>
-        <line num="25" count="1" type="stmt"/>
-        <line num="33" count="3" type="stmt"/>
-        <line num="35" count="3" type="stmt"/>
-        <line num="36" count="3" type="stmt"/>
-        <line num="37" count="3" type="cond" truecount="2" falsecount="0"/>
-        <line num="40" count="2" type="stmt"/>
-        <line num="41" count="2" type="stmt"/>
-        <line num="51" count="2" type="stmt"/>
-        <line num="52" count="2" type="stmt"/>
-        <line num="53" count="1" type="stmt"/>
-        <line num="59" count="1" type="stmt"/>
-        <line num="65" count="1" type="stmt"/>
-        <line num="66" count="6" type="stmt"/>
-        <line num="68" count="6" type="stmt"/>
-        <line num="69" count="6" type="stmt"/>
-        <line num="70" count="5" type="cond" truecount="2" falsecount="0"/>
-        <line num="71" count="2" type="stmt"/>
-        <line num="73" count="3" type="stmt"/>
-        <line num="75" count="1" type="stmt"/>
+        <line num="20" count="1" type="stmt"/>
+        <line num="29" count="1" type="stmt"/>
+        <line num="37" count="3" type="stmt"/>
+        <line num="39" count="3" type="stmt"/>
+        <line num="40" count="3" type="stmt"/>
+        <line num="41" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="44" count="2" type="stmt"/>
+        <line num="45" count="2" type="stmt"/>
+        <line num="55" count="2" type="stmt"/>
+        <line num="56" count="2" type="stmt"/>
+        <line num="57" count="1" type="stmt"/>
+        <line num="63" count="1" type="stmt"/>
+        <line num="69" count="1" type="stmt"/>
+        <line num="70" count="6" type="stmt"/>
+        <line num="72" count="6" type="stmt"/>
+        <line num="73" count="6" type="stmt"/>
+        <line num="74" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="75" count="2" type="stmt"/>
+        <line num="77" count="3" type="stmt"/>
         <line num="79" count="1" type="stmt"/>
-        <line num="80" count="3" type="stmt"/>
-        <line num="81" count="3" type="stmt"/>
-        <line num="82" count="3" type="cond" truecount="2" falsecount="0"/>
-        <line num="84" count="2" type="stmt"/>
-        <line num="86" count="2" type="stmt"/>
+        <line num="83" count="1" type="stmt"/>
+        <line num="84" count="3" type="stmt"/>
+        <line num="85" count="3" type="stmt"/>
+        <line num="86" count="3" type="cond" truecount="2" falsecount="0"/>
         <line num="88" count="2" type="stmt"/>
-        <line num="95" count="2" type="stmt"/>
-        <line num="97" count="2" type="stmt"/>
-        <line num="98" count="1" type="stmt"/>
-        <line num="100" count="1" type="stmt"/>
+        <line num="90" count="2" type="stmt"/>
+        <line num="92" count="2" type="stmt"/>
+        <line num="99" count="2" type="stmt"/>
+        <line num="101" count="2" type="stmt"/>
+        <line num="102" count="1" type="stmt"/>
         <line num="104" count="1" type="stmt"/>
-        <line num="105" count="2" type="stmt"/>
-        <line num="106" count="2" type="stmt"/>
-        <line num="113" count="1" type="stmt"/>
-        <line num="115" count="1" type="stmt"/>
+        <line num="108" count="1" type="stmt"/>
+        <line num="109" count="2" type="stmt"/>
+        <line num="110" count="2" type="stmt"/>
+        <line num="117" count="1" type="stmt"/>
         <line num="119" count="1" type="stmt"/>
-        <line num="120" count="5" type="stmt"/>
-        <line num="121" count="5" type="stmt"/>
+        <line num="123" count="1" type="stmt"/>
         <line num="124" count="5" type="stmt"/>
         <line num="125" count="5" type="stmt"/>
-        <line num="128" count="4" type="stmt"/>
-        <line num="133" count="4" type="stmt"/>
-        <line num="135" count="3" type="stmt"/>
-        <line num="138" count="3" type="stmt"/>
-        <line num="139" count="3" type="cond" truecount="2" falsecount="0"/>
-        <line num="140" count="2" type="stmt"/>
-        <line num="147" count="2" type="stmt"/>
-        <line num="149" count="3" type="stmt"/>
-        <line num="153" count="1" type="stmt"/>
-        <line num="154" count="5" type="stmt"/>
-        <line num="155" count="5" type="stmt"/>
+        <line num="128" count="5" type="stmt"/>
+        <line num="129" count="5" type="stmt"/>
+        <line num="132" count="4" type="stmt"/>
+        <line num="137" count="4" type="stmt"/>
+        <line num="139" count="3" type="stmt"/>
+        <line num="142" count="3" type="stmt"/>
+        <line num="143" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="144" count="2" type="stmt"/>
+        <line num="151" count="2" type="stmt"/>
+        <line num="153" count="3" type="stmt"/>
+        <line num="157" count="1" type="stmt"/>
+        <line num="158" count="5" type="stmt"/>
         <line num="159" count="5" type="stmt"/>
-        <line num="160" count="4" type="cond" truecount="2" falsecount="0"/>
-        <line num="161" count="1" type="stmt"/>
-        <line num="163" count="3" type="stmt"/>
-        <line num="168" count="3" type="stmt"/>
-        <line num="169" count="2" type="cond" truecount="1" falsecount="1"/>
-        <line num="170" count="0" type="stmt"/>
-        <line num="173" count="2" type="stmt"/>
-        <line num="174" count="2" type="stmt"/>
-        <line num="175" count="1" type="stmt"/>
-        <line num="177" count="3" type="stmt"/>
+        <line num="163" count="5" type="stmt"/>
+        <line num="164" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="165" count="1" type="stmt"/>
+        <line num="167" count="3" type="stmt"/>
+        <line num="172" count="3" type="stmt"/>
+        <line num="173" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="174" count="0" type="stmt"/>
+        <line num="177" count="2" type="stmt"/>
+        <line num="178" count="2" type="stmt"/>
+        <line num="179" count="1" type="stmt"/>
+        <line num="181" count="3" type="stmt"/>
       </file>
-      <file name="comment.mjs" path="C:\Users\poffy\Desktop\Università\Magistrale\Software2\Participium\server\services\comment.mjs">
+      <file name="comment.mjs" path="C:\Users\prici\Desktop\SE2\Participium\server\services\comment.mjs">
         <metrics statements="25" coveredstatements="23" conditionals="6" coveredconditionals="4" methods="6" coveredmethods="6"/>
         <line num="4" count="1" type="stmt"/>
         <line num="6" count="1" type="stmt"/>
@@ -406,7 +406,7 @@
         <line num="143" count="2" type="stmt"/>
         <line num="144" count="1" type="stmt"/>
       </file>
-      <file name="company.mjs" path="C:\Users\poffy\Desktop\Università\Magistrale\Software2\Participium\server\services\company.mjs">
+      <file name="company.mjs" path="C:\Users\prici\Desktop\SE2\Participium\server\services\company.mjs">
         <metrics statements="6" coveredstatements="6" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
         <line num="4" count="1" type="stmt"/>
         <line num="6" count="1" type="stmt"/>
@@ -415,7 +415,7 @@
         <line num="17" count="3" type="stmt"/>
         <line num="19" count="2" type="stmt"/>
       </file>
-      <file name="office.mjs" path="C:\Users\poffy\Desktop\Università\Magistrale\Software2\Participium\server\services\office.mjs">
+      <file name="office.mjs" path="C:\Users\prici\Desktop\SE2\Participium\server\services\office.mjs">
         <metrics statements="6" coveredstatements="6" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
         <line num="4" count="1" type="stmt"/>
         <line num="6" count="1" type="stmt"/>
@@ -424,7 +424,7 @@
         <line num="18" count="3" type="stmt"/>
         <line num="19" count="2" type="stmt"/>
       </file>
-      <file name="operator.mjs" path="C:\Users\poffy\Desktop\Università\Magistrale\Software2\Participium\server\services\operator.mjs">
+      <file name="operator.mjs" path="C:\Users\prici\Desktop\SE2\Participium\server\services\operator.mjs">
         <metrics statements="58" coveredstatements="58" conditionals="20" coveredconditionals="19" methods="17" coveredmethods="17"/>
         <line num="5" count="1" type="stmt"/>
         <line num="7" count="1" type="stmt"/>
@@ -485,7 +485,7 @@
         <line num="147" count="1" type="stmt"/>
         <line num="149" count="1" type="stmt"/>
       </file>
-      <file name="report.mjs" path="C:\Users\poffy\Desktop\Università\Magistrale\Software2\Participium\server\services\report.mjs">
+      <file name="report.mjs" path="C:\Users\prici\Desktop\SE2\Participium\server\services\report.mjs">
         <metrics statements="80" coveredstatements="71" conditionals="55" coveredconditionals="29" methods="10" coveredmethods="10"/>
         <line num="5" count="1" type="stmt"/>
         <line num="7" count="1" type="stmt"/>
@@ -568,7 +568,7 @@
         <line num="440" count="1" type="stmt"/>
         <line num="443" count="1" type="stmt"/>
       </file>
-      <file name="role.mjs" path="C:\Users\poffy\Desktop\Università\Magistrale\Software2\Participium\server\services\role.mjs">
+      <file name="role.mjs" path="C:\Users\prici\Desktop\SE2\Participium\server\services\role.mjs">
         <metrics statements="6" coveredstatements="6" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
         <line num="4" count="1" type="stmt"/>
         <line num="6" count="1" type="stmt"/>
@@ -577,13 +577,13 @@
         <line num="17" count="3" type="stmt"/>
         <line num="18" count="2" type="stmt"/>
       </file>
-      <file name="utils.mjs" path="C:\Users\poffy\Desktop\Università\Magistrale\Software2\Participium\server\services\utils.mjs">
-        <metrics statements="5" coveredstatements="5" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+      <file name="utils.mjs" path="C:\Users\prici\Desktop\SE2\Participium\server\services\utils.mjs">
+        <metrics statements="5" coveredstatements="5" conditionals="2" coveredconditionals="2" methods="1" coveredmethods="1"/>
         <line num="4" count="1" type="stmt"/>
         <line num="6" count="1" type="stmt"/>
-        <line num="18" count="1" type="stmt"/>
-        <line num="19" count="4" type="stmt"/>
-        <line num="26" count="3" type="stmt"/>
+        <line num="20" count="1" type="stmt"/>
+        <line num="21" count="4" type="stmt"/>
+        <line num="28" count="3" type="stmt"/>
       </file>
     </package>
   </project>
