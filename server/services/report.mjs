@@ -354,6 +354,7 @@ export const getAllApprovedReports = async () => {
         r.latitude,
         r.longitude,
         r.anonymous,
+        r.rejection_reason,
         r.created_at,
         r.updated_at,
         r.citizen_id,
@@ -362,19 +363,27 @@ export const getAllApprovedReports = async () => {
         c.last_name as citizen_last_name,
         r.category_id,
         cat.name as category_name,
-        r.office_id,
-        off.name as office_name,
+        cat.office as office_name,
         r.status_id,
         s.name as status_name,
+        r.assigned_to_operator_id,
+        op.username as operator_username,
+        op.email as operator_email,
+        r.assigned_to_external_id,
+        ext_op.username as external_operator_username,
+        ext_op.email as external_operator_email,
+        ext_comp.name as external_company_name,
         COALESCE(json_agg(DISTINCT jsonb_build_object('photo_id', p.photo_id, 'image_url', p.image_url)) FILTER (WHERE p.photo_id IS NOT NULL), '[]') AS photos
       FROM reports r
       LEFT JOIN citizens c ON r.citizen_id = c.citizen_id
       LEFT JOIN categories cat ON r.category_id = cat.category_id
-      LEFT JOIN offices off ON r.office_id = off.office_id
       LEFT JOIN statuses s ON r.status_id = s.status_id
+      LEFT JOIN operators op ON r.assigned_to_operator_id = op.operator_id
+      LEFT JOIN operators ext_op ON r.assigned_to_external_id = ext_op.operator_id
+      LEFT JOIN companies ext_comp ON ext_op.company_id = ext_comp.company_id
       LEFT JOIN photos p ON r.report_id = p.report_id
       WHERE r.status_id IN (2, 3, 4)
-      GROUP BY r.report_id, c.citizen_id, c.username, c.first_name, c.last_name, cat.name, off.name, s.name
+      GROUP BY r.report_id, c.citizen_id, c.username, c.first_name, c.last_name, cat.name, cat.office, s.name, op.operator_id, op.username, op.email, ext_op.operator_id, ext_op.username, ext_op.email, ext_comp.company_id, ext_comp.name
       ORDER BY r.created_at DESC
     `;
 
@@ -386,16 +395,29 @@ export const getAllApprovedReports = async () => {
       latitude: row.latitude,
       longitude: row.longitude,
       anonymous: row.anonymous,
+      rejection_reason: row.rejection_reason,
       created_at: row.created_at,
       updated_at: row.updated_at,
       citizen: row.anonymous ? null : (row.citizen_id ? {
+        id: row.citizen_id,
         username: row.citizen_username,
         first_name: row.citizen_first_name,
         last_name: row.citizen_last_name
       } : null),
       category: { id: row.category_id, name: row.category_name },
-      office: { id: row.office_id, name: row.office_name },
+      office: row.office_name,
       status: { id: row.status_id, name: row.status_name },
+      assigned_to_operator: row.assigned_to_operator_id ? {
+        id: row.assigned_to_operator_id,
+        username: row.operator_username,
+        email: row.operator_email
+      } : null,
+      assigned_to_external: row.assigned_to_external_id ? {
+        id: row.assigned_to_external_id,
+        username: row.external_operator_username,
+        email: row.external_operator_email,
+        company: row.external_company_name
+      } : null,
       photos: row.photos || []
     }));
 };
