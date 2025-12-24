@@ -159,8 +159,6 @@ router.put("/reports/:id/mainteiner", async (req, res) => {
 // GET /reports/approved -> approved reports for map (public only to registered user)
 router.get("/reports/approved", async (req, res) => {
   try {
-    if (!req.isAuthenticated())
-      return res.status(401).json({ error: "Not authenticated" });
     const reports = await getAllApprovedReports();
   return res.status(200).json(reports);
   } catch (err) {
