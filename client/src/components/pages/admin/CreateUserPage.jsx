@@ -8,13 +8,13 @@ const CreateUserPage = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [offices, setOffices] = useState([]);
-  const [companies,setCompanies] = useState([]);
+  const [companies, setCompanies] = useState([]);
   const [roles, setRoles] = useState([]);
   const [newUser, setNewUser] = useState({
     username: "",
     email: "",
     password: "",
-    office_id: "",
+    office_ids: [],
     role: "",
     company: "",
   });
@@ -28,14 +28,14 @@ const CreateUserPage = () => {
                           newUser.role !== (externalMaintainerRole?.id?.toString() || "");
 
   // Return the list of visible offices
-  const filteredOffices = isRestrictedOffice? offices.filter(o => o.name === "Organization Office"): offices;
+  const filteredOffices = isRestrictedOffice 
+    ? offices.filter(o => o.name === "Organization Office") 
+    : offices;
 
   const participium = companies.find(c => c.name === "Participium");
   const filteredRoles = participium && newUser.company === participium.id.toString()
-  ? roles.filter(r => r.name !== "External maintainer")
-  : roles.filter(r => r.name === "External maintainer");
-
-
+    ? roles.filter(r => r.name !== "External maintainer")
+    : roles.filter(r => r.name === "External maintainer");
 
   useEffect(() => {
     loadOffices();
@@ -76,9 +76,27 @@ const CreateUserPage = () => {
     setNewUser((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleOfficeToggle = (officeId) => {
+    setNewUser((prev) => {
+      const isSelected = prev.office_ids.includes(officeId);
+      return {
+        ...prev,
+        office_ids: isSelected
+          ? prev.office_ids.filter(id => id !== officeId)
+          : [...prev.office_ids, officeId]
+      };
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (newUser.office_ids.length === 0) {
+      setError("Please select at least one office");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -105,8 +123,10 @@ const CreateUserPage = () => {
           </p>
 
           {error && (
-          <div className="alert alert-error">{typeof error === "string" ? error : error.msg || JSON.stringify(error)}</div>)}
-
+            <div className="alert alert-error">
+              {typeof error === "string" ? error : error.msg || JSON.stringify(error)}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="createuser-form">
             <div className="form-field">
@@ -150,7 +170,7 @@ const CreateUserPage = () => {
             </div>
 
             <div className="form-field">
-              <label htmlFor="role">Company</label>
+              <label htmlFor="company">Company</label>
               <select
                 id="company"
                 name="company"
@@ -198,26 +218,21 @@ const CreateUserPage = () => {
             </div>
 
             <div className="form-field">
-              <label htmlFor="office_id">Office</label>
-              <select
-                id="office_id"
-                name="office_id"
-                value={newUser.office_id}
-                onChange={handleInputChange}
-                required
-                className={!newUser.office_id ? "placeholder" : ""}
-              >
-                <option value="" disabled>
-                  Select operator office
-                </option>
+              <label>Offices</label>
+              <div className="checkbox-group">
                 {filteredOffices.map((office) => (
-                  <option key={office.id} value={office.id}>
-                    {office.name}
-                  </option>
+                  <label key={office.id} className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={newUser.office_ids.includes(office.id)}
+                      onChange={() => handleOfficeToggle(office.id)}
+                    />
+                    <span>{office.name}</span>
+                  </label>
                 ))}
-              </select>
+              </div>
               <small className="form-text">
-                Note: Offices cannot be modified after user creation.
+                Select one or more offices. Note: Offices cannot be modified after user creation.
               </small>
             </div>
 

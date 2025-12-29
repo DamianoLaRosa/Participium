@@ -30,14 +30,12 @@ export const insertReport = async ({ title, citizen_id, description, image_urls,
     }
 
     // Get office_id from category
-    const categorySql = 'SELECT office_id FROM categories WHERE category_id = $1';
+    const categorySql = 'SELECT category_id FROM categories WHERE category_id = $1';
     const categoryResult = await client.query(categorySql, [category_id]);
 
     if (categoryResult.rows.length === 0) {
       throw new Error('Invalid category_id');
     }
-
-    const office_id = categoryResult.rows[0].office_id;
 
     // Get "Pending Approval" status_id
     const statusSql = 'SELECT status_id FROM statuses WHERE name = $1';
@@ -45,11 +43,11 @@ export const insertReport = async ({ title, citizen_id, description, image_urls,
     const status_id = statusResult.rows[0].status_id;
 
     const reportSql = `
-      INSERT INTO reports (citizen_id, category_id, office_id, status_id, title, description, latitude, longitude, anonymous, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
-      RETURNING report_id, citizen_id, category_id, office_id, status_id, title, description, latitude, longitude, anonymous, created_at
+      INSERT INTO reports (citizen_id, category_id, status_id, title, description, latitude, longitude, anonymous, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+      RETURNING report_id, citizen_id, category_id, status_id, title, description, latitude, longitude, anonymous, created_at
     `;
-    const reportValues = [citizen_id, category_id, office_id, status_id, title, description, latitude, longitude, anonymous || false];
+    const reportValues = [citizen_id, category_id, status_id, title, description, latitude, longitude, anonymous || false];
     const reportResult = await client.query(reportSql, reportValues);
     const report = reportResult.rows[0];
 
@@ -94,8 +92,6 @@ export const getAllReports = async () => {
         c.last_name as citizen_last_name,
         r.category_id,
         cat.name as category_name,
-        r.office_id,
-        off.name as office_name,
         r.status_id,
         s.name as status_name,
         r.assigned_to_external_id,
@@ -105,12 +101,11 @@ export const getAllReports = async () => {
       FROM reports r
       LEFT JOIN citizens c ON r.citizen_id = c.citizen_id
       LEFT JOIN categories cat ON r.category_id = cat.category_id
-      LEFT JOIN offices off ON r.office_id = off.office_id
       LEFT JOIN statuses s ON r.status_id = s.status_id
       LEFT JOIN operators ext_op ON r.assigned_to_external_id = ext_op.operator_id
       LEFT JOIN companies ext_comp ON ext_op.company_id = ext_comp.company_id
       LEFT JOIN photos p ON r.report_id = p.report_id
-      GROUP BY r.report_id, c.citizen_id, c.username, c.first_name, c.last_name, cat.name, off.name, s.name, ext_op.username, ext_comp.name
+      GROUP BY r.report_id, c.citizen_id, c.username, c.first_name, c.last_name, cat.name, s.name, ext_op.username, ext_comp.name
       ORDER BY r.created_at DESC
     `;
 
@@ -162,8 +157,7 @@ export const getReportsAssigned = async (operator_id) => {
             c.last_name as citizen_last_name,
             r.category_id,
             cat.name as category_name,
-            r.office_id,
-            off.name as office_name,
+            cat.office as office_name,
             r.status_id,
             s.name as status_name,
             r.assigned_to_operator_id,
@@ -176,13 +170,12 @@ export const getReportsAssigned = async (operator_id) => {
           FROM reports r
           LEFT JOIN citizens c ON r.citizen_id = c.citizen_id
           LEFT JOIN categories cat ON r.category_id = cat.category_id
-          LEFT JOIN offices off ON r.office_id = off.office_id
           LEFT JOIN statuses s ON r.status_id = s.status_id
           LEFT JOIN operators op ON r.assigned_to_operator_id = op.operator_id
           LEFT JOIN companies comp ON op.company_id = comp.company_id
           LEFT JOIN photos p ON r.report_id = p.report_id
           WHERE r.assigned_to_operator_id = $1 OR r.assigned_to_external_id = $1
-          GROUP BY r.report_id, c.citizen_id, c.username, c.first_name, c.last_name, cat.name, off.name, s.name, op.operator_id, op.username, op.email, op.company_id, comp.company_id, comp.name
+          GROUP BY r.report_id, r.category_id, r.status_id, r.assigned_to_operator_id, r.assigned_to_external_id, c.citizen_id, c.username, c.first_name, c.last_name,  cat.category_id, cat.name, cat.office, s.status_id, s.name, op.operator_id, op.username, op.email, op.company_id, comp.company_id, comp.name
           ORDER BY r.updated_at DESC
         `;
 
@@ -276,8 +269,6 @@ export const updateReportStatus = async (report_id, status_id, rejection_reason 
             c.last_name as citizen_last_name,
             r.category_id,
             cat.name as category_name,
-            r.office_id,
-            off.name as office_name,
             r.status_id,
             s.name as status_name,
             r.assigned_to_operator_id,
@@ -291,14 +282,13 @@ export const updateReportStatus = async (report_id, status_id, rejection_reason 
           FROM reports r
           LEFT JOIN citizens c ON r.citizen_id = c.citizen_id
           LEFT JOIN categories cat ON r.category_id = cat.category_id
-          LEFT JOIN offices off ON r.office_id = off.office_id
           LEFT JOIN statuses s ON r.status_id = s.status_id
           LEFT JOIN operators op ON r.assigned_to_operator_id = op.operator_id
           LEFT JOIN operators ext_op ON r.assigned_to_external_id = ext_op.operator_id
           LEFT JOIN companies comp ON ext_op.company_id = comp.company_id
           LEFT JOIN photos p ON r.report_id = p.report_id
           WHERE r.report_id = $1
-          GROUP BY r.report_id, c.citizen_id, c.username, c.first_name, c.last_name, cat.name, off.name, s.name, op.operator_id, op.username, op.email, ext_op.operator_id, ext_op.username, ext_op.email, comp.company_id, comp.name
+          GROUP BY r.report_id, c.citizen_id, c.username, c.first_name, c.last_name, cat.name, s.name, op.operator_id, op.username, op.email, ext_op.operator_id, ext_op.username, ext_op.email, comp.company_id, comp.name
         `;
 
     const selectResult = await client.query(selectSql, [report_id]);
@@ -323,7 +313,6 @@ export const updateReportStatus = async (report_id, status_id, rejection_reason 
         last_name: row.citizen_last_name
       } : null,
       category: { id: row.category_id, name: row.category_name },
-      office: { id: row.office_id, name: row.office_name },
       status: { id: row.status_id, name: row.status_name },
       assigned_to_operator: row.assigned_to_operator_id ? {
         id: row.assigned_to_operator_id,

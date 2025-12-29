@@ -380,7 +380,7 @@ function InsertReportForm({
               )}
             </div>
 
-            <div className={styles.formGroup} style={{ display: "none" }}>
+            <div className={styles.formGroup}>
               <label className={styles.checkboxLabel}>
                 <input
                   type="checkbox"
@@ -456,9 +456,9 @@ function ReportSummary({ report, user, message, categories }) {
               {categories.find((cat) => cat.id === report.category_id)?.name ||
                 "Unknown"}
             </p>
-            {/*<p>
+            <p>
             <strong>Anonymous:</strong> {report.anonymous ? "Yes" : "No"}
-          </p>*/}
+          </p>
             <p>
               <strong>Images:</strong> {report.images.length} file(s) attached
             </p>

@@ -36,7 +36,7 @@ router.get('/admin', async (req, res) => {
 // if I am relation officer (id report office) -> get list operators in that office
 // if I am technical officer (id report office) -> get list external maintainer in that office
 router.get('/operators', [
-  check('office_id').isInt().withMessage('Office ID must be an integer')
+  check('category_id').isInt().withMessage('Category ID must be an integer')
   ] , async (req, res) => {
 
   if (!req.isAuthenticated()) {
@@ -49,16 +49,16 @@ router.get('/operators', [
   }
 
   try {
-    const { office_id } = req.query;
+    const { category_id } = req.query;
 
     if (req.user.role === 'Municipal public relations officer') {
-      const operators = await getTechnicalOfficersByOffice( office_id );
+      const operators = await getTechnicalOfficersByOffice( category_id );
       return res.status(200).json(operators);
     }
 
     if (req.user.role === 'Technical office staff member') {
       // do the same thing for assigning external maintainer
-      const maintainers = await getMainteinerByOffice( office_id );
+      const maintainers = await getMainteinerByOffice( category_id );
       return res.status(200).json(maintainers);
     }
 

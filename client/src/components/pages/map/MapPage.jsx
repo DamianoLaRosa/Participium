@@ -517,7 +517,7 @@ function ReportPopup({ report, onViewDetails }) {
         <strong>Status:</strong> {report.status.name}
       </p>
       <p className={styles.reportPopupInfo}>
-        <strong>Reported by:</strong> {report.citizen.username}
+        <strong>Reported by:</strong> {report.citizen?.username || "Anonymous"}
       </p>
       <button className={styles.reportPopupButton} onClick={onViewDetails}>
         Details
@@ -669,7 +669,7 @@ function ReportDetailsModal({ report, onClose }) {
 
             <div className={styles.detailRow}>
               <strong>Reported by:</strong>
-              <p>{report.citizen.username || "Anonymous"}</p>
+              <p>{report.citizen?.username || "Anonymous"}</p>
             </div>
 
             <div className={styles.detailRow}>

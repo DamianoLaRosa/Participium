@@ -14,7 +14,7 @@ const pool = new Pool({
 
 //returns all default offices 
 export const getAllOffices = async () => {
-    const sql = 'SELECT * FROM offices';
+    const sql = 'SELECT * FROM categories';
     const result = await pool.query(sql);
-    return result.rows.map((e) => { return { id: e.office_id, name: e.name }; });
+    return result.rows.map((e) => { return { id: e.category_id, name: e.name }; });
 };

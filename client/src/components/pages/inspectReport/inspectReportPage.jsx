@@ -70,7 +70,7 @@ function InspectReportPage() {
   const loadOfficers = async () => {
     try {
       const officersData = await API.getOperatorsByOffice(
-        selectedReport.office.id
+        selectedReport.category.id
       );
       setOfficers(officersData);
       if (selectedReport.assigned_to_external) {

@@ -31,9 +31,9 @@ export const getAllPendingReports = async () => {
 };
 
 // Get operators by office ID
-export const getOperatorsByOffice = async (office_id) => {
+export const getOperatorsByOffice = async (category_id) => {
   return await axiosInstance.get("/api/operators", {
-    params: { office_id: office_id }, // Axios lo trasforma in ?officeId=9
+    params: { category_id: category_id }, // Axios lo trasforma in ?categoryId=9
   });
 };
 

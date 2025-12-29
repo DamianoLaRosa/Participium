@@ -64,23 +64,29 @@ export const getUser = async (username, password) => {
 };
 
 //get all mainteiners by office_id
-export const getMainteinerByOffice = async ( office_id ) => {
-  const sql = `SELECT o.operator_id, o.username, c.name AS company_name
-    FROM operators o LEFT JOIN companies c ON o.company_id = c.company_id
+export const getMainteinerByOffice = async ( category_id ) => {
+  const sql = `SELECT DISTINCT o.operator_id, o.username, c.name AS company_name
+    FROM operators o 
+    LEFT JOIN companies c ON o.company_id = c.company_id
+    LEFT JOIN operator_categories oc ON o.operator_id = oc.operator_id
     WHERE o.role_id = (SELECT role_id FROM roles WHERE name = 'External maintainer') 
-    AND o.office_id = $1`;  
-  const result = await pool.query(sql,[office_id]);
+    AND oc.category_id = $1`;
+  const result = await pool.query(sql,[category_id]);
 
   return result.rows.map(e => ({ id: e.operator_id, username: e.username, company: e.company_name }));
 };
 
 //get all technical officers by relation officer's office_id
-export const getTechnicalOfficersByOffice = async (officeId) => {
-  const sqlGetTechnicalOfficers = 'SELECT * FROM operators WHERE office_id = $1 AND role_id = (SELECT role_id FROM roles WHERE name = \'Technical office staff member\')';
-  const resultOfficers = await pool.query(sqlGetTechnicalOfficers, [officeId]);
+export const getTechnicalOfficersByOffice = async (category_id) => {
+  const sqlGetTechnicalOfficers = `SELECT DISTINCT o.operator_id, o.email, o.username
+    FROM operators o
+    LEFT JOIN operator_categories oc ON o.operator_id = oc.operator_id
+    WHERE oc.category_id = $1 
+    AND o.role_id = (SELECT role_id FROM roles WHERE name = 'Technical office staff member')`;
+  const resultOfficers = await pool.query(sqlGetTechnicalOfficers, [category_id]);
 
   return resultOfficers.rows
-    .map((e) => ({ id: e.operator_id, email: e.email, username: e.username,office_id: e.office_id }));
+    .map((e) => ({ id: e.operator_id, email: e.email, username: e.username}));
 }
 
 //given username (email) and password does the login -> searches only in the onperators tables
@@ -110,10 +116,16 @@ export const getOperators = async (username, password) => {
 //returns all operators with its data 
 export const getAllOperators = async () => {
     const sql = `
-      SELECT o.operator_id, o.email, o.username, o.office_id, off.name as office_name, r.name as role_name
+      SELECT o.operator_id, o.email, o.username, r.name as role_name, 
+      COALESCE(
+          json_agg(DISTINCT c.office) FILTER (WHERE c.office IS NOT NULL),
+          '[]'
+        ) as offices
       FROM operators o
-      LEFT JOIN offices off ON o.office_id = off.office_id
       LEFT JOIN roles r ON o.role_id = r.role_id
+      LEFT JOIN operator_categories oc ON o.operator_id = oc.operator_id
+      LEFT JOIN categories c ON oc.category_id = c.category_id
+      GROUP BY o.operator_id, o.email, o.username, r.name
       ORDER BY o.operator_id DESC
     `;
     const result = await pool.query(sql);
@@ -121,9 +133,8 @@ export const getAllOperators = async () => {
       id: row.operator_id,
       email: row.email,
       username: row.username,
-      office_id: row.office_id,
-      office_name: row.office_name,
-      role: row.role_name
+      role: row.role_name,
+      offices: row.offices
     }));
 };
 
