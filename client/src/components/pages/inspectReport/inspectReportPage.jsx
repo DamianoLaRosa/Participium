@@ -36,6 +36,7 @@ function InspectReportPage() {
         const user = await API.getUserInfo();
         setLoggedUser(user);
         if (selectedReport) {
+          //console.log("Selected Report:", selectedReport);
           loadOfficers();
           loadAddress();
         }
@@ -237,9 +238,9 @@ function InspectReportPage() {
           </div>
 
           <div className={styles.row}>
-            <span className={styles.label}>Citizen</span>
+            <span className={styles.label}>Citizen </span>
             <span className={styles.value}>
-              {selectedReport.citizen?.username || "Anonymous"}
+              {!selectedReport.anonymous? selectedReport.citizen.username : "Anonymous"}
             </span>
           </div>
 
