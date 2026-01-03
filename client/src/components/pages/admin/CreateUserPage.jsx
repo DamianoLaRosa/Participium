@@ -14,9 +14,9 @@ const CreateUserPage = () => {
     username: "",
     email: "",
     password: "",
-    office_id: [], //array for the offices ids
-    role: "", // external mainteiner
-    company: "", // participium
+    office_id: [],
+    role: "",
+    company: "",
   });
 
   // Find id of the restricted roles
@@ -30,7 +30,7 @@ const CreateUserPage = () => {
   // Return the list of visible offices
   const filteredOffices = isRestrictedOffice 
     ? offices.filter(o => o.office === "Organization Office") 
-    : offices.filter(o => o.office !== "Organization Office") ;
+    : offices.filter(o => o.office !== "Organization Office");
 
   const participium = companies.find(c => c.name === "Participium");
   const filteredRoles = participium && newUser.company === participium.id.toString()
@@ -43,21 +43,49 @@ const CreateUserPage = () => {
     loadCompanies();
   }, []);
 
+  // Effect per gestire il cambio di company
+  useEffect(() => {
+    if (newUser.company) {
+      loadCompanyCategories(newUser.company);
+      // Resetta role e offices quando cambia la company
+      setNewUser(prev => ({ 
+        ...prev, 
+        role: "",
+        office_id: [] 
+      }));
+    } else {
+      loadOffices();
+      setNewUser(prev => ({ 
+        ...prev, 
+        role: "",
+        office_id: [] 
+      }));
+    }
+  }, [newUser.company]);
+
+  // Effect per gestire il cambio di role
+  useEffect(() => {
+    // Resetta offices quando cambia il role
+    setNewUser(prev => ({ ...prev, office_id: [] }));
+  }, [newUser.role]);
+
   const loadOffices = async () => {
     try {
       const data = await API.getAllCategories();
-      setOffices(data);
+      setOffices(Array.isArray(data) ? data : []);
     } catch (err) {
       setError("Failed to load offices");
+      setOffices([]);
     }
   };
 
   const loadCompanies = async () => {
     try {
       const data = await API.getAllCompanies();
-      setCompanies(data);
+      setCompanies(Array.isArray(data) ? data : []);
     } catch (err) {
       setError("Failed to load companies");
+      setCompanies([]);
     }
   };
 
@@ -68,27 +96,20 @@ const CreateUserPage = () => {
       setRoles(filteredRoles);
     } catch (err) {
       setError("Failed to load roles");
+      setRoles([]);
     }
   };
-
-  useEffect(() => {
-    if (newUser.company) {
-      loadCompanyCategories(newUser.company);
-    } else {
-      loadOffices();
-      setNewUser(prev => ({ ...prev, office_id: [] }));
-    }
-  }, [newUser.company]);
 
   const loadCompanyCategories = async (companyId) => {
     setLoading(true);
     try {
       const data = await API.getCompanyCategories(companyId);
-      setOffices(data);
+      setOffices(Array.isArray(data) ? data : []);
+      setError("");
     } catch (err) {
       setError("Failed to load categories for this company");
-      loadOffices();
-    }finally {
+      setOffices([]);
+    } finally {
       setLoading(false);
     }
   };
@@ -113,6 +134,32 @@ const CreateUserPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    // Validazione: tutti i campi devono essere compilati
+    if (!newUser.username.trim()) {
+      setError("Username is required");
+      return;
+    }
+
+    if (!newUser.email.trim()) {
+      setError("Email is required");
+      return;
+    }
+
+    if (!newUser.password || newUser.password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+    if (!newUser.company) {
+      setError("Please select a company");
+      return;
+    }
+
+    if (!newUser.role) {
+      setError("Please select a role");
+      return;
+    }
 
     if (newUser.office_id.length === 0) {
       setError("Please select at least one office");
@@ -152,7 +199,7 @@ const CreateUserPage = () => {
 
           <form onSubmit={handleSubmit} className="createuser-form">
             <div className="form-field">
-              <label htmlFor="username">Username</label>
+              <label htmlFor="username">Username *</label>
               <input
                 type="text"
                 id="username"
@@ -165,7 +212,7 @@ const CreateUserPage = () => {
             </div>
 
             <div className="form-field">
-              <label htmlFor="email">Email</label>
+              <label htmlFor="email">Email *</label>
               <input
                 type="email"
                 id="email"
@@ -178,7 +225,7 @@ const CreateUserPage = () => {
             </div>
 
             <div className="form-field">
-              <label htmlFor="password">Password</label>
+              <label htmlFor="password">Password *</label>
               <input
                 type="password"
                 id="password"
@@ -192,7 +239,7 @@ const CreateUserPage = () => {
             </div>
 
             <div className="form-field">
-              <label htmlFor="company">Company</label>
+              <label htmlFor="company">Company *</label>
               <select
                 id="company"
                 name="company"
@@ -211,22 +258,23 @@ const CreateUserPage = () => {
                 ))}
               </select>
               <small className="form-text">
-                Note: Companies cannot be modified after user creation.
+                Note: Changing company will reset role and offices selections.
               </small>
             </div>
 
             <div className="form-field">
-              <label htmlFor="role">Role</label>
+              <label htmlFor="role">Role *</label>
               <select
                 id="role"
                 name="role"
                 value={newUser.role}
                 onChange={handleInputChange}
                 required
+                disabled={!newUser.company}
                 className={!newUser.role ? "placeholder" : ""}
               >
                 <option value="" disabled>
-                  Select operator role
+                  {!newUser.company ? "Select a company first" : "Select operator role"}
                 </option>
                 {filteredRoles.map((role) => (
                   <option key={role.id} value={role.id}>
@@ -235,26 +283,32 @@ const CreateUserPage = () => {
                 ))}
               </select>
               <small className="form-text">
-                Note: Roles cannot be modified after user creation.
+                Note: Changing role will reset offices selection.
               </small>
             </div>
 
             <div className="form-field">
-              <label>Offices</label>
-              <div className="checkbox-group">
-                {filteredOffices.sort((a, b) => a.id - b.id).map((office) => (
-                  <label key={office.id} className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={newUser.office_id.includes(office.id)}
-                      onChange={() => handleOfficeToggle(office.id)}
-                    />
-                    <span>{office.name}</span>
-                  </label>
-                ))}
-              </div>
+              <label>Offices *</label>
+              {!newUser.role ? (
+                <p className="form-text text-muted">Please select a role first</p>
+              ) : filteredOffices.length === 0 ? (
+                <p className="form-text text-muted">No offices available for this selection</p>
+              ) : (
+                <div className="checkbox-group">
+                  {filteredOffices.sort((a, b) => a.id - b.id).map((office) => (
+                    <label key={office.id} className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={newUser.office_id.includes(office.id)}
+                        onChange={() => handleOfficeToggle(office.id)}
+                      />
+                      <span>{office.name}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
               <small className="form-text">
-                Select one or more offices. Note: Offices cannot be modified after user creation.
+                Select one or more offices. Selected: {newUser.office_id.length}
               </small>
             </div>
 
