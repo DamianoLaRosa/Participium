@@ -131,7 +131,7 @@ export const generateEmailVerificationCode = async (userId) => {
     // Insert new citizen-code pair using DB-side UTC timestamps
     const sql = `
       INSERT INTO verification_codes (citizen_id, code, created_at, expires_at)
-      VALUES ($1, $2, NOW() AT TIME ZONE 'UTC', (NOW() AT TIME ZONE 'UTC') + INTERVAL '30 minutes')
+      VALUES ($1, $2, NOW(), NOW() + INTERVAL '30 minutes')
       RETURNING expires_at;
     `;
     const { rows } = await pool.query(sql, [userId, code]);
@@ -144,7 +144,7 @@ export const generateEmailVerificationCode = async (userId) => {
       await sendEmail(
         userInfo.email,
         "Your Email Verification Code",
-        `Your verification code is: ${code}`
+        `Your verification code is: ${code}, it will expire in 30 minutes`
       );
     }
 
@@ -177,6 +177,22 @@ export const verifyEmailCode = async (userId, code) => {
     const deleteSql = "DELETE FROM verification_codes WHERE citizen_id = $1";
     await pool.query(deleteSql, [userId]);
     return true;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getActiveVerificationToken = async (userId) => {
+  try {
+    const sql = `
+      SELECT  expires_at FROM verification_codes
+      WHERE citizen_id = $1 AND expires_at > NOW()
+    `;
+    const result = await pool.query(sql, [userId]);
+    if (result.rows.length === 0) {
+      return null;
+    }
+    return result.rows[0];
   } catch (err) {
     throw err;
   }

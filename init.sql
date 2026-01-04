@@ -17,8 +17,8 @@ CREATE TABLE verification_codes (
     code_id SERIAL PRIMARY KEY,
     citizen_id INT REFERENCES citizens(citizen_id),
     code VARCHAR(10) NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    expires_at TIMESTAMP NOT NULL
+    created_at TIMESTAMPTZ DEFAULT NOW(),   -- timestamp with timezone
+    expires_at TIMESTAMPTZ NOT NULL         -- timestamp with timezone
 );
 
 CREATE TABLE categories (

@@ -29,6 +29,7 @@ import {
   updateCitizenProfile,
   requestVerificationCode,
   verifyEmail,
+  checkValidateToken,
 } from "./citizen.js";
 import {
   getMessages,
@@ -79,6 +80,7 @@ const API = {
   updateCitizenProfile,
   requestVerificationCode,
   verifyEmail,
+  checkValidateToken,
 
   //comments methods
   getMessages,
