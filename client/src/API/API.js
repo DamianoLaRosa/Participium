@@ -25,7 +25,7 @@ import {
   updateReportStatusByMaintainer,
 } from "./maintainer.js";
 import { getImageUploadUrl, uploadImageToSignedUrl } from "./image.js";
-import { getAllReportsForTechOfficer } from "./techofficer.js";
+import { getAllReportsForTechOfficer, getMyCategories } from "./techofficer.js";
 import {
   getCitizenProfile,
   updateCitizenProfile,
@@ -78,6 +78,7 @@ const API = {
 
   // Tech Officer methods
   getAllReportsForTechOfficer,
+  getMyCategories,
 
   // Citizen methods
   getCitizenProfile,

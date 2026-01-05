@@ -201,7 +201,7 @@ const HomePage = ({ user }) => {
       <section className="cta-section">
         <div className="container">
           <h2>Join Us</h2>
-          <p>Help improve the city of Turin by reporting the problems you encounter daily</p>
+          <p className="hero-subtitle">Help improve the city of Turin by reporting the problems you encounter daily</p>
           {!user && (
             <button onClick={() => navigate('/signup')} className="btn btn-cta">
               Get Started - Register for Free

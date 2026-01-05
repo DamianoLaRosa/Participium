@@ -41,3 +41,22 @@ export const getCompanyCategories = async (companyId) => {
       office: e.office
     }));
 };
+
+// Get all category IDs associated with an operator
+export const getCategoriesByOperator = async (operator_id) => {
+  const sql = `
+    SELECT category_id 
+    FROM operator_categories 
+    WHERE operator_id = $1
+    ORDER BY category_id
+  `;
+  
+  const result = await pool.query(sql, [operator_id]);
+  
+  // Se non ci sono categorie associate, ritorna [1]
+  if (result.rows.length === 0) {
+    return [1];
+  }
+  
+  return result.rows.map(row => row.category_id);
+};

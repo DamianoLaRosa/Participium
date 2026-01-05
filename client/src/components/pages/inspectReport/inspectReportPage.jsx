@@ -358,7 +358,7 @@ function InspectReportPage() {
           <div className={`${styles.section} ${styles.sectionNoBorder}`}>
             <h3 className={styles.sectionTitle}>Assign External Maintainer</h3>
 
-            {/* Manual assignment */}
+            {/* 
             <select
               value={selectedMaintainer || ""}
               onChange={(e) => setSelectedMaintainer(Number(e.target.value))}
@@ -370,24 +370,24 @@ function InspectReportPage() {
                   {maintainer.username} — {maintainer.company}
                 </option>
               ))}
-            </select>
+            </select> 
 
-            {/* Buttons side by side */}
             <div className={styles.maintainerButtons}>
+              
               <button
                 className={styles.primaryButton}
                 onClick={handleAssignMaintainer}
                 disabled={!selectedMaintainer}
               >
                 Assign Selected
-              </button>
+              </button> */}
               <button
                 className={styles.successButton}
                 onClick={handleAutoAssignMaintainer}
               >
-                Auto-Assign
+                Assign automatic External Maintainer
               </button>
-            </div>
+            
           </div>
         )}
 

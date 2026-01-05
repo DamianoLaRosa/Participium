@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAllCategories, getCompanyCategories } from '../dao.mjs';
+import { getAllCategories, getCompanyCategories, getCategoriesByOperator } from '../dao.mjs';
 
 const router = Router();
 
@@ -33,6 +33,24 @@ router.get('/admin/companies/:companyId/categories', async (req, res) => {
   } catch (err) {
     console.error(err); 
     res.status(503).json({ error: 'Database error' });
+  }
+});
+
+// GET /api/operators/my-categories -> Get categories for authenticated operator
+router.get('/operators/my-categories', async (req, res) => {
+  try {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const operator_id = req.user.id;
+    const categories = await getCategoriesByOperator(operator_id);
+    
+    return res.status(200).json({ categories });
+    
+  } catch (err) {
+    console.error('Error fetching operator categories:', err);
+    return res.status(503).json({ error: 'Database error during category fetch' });
   }
 });
 
