@@ -391,8 +391,8 @@ function InspectReportPage() {
           </div>
         )}
 
-        {/* External Maintainer Status Update */}
-        {isExternalMaintainer && selectedReport.status.id !== 6 && (
+        {/* External Maintainer and Technical Officer Status Update */}
+        { (isTechnicalOfficer || isExternalMaintainer) && selectedReport.status.id !== 6 && (
           <div className={`${styles.section} ${styles.sectionNoBorder}`}>
             <h3 className={styles.sectionTitle}>Update Status</h3>
             <div className={styles.actionButtons}>
