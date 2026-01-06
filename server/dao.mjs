@@ -5,3 +5,5 @@ export * from "./services/operator.mjs";
 export * from "./services/report.mjs";
 export * from "./services/company.mjs";
 export * from "./services/comment.mjs";
+export * from "./services/notification.mjs";
+export * from "./services/chat.mjs";

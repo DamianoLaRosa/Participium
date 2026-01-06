@@ -1,6 +1,6 @@
-import { Router } from 'express';
-import { check } from 'express-validator';
-import { 
+import { Router } from "express";
+import { check } from "express-validator";
+import {
   insertReport,
   getAllReports,
   updateReportStatus,
@@ -13,50 +13,92 @@ import {
   addMessage,
   getMessages,
   autoAssignMaintainer,
-  autoAssignTechnicalOfficer
- } from '../dao.mjs';
+  autoAssignTechnicalOfficer,
+  createNotification,
+  addSystemMessage,
+} from "../dao.mjs";
+import { getIO } from "../socket.mjs";
 
 const router = Router();
 
-//POST /reports
-router.post('/reports',[
-  check('title').exists({ checkFalsy: true }).withMessage('Title is required')
-    .isLength({ min: 3 }).withMessage('Title must be at least 3 characters long'),
-  check('description').exists({ checkFalsy: true }).withMessage('Description is required')
-    .isLength({ min: 10 }).withMessage('Description must be at least 10 characters long'),
-  check('image_urls').isArray({ min: 1, max: 3 }).withMessage('You must provide between 1 and 3 images'),
-  check('latitude').exists().withMessage('Latitude is required')
-    .isFloat().withMessage('Latitude must be a number'),
-  check('longitude').exists().withMessage('Longitude is required')
-    .isFloat().withMessage('Longitude must be a number'),
-  check('category_id').exists().withMessage('Category ID is required')
-    .isInt().withMessage('Category ID must be an integer'),
-  check('anonymous').exists().withMessage('Anonymous is required')
-    .isBoolean().withMessage('Anonymous must be boolean'),
-], async (req, res) => {
+// Status change messages for notifications
+const STATUS_MESSAGES = {
+  2: "Your report has been assigned to a technical officer",
+  3: "Work on your report is now in progress",
+  4: "Your report has been temporarily suspended",
+  5: "Your report was rejected",
+  6: "Great news! Your report has been resolved!",
+};
 
-  if (!req.isAuthenticated() || req.user.role !== 'user'  ) { 
-    return res.status(401).json({ error: 'Not authenticated or forbidden' });
+// POST /reports
+router.post(
+  "/reports",
+  [
+    check("title")
+      .exists({ checkFalsy: true })
+      .withMessage("Title is required")
+      .isLength({ min: 3 })
+      .withMessage("Title must be at least 3 characters long"),
+    check("description")
+      .exists({ checkFalsy: true })
+      .withMessage("Description is required")
+      .isLength({ min: 10 })
+      .withMessage("Description must be at least 10 characters long"),
+    check("image_urls")
+      .isArray({ min: 1, max: 3 })
+      .withMessage("You must provide between 1 and 3 images"),
+    check("latitude")
+      .exists()
+      .withMessage("Latitude is required")
+      .isFloat()
+      .withMessage("Latitude must be a number"),
+    check("longitude")
+      .exists()
+      .withMessage("Longitude is required")
+      .isFloat()
+      .withMessage("Longitude must be a number"),
+    check("category_id")
+      .exists()
+      .withMessage("Category ID is required")
+      .isInt()
+      .withMessage("Category ID must be an integer"),
+    check("anonymous")
+      .exists()
+      .withMessage("Anonymous is required")
+      .isBoolean()
+      .withMessage("Anonymous must be boolean"),
+  ],
+  async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "user") {
+      return res.status(401).json({ error: "Not authenticated or forbidden" });
+    }
+
+    try {
+      const {
+        title,
+        description,
+        image_urls,
+        latitude,
+        longitude,
+        category_id,
+        anonymous,
+      } = req.body;
+      const report = await insertReport({
+        title,
+        citizen_id: req.user.id,
+        description,
+        image_urls,
+        latitude,
+        longitude,
+        category_id,
+        anonymous,
+      });
+      return res.status(201).json(report);
+    } catch (err) {
+      return res.status(503).json({ error: err.message });
+    }
   }
-
-
-  try {
-    const { title, description, image_urls, latitude, longitude, category_id, anonymous } = req.body;
-    const report = await insertReport({ 
-      title, 
-      citizen_id: req.user.id, 
-      description, 
-      image_urls, 
-      latitude, 
-      longitude,
-      category_id,
-      anonymous 
-    });
-  return res.status(201).json(report);
-  } catch (err) {
-  return res.status(503).json({ error: err.message});
-  }
-});
+);
 
 // GET /reports -> all reports all statuses (requires rel.officer/admin)
 router.get("/reports", async (req, res) => {
@@ -70,13 +112,15 @@ router.get("/reports", async (req, res) => {
       return res.status(403).json({ error: "Forbidden" });
 
     const reports = await getAllReports();
-  return res.status(200).json(reports);
+    return res.status(200).json(reports);
   } catch (err) {
-  return res.status(503).json({ error: "Database error during report retrieval" });
+    return res
+      .status(503)
+      .json({ error: "Database error during report retrieval" });
   }
 });
 
-// PUT /reports/:id/status -> update status of a report without assigning (requires rel.officer/admin/technical staff/external maintainer)
+// PUT /reports/:id/status -> update status of a report
 router.put("/reports/:id/status", async (req, res) => {
   try {
     if (!req.isAuthenticated())
@@ -99,13 +143,40 @@ router.put("/reports/:id/status", async (req, res) => {
     );
     if (!updated) return res.status(404).json({ error: "Report not found" });
 
-  return res.status(200).json(updated);
+    // Send notification to citizen on status change and add system message to chat
+    if (updated.citizen?.id && STATUS_MESSAGES[status_id]) {
+      let message = STATUS_MESSAGES[status_id];
+      if (status_id === 5 && rejection_reason) {
+        message = `Your report was rejected: ${rejection_reason}`;
+      }
+      await createNotification(updated.citizen.id, reportId, message, getIO());
+      
+      // Add system message to chat (for status updates visible in chat history)
+      const systemMessage = await addSystemMessage(reportId, `📋 ${message}`);
+      
+      // Emit system message via WebSocket to report room
+      const io = getIO();
+      if (io) {
+        io.to(`report:${reportId}`).emit("new_message", {
+          id: systemMessage.message_id,
+          report_id: systemMessage.report_id,
+          sender_type: systemMessage.sender_type,
+          sender_id: systemMessage.sender_id,
+          content: systemMessage.content,
+          sent_at: systemMessage.sent_at,
+        });
+      }
+    }
+
+    return res.status(200).json(updated);
   } catch (err) {
-  return res.status(503).json({ error: "Database error during status update" });
+    return res
+      .status(503)
+      .json({ error: "Database error during status update" });
   }
 });
 
-//PUT /reports/:id/operator -> set operator for a report (requires rel.officer/admin)
+// PUT /reports/:id/operator -> set operator for a report (requires rel.officer/admin)
 router.put("/reports/:id/operator", async (req, res) => {
   try {
     if (!req.isAuthenticated())
@@ -123,44 +194,43 @@ router.put("/reports/:id/operator", async (req, res) => {
       return res.status(422).json({ error: "operatorId must be a number" });
     const updated = await setOperatorByReport(reportId, operatorId);
     if (!updated) return res.status(404).json({ error: "Report not found" });
-  return res.sendStatus(200);
+    return res.sendStatus(200);
   } catch (err) {
-    res
-      .status(503)
-      .json({ error: "Database error during operator assignment" });
+    res.status(503).json({ error: "Database error during operator assignment" });
   }
 });
 
-// POST /api/reports/:id/auto-assign-officer -> Auto-assign technical officer to report (requires relation officer/admin)
+// POST /api/reports/:id/auto-assign-officer -> Auto-assign technical officer
 router.post("/reports/:id/auto-assign-officer", async (req, res) => {
   try {
     if (!req.isAuthenticated())
       return res.status(401).json({ error: "Not authenticated" });
-    
+
     if (
       req.user.role !== "Municipal public relations officer" &&
       req.user.role !== "Admin"
     )
       return res.status(403).json({ error: "Forbidden" });
-    
+
     const reportId = Number.parseInt(req.params.id, 10);
     if (Number.isNaN(reportId))
       return res.status(422).json({ error: "Invalid report id" });
 
     const result = await autoAssignTechnicalOfficer(reportId);
-    
+
     return res.status(200).json({
-        id: result.assigned_officer.operator_id,
-        username: result.assigned_officer.username,
-        email: result.assigned_officer.email
+      id: result.assigned_officer.operator_id,
+      username: result.assigned_officer.username,
+      email: result.assigned_officer.email,
     });
-    
-  } catch (err) {  
-    return res.status(503).json({ error: "Database error during officer assignment" });
+  } catch (err) {
+    return res
+      .status(503)
+      .json({ error: "Database error during officer assignment" });
   }
 });
 
-//PUT /reports/:id/mainteiner -> set mainteiner for a report (requires tec.officer/admin)
+// PUT /reports/:id/mainteiner -> set mainteiner for a report (requires tec.officer/admin)
 router.put("/reports/:id/mainteiner", async (req, res) => {
   try {
     if (!req.isAuthenticated())
@@ -179,54 +249,55 @@ router.put("/reports/:id/mainteiner", async (req, res) => {
       return res.status(422).json({ error: "operatorId must be a number" });
     const updated = await setMainteinerByReport(reportId, operatorId);
     if (!updated) return res.status(404).json({ error: "Report not found" });
-  return res.sendStatus(200);
+    return res.sendStatus(200);
   } catch (err) {
-    res
-      .status(503)
-      .json({ error: "Database error during operator assignment" });
+    res.status(503).json({ error: "Database error during operator assignment" });
   }
 });
 
-// POST /api/reports/:id/auto-assign-maintainer -> Auto-assign maintainer to report (requires tech officer/admin)
+// POST /api/reports/:id/auto-assign-maintainer -> Auto-assign maintainer
 router.post("/reports/:id/auto-assign-maintainer", async (req, res) => {
   try {
     if (!req.isAuthenticated())
       return res.status(401).json({ error: "Not authenticated" });
-    
+
     if (
       req.user.role !== "Technical office staff member" &&
       req.user.role !== "Admin"
     )
       return res.status(403).json({ error: "Forbidden" });
-    
+
     const reportId = Number.parseInt(req.params.id, 10);
     if (Number.isNaN(reportId))
       return res.status(422).json({ error: "Invalid report id" });
 
     const result = await autoAssignMaintainer(reportId);
-    
+
     return res.status(200).json({
-        id: result.assigned_maintainer.operator_id,
-        username: result.assigned_maintainer.username,
-        company: result.assigned_maintainer.company_name
+      id: result.assigned_maintainer.operator_id,
+      username: result.assigned_maintainer.username,
+      company: result.assigned_maintainer.company_name,
     });
-    
-  } catch (err) {  
-    return res.status(503).json({ error: "Database error during maintainer assignment" });
+  } catch (err) {
+    return res
+      .status(503)
+      .json({ error: "Database error during maintainer assignment" });
   }
 });
 
-// GET /reports/approved -> approved reports for map (public only to registered user)
+// GET /reports/approved -> approved reports for map
 router.get("/reports/approved", async (req, res) => {
   try {
     const reports = await getAllApprovedReports();
-  return res.status(200).json(reports);
+    return res.status(200).json(reports);
   } catch (err) {
-  return res.status(503).json({ error: "Database error during report retrieval" });
+    return res
+      .status(503)
+      .json({ error: "Database error during report retrieval" });
   }
 });
 
-// GET /reports/assigned -> reports assigned to the logged-in technical staff (requires Technical office staff member/External maintainer)
+// GET /reports/assigned -> reports assigned to logged-in technical staff
 router.get("/reports/assigned", async (req, res) => {
   try {
     if (!req.isAuthenticated())
@@ -239,7 +310,7 @@ router.get("/reports/assigned", async (req, res) => {
 
     const operatorId = req.user.id;
     const reports = await getReportsAssigned(operatorId);
-  return res.status(200).json(reports);
+    return res.status(200).json(reports);
   } catch (err) {
     res
       .status(503)
@@ -253,7 +324,10 @@ router.post("/reports/:id/internal-comments", async (req, res) => {
     if (!req.isAuthenticated())
       return res.status(401).json({ error: "Not authenticated" });
 
-    if (req.user.role !== "Technical office staff member" && req.user.role !== "External maintainer") {
+    if (
+      req.user.role !== "Technical office staff member" &&
+      req.user.role !== "External maintainer"
+    ) {
       return res.status(403).json({ error: "Forbidden - operators only" });
     }
 
@@ -271,9 +345,11 @@ router.post("/reports/:id/internal-comments", async (req, res) => {
       req.user.id,
       content.trim()
     );
-  return res.status(201).json(comment);
+    return res.status(201).json(comment);
   } catch (err) {
-  return res.status(503).json({ error: "Database error during comment creation" });
+    return res
+      .status(503)
+      .json({ error: "Database error during comment creation" });
   }
 });
 
@@ -283,7 +359,10 @@ router.get("/reports/:id/internal-comments", async (req, res) => {
     if (!req.isAuthenticated())
       return res.status(401).json({ error: "Not authenticated" });
 
-    if (req.user.role !== "Technical office staff member" && req.user.role !== "External maintainer") {
+    if (
+      req.user.role !== "Technical office staff member" &&
+      req.user.role !== "External maintainer"
+    ) {
       return res.status(403).json({ error: "Forbidden - operators only" });
     }
 
@@ -292,9 +371,11 @@ router.get("/reports/:id/internal-comments", async (req, res) => {
       return res.status(422).json({ error: "Invalid report id" });
 
     const comments = await getInternalComments(reportId);
-  return res.status(200).json(comments);
+    return res.status(200).json(comments);
   } catch (err) {
-  return res.status(503).json({ error: "Database error during comment retrieval" });
+    return res
+      .status(503)
+      .json({ error: "Database error during comment retrieval" });
   }
 });
 
@@ -321,9 +402,25 @@ router.post("/reports/:id/messages", async (req, res) => {
       req.user.id,
       content.trim()
     );
-  return res.status(201).json(message);
+
+    // Emit message via WebSocket to report room
+    const io = getIO();
+    if (io) {
+      io.to(`report:${reportId}`).emit("new_message", {
+        id: message.message_id,
+        report_id: message.report_id,
+        sender_type: message.sender_type,
+        sender_id: message.sender_id,
+        content: message.content,
+        sent_at: message.sent_at,
+      });
+    }
+
+    return res.status(201).json(message);
   } catch (err) {
-  return res.status(503).json({ error: "Database error during message creation" });
+    return res
+      .status(503)
+      .json({ error: "Database error during message creation" });
   }
 });
 
@@ -338,11 +435,12 @@ router.get("/reports/:id/messages", async (req, res) => {
       return res.status(422).json({ error: "Invalid report id" });
 
     const messages = await getMessages(reportId);
-  return res.status(200).json(messages);
+    return res.status(200).json(messages);
   } catch (err) {
-  return res.status(503).json({ error: "Database error during message retrieval" });
+    return res
+      .status(503)
+      .json({ error: "Database error during message retrieval" });
   }
 });
-
 
 export default router;

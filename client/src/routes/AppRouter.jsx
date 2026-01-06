@@ -11,6 +11,7 @@ import CommentsPage from "../components/pages/report/CommentsPage";
 import RelationOfficerPage from "../components/pages/relation-officer/RelatioOfficerPage";
 import TechnicalOfficerPage from "../components/pages/technical-officer/TechnicalOfficerPage";
 import { MapPage } from "../components/pages/map/MapPage";
+import ChatsPage from "../components/pages/chats/ChatsPage";
 import ProtectedRoute from "./ProtectedRoute";
 import RoleBasedHomePage from "./RoleBasedHomePage";
 
@@ -143,12 +144,27 @@ function AppRouter({
         />
 
         <Route
+          path="/chats"
+          element={
+            <ProtectedRoute
+              isUnverifiedSession={isUnverifiedSession}
+              requireAuth
+              user={user}
+              isAuthLoading={isAuthLoading}
+            >
+              <ChatsPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/map"
           element={
             <ProtectedRoute
               isUnverifiedSession={isUnverifiedSession}
               requireAuth
               user={user}
+              isAuthLoading={isAuthLoading}
             >
               <MapPage />
             </ProtectedRoute>
@@ -171,6 +187,7 @@ function AppRouter({
               isUnverifiedSession={isUnverifiedSession}
               requireAuth
               user={user}
+              isAuthLoading={isAuthLoading}
             >
               <InsertReportPage user={user} />
             </ProtectedRoute>

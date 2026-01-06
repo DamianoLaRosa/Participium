@@ -25,6 +25,7 @@
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "pg": "^8.16.3",
+    "socket.io": "^4.8.3",
     "sqlite3": "^5.1.7",
     "supertest": "^6.3.3"
   },

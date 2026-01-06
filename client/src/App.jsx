@@ -4,6 +4,7 @@ import { useDispatch } from "react-redux";
 import { clearLocation } from "./store/locationSlice";
 import API from "./API/API.js";
 import AppRouter from "./routes/AppRouter";
+import { SocketProvider } from "./context/SocketContext";
 import "./App.css";
 
 function App() {
@@ -60,16 +61,18 @@ function App() {
   };
 
   return (
-    <AppRouter
-      user={user}
-      setUser={setUser}
-      isAuthLoading={isAuthLoading}
-      citizenProfile={citizenProfile}
-      setCitizenProfile={setCitizenProfile}
-      isUnverifiedSession={isUnverifiedSession}
-      setIsUnverifiedSession={setIsUnverifiedSession}
-      handleLogout={handleLogout}
-    />
+    <SocketProvider user={user}>
+      <AppRouter
+        user={user}
+        setUser={setUser}
+        isAuthLoading={isAuthLoading}
+        citizenProfile={citizenProfile}
+        setCitizenProfile={setCitizenProfile}
+        isUnverifiedSession={isUnverifiedSession}
+        setIsUnverifiedSession={setIsUnverifiedSession}
+        handleLogout={handleLogout}
+      />
+    </SocketProvider>
   );
 }
 

@@ -7,7 +7,7 @@
   color: var(--static-black);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   position: relative;
-  z-index: 1000;
+  z-index: 2000;
 }
 
 .headerLogoContainer {
@@ -87,7 +87,7 @@
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
   min-width: 150px;
-  z-index: 1001;
+  z-index: 9999;
 }
 
 .dropdownItem {
@@ -125,4 +125,182 @@
 
 .logoutItem:hover {
   background-color: #fee;
+}
+
+/* Notification styles */
+.notificationContainer {
+  position: relative;
+}
+
+.notificationButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  position: relative;
+  border-radius: var(--radius-full);
+  transition: background-color 0.2s ease;
+}
+
+.notificationButton:hover {
+  background-color: var(--background-default);
+}
+
+.notificationBadge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background-color: #c33;
+  color: var(--static-white);
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notificationDropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background-color: var(--static-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  width: 320px;
+  max-height: 400px;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.notificationHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-default);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.notificationHeader button {
+  background: none;
+  border: none;
+  color: var(--accent-primary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.notificationHeader button:hover {
+  text-decoration: underline;
+}
+
+.notificationList {
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.notificationItem {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-default);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.notificationItem:hover {
+  background-color: var(--background-default);
+}
+
+.notificationItem:last-child {
+  border-bottom: none;
+}
+
+.notificationItem.unread {
+  background-color: rgba(102, 126, 234, 0.08);
+}
+
+.notificationItem.unread:hover {
+  background-color: rgba(102, 126, 234, 0.12);
+}
+
+.notificationItem p {
+  margin: 0 0 4px 0;
+  font-size: 13px;
+  color: var(--static-black);
+  line-height: 1.4;
+}
+
+.notificationItem small {
+  color: var(--foreground-default);
+  font-size: 11px;
+}
+
+.noNotifications {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--foreground-default);
+  font-size: 14px;
+}
+
+.viewAllButton {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border-default);
+  text-align: center;
+  font-size: 13px;
+  color: var(--accent-primary);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.viewAllButton:hover {
+  background-color: var(--background-default);
+}
+
+/* Chat item styles in dropdown */
+.chatItem {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-default);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.chatItem:hover {
+  background-color: var(--background-default);
+}
+
+.chatItem:last-child {
+  border-bottom: none;
+}
+
+.chatItem .chatTitle {
+  margin: 0 0 4px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--static-black);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chatItem .chatPreview {
+  display: block;
+  color: var(--foreground-default);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

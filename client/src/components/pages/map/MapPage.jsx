@@ -11,7 +11,7 @@ import {
 } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { setLocation, clearLocation } from "../../../store/locationSlice";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -172,6 +172,7 @@ export function MapPage(props) {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const location = useSelector((state) => state.location);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -187,6 +188,9 @@ export function MapPage(props) {
   const [isLoading, setIsLoading] = useState(true);
   const [reportsLoaded, setReportsLoaded] = useState(false);
   const hasLoadedRef = useRef(false);
+
+  // Report ID from URL query params (for notification navigation)
+  const focusReportId = searchParams.get("reportId");
 
   // Use TanStack Query hook for city boundaries
   const {
@@ -213,6 +217,29 @@ export function MapPage(props) {
       setIsLoading(false);
     }
   }, [reportsLoaded, boundariesLoading]);
+
+  // Focus on specific report when navigating from notification
+  useEffect(() => {
+    if (focusReportId && reports.length > 0 && reportsLoaded) {
+      const reportToFocus = reports.find(
+        (r) => r.id === parseInt(focusReportId, 10)
+      );
+      if (reportToFocus && reportToFocus.latitude && reportToFocus.longitude) {
+        setMapCenter([reportToFocus.latitude, reportToFocus.longitude]);
+        setMapZoom(17);
+        
+        // Open modal with delay to allow camera to focus first
+        const timer = setTimeout(() => {
+          setSelectedReport(reportToFocus);
+          setIsModalOpen(true);
+          // Clear the URL parameter after modal is opened
+          setSearchParams({}, { replace: true });
+        }, 400);
+        
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [focusReportId, reports, reportsLoaded, setSearchParams]);
 
   // Check if there's an error loading city boundaries
   const hasBoundariesError = !!boundariesError;
@@ -642,9 +669,13 @@ function ApprovedReportsLayer({ reports, onViewDetails }) {
 }
 
 function ReportDetailsModal({ report, onClose }) {
+  const navigate = useNavigate();
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
 
   const imageUrls = report.photos?.map((p) => p.image_url) || [];
+  
+  // Show chat button only for approved reports (not pending or rejected)
+  const showChatButton = report.status?.id !== 1 && report.status?.id !== 5;
 
   return (
     <>
@@ -700,6 +731,20 @@ function ReportDetailsModal({ report, onClose }) {
                     />
                   ))}
                 </div>
+              </div>
+            )}
+
+            {showChatButton && (
+              <div className={styles.modalActions}>
+                <button
+                  className={styles.openChatButton}
+                  onClick={() => {
+                    onClose();
+                    navigate(`/chats?reportId=${report.id}`);
+                  }}
+                >
+                  💬 Open Chat
+                </button>
               </div>
             )}
           </div>

@@ -39,6 +39,15 @@ import {
   getInternalComments,
   addInternalComment
 } from "./comment.js";
+import {
+  getNotifications,
+  getUnreadNotificationCount,
+  markNotificationAsSeen,
+  markAllNotificationsAsSeen,
+  getReportMessages,
+  sendReportMessage,
+} from "./notification.js";
+import { getChats, getChatDetails } from "./chat.js";
 
 const API = {
   // Admin methods
@@ -87,11 +96,23 @@ const API = {
   verifyEmail,
   checkValidateToken,
 
-  //comments methods
+  // Comments methods
   getMessages,
   addMessage,
   getInternalComments,
   addInternalComment,
+
+  // Notification methods
+  getNotifications,
+  getUnreadNotificationCount,
+  markNotificationAsSeen,
+  markAllNotificationsAsSeen,
+  getReportMessages,
+  sendReportMessage,
+
+  // Chat methods
+  getChats,
+  getChatDetails,
 };
 
 export default API;

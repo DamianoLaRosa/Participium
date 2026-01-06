@@ -150,3 +150,21 @@ export const getMessages = async (report_id) => {
     sent_at: row.sent_at,
   }));
 };
+
+/**
+ * Add a system message to a report (used for status updates)
+ * These messages appear in chat but are sent by the system
+ * @param {number} report_id - The report ID
+ * @param {string} content - The message content
+ * @returns {object} The created message
+ */
+export const addSystemMessage = async (report_id, content) => {
+  const sql = `
+    INSERT INTO messages (report_id, sender_type, sender_id, content, sent_at)
+    VALUES ($1, 'operator', 0, $2, NOW())
+    RETURNING message_id, report_id, sender_type, sender_id, content, sent_at
+  `;
+
+  const result = await pool.query(sql, [report_id, content]);
+  return result.rows[0];
+};
