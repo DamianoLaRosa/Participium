@@ -14,6 +14,7 @@ export function Header(props) {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [recentChats, setRecentChats] = useState([]);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
   const menuRef = useRef(null);
   const notifRef = useRef(null);
   const chatsRef = useRef(null);
@@ -74,6 +75,47 @@ export function Header(props) {
       socket.off("new_notification", handleNewNotification);
     };
   }, [socket, isCitizen]);
+
+  // Track processed message IDs to prevent duplicate badge increments
+  const processedMessageIds = useRef(new Set());
+
+  // Listen for new messages via WebSocket
+  useEffect(() => {
+    if (!socket || !canAccessChats) return;
+
+    const handleNewMessage = (message) => {
+      // Skip if we've already processed this message (prevent duplicates from multiple rooms)
+      if (processedMessageIds.current.has(message.id)) {
+        return;
+      }
+      processedMessageIds.current.add(message.id);
+
+      // Only increment if we're not on the chats page
+      if (!window.location.pathname.includes("/chats")) {
+        setUnreadMessagesCount((prev) => prev + 1);
+      }
+      // Update recent chats with new message
+      setRecentChats((prev) => {
+        const updated = prev.map((chat) =>
+          chat.report_id === message.report_id
+            ? { ...chat, last_message: { content: message.content, sender_type: message.sender_type, sent_at: message.sent_at } }
+            : chat
+        );
+        // Sort by last activity
+        return updated.sort((a, b) => {
+          const aTime = a.last_message?.sent_at || a.last_activity;
+          const bTime = b.last_message?.sent_at || b.last_activity;
+          return new Date(bTime) - new Date(aTime);
+        });
+      });
+    };
+
+    socket.on("new_message", handleNewMessage);
+
+    return () => {
+      socket.off("new_message", handleNewMessage);
+    };
+  }, [socket, canAccessChats]);
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -170,10 +212,21 @@ export function Header(props) {
               <div className={styles.notificationContainer} ref={chatsRef}>
                 <button
                   className={styles.notificationButton}
-                  onClick={() => setIsChatsOpen(!isChatsOpen)}
+                  onClick={() => {
+                    setIsChatsOpen(!isChatsOpen);
+                    // Reset unread count when opening dropdown
+                    if (!isChatsOpen) {
+                      setUnreadMessagesCount(0);
+                    }
+                  }}
                   aria-label="Chats"
                 >
                   💬
+                  {unreadMessagesCount > 0 && (
+                    <span className={styles.notificationBadge}>
+                      {unreadMessagesCount > 9 ? "9+" : unreadMessagesCount}
+                    </span>
+                  )}
                 </button>
 
                 {isChatsOpen && (
@@ -194,6 +247,7 @@ export function Header(props) {
                             className={styles.chatItem}
                             onClick={() => {
                               setIsChatsOpen(false);
+                              setUnreadMessagesCount(0);
                               navigate(`/chats?reportId=${chat.report_id}`);
                             }}
                           >
@@ -212,6 +266,7 @@ export function Header(props) {
                       className={styles.viewAllButton}
                       onClick={() => {
                         setIsChatsOpen(false);
+                        setUnreadMessagesCount(0);
                         navigate("/chats");
                       }}
                     >

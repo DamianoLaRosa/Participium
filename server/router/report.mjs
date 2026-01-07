@@ -16,6 +16,7 @@ import {
   autoAssignTechnicalOfficer,
   createNotification,
   addSystemMessage,
+  getReportParticipants,
 } from "../dao.mjs";
 import { getIO } from "../socket.mjs";
 
@@ -154,17 +155,23 @@ router.put("/reports/:id/status", async (req, res) => {
       // Add system message to chat (for status updates visible in chat history)
       const systemMessage = await addSystemMessage(reportId, `📋 ${message}`);
       
-      // Emit system message via WebSocket to report room
+      // Emit system message via WebSocket to report room and citizen room
       const io = getIO();
       if (io) {
-        io.to(`report:${reportId}`).emit("new_message", {
+        const sysMessagePayload = {
           id: systemMessage.message_id,
           report_id: systemMessage.report_id,
           sender_type: systemMessage.sender_type,
           sender_id: systemMessage.sender_id,
           content: systemMessage.content,
           sent_at: systemMessage.sent_at,
-        });
+        };
+
+        // Emit to report room
+        io.to(`report:${reportId}`).emit("new_message", sysMessagePayload);
+
+        // Emit to citizen room for badge update
+        io.to(`citizen:${updated.citizen.id}`).emit("new_message", sysMessagePayload);
       }
     }
 
@@ -403,17 +410,37 @@ router.post("/reports/:id/messages", async (req, res) => {
       content.trim()
     );
 
-    // Emit message via WebSocket to report room
+    // Emit message via WebSocket to report room and user rooms
     const io = getIO();
     if (io) {
-      io.to(`report:${reportId}`).emit("new_message", {
+      const messagePayload = {
         id: message.message_id,
         report_id: message.report_id,
         sender_type: message.sender_type,
         sender_id: message.sender_id,
         content: message.content,
         sent_at: message.sent_at,
-      });
+      };
+
+      // Emit to report room (for active chat participants)
+      io.to(`report:${reportId}`).emit("new_message", messagePayload);
+
+      // Also emit to user rooms (for header badge updates)
+      const participants = await getReportParticipants(reportId);
+      if (participants) {
+        // Emit to citizen (only if sender is not the citizen)
+        if (participants.citizen_id && senderType !== "citizen") {
+          io.to(`citizen:${participants.citizen_id}`).emit("new_message", messagePayload);
+        }
+        // Emit to operator (only if sender is not the operator)
+        if (participants.operator_id && (senderType !== "operator" || message.sender_id !== participants.operator_id)) {
+          io.to(`operator:${participants.operator_id}`).emit("new_message", messagePayload);
+        }
+        // Emit to external maintainer (only if sender is not that maintainer)
+        if (participants.external_id && (senderType !== "operator" || message.sender_id !== participants.external_id)) {
+          io.to(`operator:${participants.external_id}`).emit("new_message", messagePayload);
+        }
+      }
     }
 
     return res.status(201).json(message);

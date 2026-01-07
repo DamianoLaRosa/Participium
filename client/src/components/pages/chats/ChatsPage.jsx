@@ -103,28 +103,38 @@ export default function ChatsPage({ user }) {
     if (!socket) return;
 
     const handleNewMessage = (message) => {
-      // Only add if it's for the current chat
+      // Only add if it's for the current chat and not already in the list (deduplication)
       if (message.report_id === parseInt(activeReportId, 10)) {
-        setMessages((prev) => [...prev, message]);
+        setMessages((prev) => {
+          // Check if message already exists (prevent duplicates from multiple rooms)
+          if (prev.some((m) => m.id === message.id)) {
+            return prev;
+          }
+          return [...prev, message];
+        });
         scrollToBottom();
       }
       
-      // Update last message in chats list
+      // Update last message in chats list (with deduplication check)
       setChats((prev) =>
-        prev.map((chat) =>
-          chat.report_id === message.report_id
-            ? {
-                ...chat,
-                last_message: {
-                  content: message.content,
-                  sender_type: message.sender_type,
-                  sent_at: message.sent_at,
-                },
-                message_count: chat.message_count + 1,
-                last_activity: message.sent_at,
-              }
-            : chat
-        )
+        prev.map((chat) => {
+          if (chat.report_id !== message.report_id) return chat;
+          // Skip if this message is already the last message
+          if (chat.last_message?.sent_at === message.sent_at && 
+              chat.last_message?.content === message.content) {
+            return chat;
+          }
+          return {
+            ...chat,
+            last_message: {
+              content: message.content,
+              sender_type: message.sender_type,
+              sent_at: message.sent_at,
+            },
+            message_count: chat.message_count + 1,
+            last_activity: message.sent_at,
+          };
+        })
       );
     };
 

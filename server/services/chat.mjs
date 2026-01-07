@@ -197,3 +197,23 @@ export const getChatDetails = async (report_id) => {
   };
 };
 
+/**
+ * Get report participants (citizen and operator IDs) for WebSocket emission
+ * @param {number} report_id - The report ID
+ * @returns {object} Object with citizen_id, operator_id, external_id
+ */
+export const getReportParticipants = async (report_id) => {
+  const sql = `
+    SELECT 
+      citizen_id,
+      assigned_to_operator_id as operator_id,
+      assigned_to_external_id as external_id
+    FROM reports
+    WHERE report_id = $1
+  `;
+
+  const result = await pool.query(sql, [report_id]);
+  if (result.rows.length === 0) return null;
+  return result.rows[0];
+};
+
