@@ -103,6 +103,72 @@ tec.parks@participium.local - participium
 -- General Services
 tec.general@participium.local - participium
 
+# Real-time Features (WebSockets)
+
+The application uses **Socket.IO** for real-time communication between the server and clients.
+
+## Architecture
+
+```
+┌─────────────────┐         ┌─────────────────┐         ┌─────────────────┐
+│     Client      │◄───────►│   Socket.IO     │◄───────►│     Server      │
+│   (React App)   │  WS     │    Server       │         │   (Express)     │
+└─────────────────┘         └─────────────────┘         └─────────────────┘
+                                    │
+                    ┌───────────────┼───────────────┐
+                    ▼               ▼               ▼
+              citizen:1       operator:6      report:123
+              (user room)   (operator room)  (chat room)
+```
+
+## Socket Rooms
+
+| Room Type | Format | Purpose |
+|-----------|--------|---------|
+| **Citizen Room** | `citizen:{id}` | Personal notifications for citizens |
+| **Operator Room** | `operator:{id}` | Personal notifications for operators |
+| **Report Room** | `report:{id}` | Chat messages for a specific report |
+
+## Events
+
+### Server → Client
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `new_notification` | `{ id, citizen_id, report_id, message, sent_at, seen }` | New status update notification |
+| `new_message` | `{ id, report_id, sender_type, sender_id, content, sent_at }` | New chat message |
+
+### Client → Server
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `join_report` | `reportId` | Join a report's chat room |
+| `leave_report` | `reportId` | Leave a report's chat room |
+
+## Features
+
+### Notifications (Citizens only)
+- Citizens receive real-time notifications when their report status changes
+- Notification badge in header shows unread count
+- Clicking a notification navigates to the report on the map
+
+### Chat (Citizens & Technical Officers)
+- Each report has a dedicated chat between the citizen and assigned operator
+- Real-time message delivery via WebSocket
+- System messages for status changes (prefixed with 📋)
+- Unread message badge in header
+- Full chat history available on `/chats` page
+
+## Connection Flow
+
+1. User logs in → Client establishes WebSocket connection with `userId` and `userType`
+2. Server authenticates and joins user to their personal room (`citizen:{id}` or `operator:{id}`)
+3. When user opens a chat → Client emits `join_report` to join the report room
+4. When user leaves chat → Client emits `leave_report` to leave the room
+5. On logout → WebSocket connection is closed
+
+---
+
 # DB
 citizens( citizen_id, email, username, first_name, last_name, password_hash, salt, profile_photo_url, telegram_username, email_notifications, created_at, verified )
 
@@ -133,3 +199,36 @@ messages( message_id, report_id, sender_type, sender_id, content, sent_at )
 notifications( notification_id, citizen_id, report_id, message, sent_at, seen )
 
 telegram_users( telegram_user_id, citizen_id, chat_id, linked_at )
+
+---
+
+# Server Structure
+
+```
+server/
+├── index.mjs              # Express app + Socket.IO server setup
+├── dao.mjs                # Data Access Object (exports all services)
+├── socket.mjs             # Socket.IO instance holder (prevents circular deps)
+├── utils.mjs              # Utility functions
+├── router/
+│   ├── category.mjs       # Category routes
+│   ├── citizen.mjs        # Citizen routes
+│   ├── company.mjs        # Company routes
+│   ├── operator.mjs       # Operator routes
+│   ├── report.mjs         # Report routes (includes messages)
+│   ├── role.mjs           # Role routes
+│   ├── notification.mjs   # Notification routes
+│   └── chat.mjs           # Chat routes
+├── services/
+│   ├── category.mjs       # Category database operations
+│   ├── citizen.mjs        # Citizen database operations
+│   ├── comment.mjs        # Comments & messages database operations
+│   ├── company.mjs        # Company database operations
+│   ├── operator.mjs       # Operator database operations
+│   ├── report.mjs         # Report database operations
+│   ├── role.mjs           # Role database operations
+│   ├── notification.mjs   # Notification database operations
+│   ├── chat.mjs           # Chat database operations
+│   └── utils.mjs          # Database utility functions
+└── __tests__/             # Jest test files
+```

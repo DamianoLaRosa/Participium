@@ -8,6 +8,7 @@
 | **Redux Toolkit**        | 2.10.1  | Global state management                     |
 | **TanStack React Query** | 5.90.10 | Server state caching & data fetching        |
 | **Axios**                | 1.13.2  | HTTP client for API requests                |
+| **Socket.IO Client**     | 4.x     | Real-time WebSocket communication           |
 | **Leaflet**              | 1.9.4   | Interactive maps                            |
 | **Turf.js**              | 7.3.0   | Geospatial analysis                         |
 | **Supabase JS**          | 2.80.0  | Backend-as-a-Service client (image storage) |
@@ -27,33 +28,48 @@ client/
 │   │   ├── admin.js         # Admin endpoints
 │   │   ├── auth.js          # Authentication endpoints
 │   │   ├── axiosInstance.js # Axios configuration
+│   │   ├── chat.js          # Chat endpoints (NEW)
+│   │   ├── citizen.js       # Citizen profile endpoints
+│   │   ├── comment.js       # Comment endpoints
 │   │   ├── image.js         # Image upload endpoints
+│   │   ├── maintainer.js    # Maintainer endpoints
 │   │   ├── map.js           # Map/reports endpoints
-│   │   └── report.js        # Report CRUD endpoints
+│   │   ├── notification.js  # Notification endpoints (NEW)
+│   │   ├── report.js        # Report CRUD endpoints
+│   │   └── techofficer.js   # Technical officer endpoints
 │   ├── assets/              # App assets
 │   ├── components/
 │   │   ├── common/          # Reusable components
 │   │   │   ├── footer/      # Footer component
-│   │   │   ├── header/      # Header with navigation
+│   │   │   ├── header/      # Header with navigation, notifications & chats (UPDATED)
 │   │   │   ├── imagePreviewModal/ # Fullscreen image slider modal
 │   │   │   ├── layout/      # Page layout wrapper
 │   │   │   └── logoutModal/ # Logout confirmation modal
 │   │   └── pages/           # Page components
 │   │       ├── admin/       # Admin dashboard & user creation
+│   │       ├── chats/       # Chat page for citizen-operator communication (NEW)
 │   │       ├── home/        # Landing page
 │   │       ├── inspectReport/# Report inspection view
 │   │       ├── login/       # Login/Signup page
-│   │       ├── map/         # Interactive map page
+│   │       ├── maintainer/  # Maintainer dashboard
+│   │       ├── map/         # Interactive map page (UPDATED with chat button)
 │   │       ├── profile/     # User profile page (citizens only)
 │   │       ├── relation-officer/  # PR officer dashboard
 │   │       ├── report/      # Report submission form
-│   │       └── technical-officer/ # Technical staff dashboard
+│   │       ├── technical-officer/ # Technical staff dashboard
+│   │       └── verify-email/ # Email verification page
 │   ├── constants/           # Shared constants
 │   │   └── statusMap.js     # Report status colors & labels
+│   ├── context/             # React Context providers (NEW)
+│   │   └── SocketContext.jsx # Socket.IO connection context
 │   ├── data/
 │   │   ├── supabaseClient.js # Supabase client configuration
 │   │   └── Turin_GEOJSON.json # City boundary data (fallback)
 │   ├── images/              # Image assets
+│   ├── routes/              # Routing configuration
+│   │   ├── AppRouter.jsx    # Main router with all routes
+│   │   ├── ProtectedRoute.jsx # Route protection wrapper
+│   │   └── RoleBasedHomePage.jsx # Role-based redirects
 │   ├── store/               # Redux store
 │   │   ├── store.js         # Store configuration
 │   │   ├── locationSlice.js # Location state slice
@@ -62,7 +78,7 @@ client/
 │   │   ├── interface.css
 │   │   ├── layout.css
 │   │   └── variables.css
-│   ├── App.jsx              # Main app with routing
+│   ├── App.jsx              # Main app with SocketProvider
 │   ├── App.css
 │   ├── main.jsx             # Application entry point
 │   ├── index.css
@@ -118,15 +134,17 @@ const user = await API.getUserInfo(); // Returns the entire data directly, not {
 
 They are devided by the purpose we use them for:
 
-| Module           | File             | Methods                                                                                                                         |
-| ---------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| **Auth**         | `auth.js`        | `logIn`, `getUserInfo`, `logOut`, `signUp`                                                                                      |
-| **Admin**        | `admin.js`       | `getAllRoles`, `createMunicipalityUser`, `getAllOperators`, `getAllOffices`                                                     |
-| **Map**          | `map.js`         | `getAllApprovedReports`                                                                                                         |
-| **Report**       | `report.js`      | `insertReport`, `getAllCategories`, `updateReportStatus`, `getAllPendingReports`, `getOperatorsByOffice`, `setOperatorByReport` |
-| **Image**        | `image.js`       | `getImageUploadUrl`, `uploadImageToSignedUrl`                                                                                   |
-| **Tech Officer** | `techofficer.js` | `getAllReportsForTechOfficer`                                                                                                   |
-| **Citizen**      | `citizen.js`     | `getCitizenProfile`, `updateCitizenProfile`                                                                                     |
+| Module           | File              | Methods                                                                                                                         |
+| ---------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **Auth**         | `auth.js`         | `logIn`, `getUserInfo`, `logOut`, `signUp`                                                                                      |
+| **Admin**        | `admin.js`        | `getAllRoles`, `createMunicipalityUser`, `getAllOperators`, `getAllOffices`                                                     |
+| **Map**          | `map.js`          | `getAllApprovedReports`                                                                                                         |
+| **Report**       | `report.js`       | `insertReport`, `getAllCategories`, `updateReportStatus`, `getAllPendingReports`, `getOperatorsByOffice`, `setOperatorByReport` |
+| **Image**        | `image.js`        | `getImageUploadUrl`, `uploadImageToSignedUrl`                                                                                   |
+| **Tech Officer** | `techofficer.js`  | `getAllReportsForTechOfficer`                                                                                                   |
+| **Citizen**      | `citizen.js`      | `getCitizenProfile`, `updateCitizenProfile`                                                                                     |
+| **Notification** | `notification.js` | `getNotifications`, `getUnreadNotificationCount`, `markNotificationAsSeen`, `markAllNotificationsAsSeen`                        |
+| **Chat**         | `chat.js`         | `getChats`, `getChatDetails`, `sendReportMessage`                                                                               |
 
 ### Unified API Object (`API.js`)
 
@@ -345,28 +363,31 @@ export const useCityBoundaries = () => {
 
 ### Common Components
 
-| Component           | Location                               | Description                                      |
-| ------------------- | -------------------------------------- | ------------------------------------------------ |
-| `Layout`            | `components/common/layout/`            | Page wrapper with header/footer                  |
-| `Header`            | `components/common/header/`            | Navigation bar with user info & settings menu    |
-| `Footer`            | `components/common/footer/`            | Page footer                                      |
-| `LogoutModal`       | `components/common/logoutModal/`       | Logout confirmation dialog                       |
-| `ImagePreviewModal` | `components/common/imagePreviewModal/` | Fullscreen image slider with navigation controls |
+| Component           | Location                               | Description                                                              |
+| ------------------- | -------------------------------------- | ------------------------------------------------------------------------ |
+| `Layout`            | `components/common/layout/`            | Page wrapper with header/footer                                          |
+| `Header`            | `components/common/header/`            | Navigation bar with notifications 🔔, chats 💬, avatar menu              |
+| `Footer`            | `components/common/footer/`            | Page footer                                                              |
+| `LogoutModal`       | `components/common/logoutModal/`       | Logout confirmation dialog                                               |
+| `ImagePreviewModal` | `components/common/imagePreviewModal/` | Fullscreen image slider with navigation controls                         |
 
 ### Pages
 
-| Page                   | Route               | Description                                         |
-| ---------------------- | ------------------- | --------------------------------------------------- |
-| `HomePage`             | `/`                 | Landing page for unauthenticated users              |
-| `LoginPage`            | `/login`, `/signup` | Authentication forms                                |
-| `MapPage`              | `/map`              | Interactive map to view reports and select location |
-| `InsertReportPage`     | `/create_report`    | Report submission form                              |
-| `ProfilePage`          | `/profile`          | User profile editing (citizens only)                |
-| `AdminPage`            | `/admin`            | Admin dashboard                                     |
-| `CreateUserPage`       | `/admin/createuser` | Create municipal staff accounts                     |
-| `RelationOfficerPage`  | `/relationOfficer`  | PR officer dashboard                                |
-| `TechnicalOfficerPage` | `/technicalOfficer` | Technical staff dashboard                           |
-| `InspectReportPage`    | `/inspectReport`    | Detailed report view                                |
+| Page                   | Route                   | Description                                         |
+| ---------------------- | ----------------------- | --------------------------------------------------- |
+| `HomePage`             | `/`                     | Landing page for unauthenticated users              |
+| `LoginPage`            | `/login`, `/signup`     | Authentication forms                                |
+| `MapPage`              | `/map`                  | Interactive map to view reports and select location |
+| `InsertReportPage`     | `/create_report`        | Report submission form                              |
+| `ProfilePage`          | `/profile`              | User profile editing (citizens only)                |
+| `ChatsPage`            | `/chats`                | Chat list and messaging (citizens & operators)      |
+| `AdminPage`            | `/admin`                | Admin dashboard                                     |
+| `CreateUserPage`       | `/admin/createuser`     | Create municipal staff accounts                     |
+| `RelationOfficerPage`  | `/relationOfficer`      | PR officer dashboard                                |
+| `TechnicalOfficerPage` | `/technicalOfficer`     | Technical staff dashboard                           |
+| `MaintainerPage`       | `/maintainer`           | External maintainer dashboard                       |
+| `InspectReportPage`    | `/inspectReport`        | Detailed report view                                |
+| `VerifyEmailPage`      | `/verify-email`         | Email verification page                             |
 
 ---
 
@@ -414,3 +435,87 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 - **CSS Modules** — Component-scoped styles (`*.module.css`)
 - **CSS Variables** — Design tokens defined in `variables.css` (colors, shadows, radius, gradients)
 - **Global Classes** — Reusable UI classes in `interface.css` (`.btn`, `.btn-primary`, `.pointer`, typography) and `layout.css` (`.page-container`)
+
+---
+
+## Real-time Features (WebSockets)
+
+The application uses **Socket.IO** for real-time communication with the server.
+
+### Socket Context (`SocketContext.jsx`)
+
+A React Context that manages the WebSocket connection lifecycle.
+
+```javascript
+import { useSocket } from "../context/SocketContext";
+
+function MyComponent() {
+  const { socket, isConnected } = useSocket();
+  
+  useEffect(() => {
+    if (!socket) return;
+    
+    socket.on("new_message", (message) => {
+      console.log("Received message:", message);
+    });
+    
+    return () => socket.off("new_message");
+  }, [socket]);
+}
+```
+
+**Connection Logic:**
+- Connects when user is authenticated
+- Sends `userId` and `userType` for authentication
+- Automatically disconnects on logout
+- Reconnects on page refresh if session is valid
+
+### Notifications
+
+Citizens receive real-time notifications when their report status changes.
+
+**Header Component Features:**
+- 🔔 Notification bell with unread count badge
+- Dropdown list of recent notifications
+- Click to navigate to the report on the map
+- "Mark all as read" functionality
+
+**Events Listened:**
+- `new_notification` — New status update notification
+
+### Chat System
+
+Real-time messaging between citizens and technical officers.
+
+**Header Component Features:**
+- 💬 Chat icon with unread messages badge
+- Dropdown with 3 most recent chats
+- "View all chats" button → `/chats` page
+
+**ChatsPage Features:**
+- Left sidebar with chat list
+- Right panel with active chat messages
+- Real-time message delivery
+- System messages for status changes (prefixed with 📋)
+- Responsive design (mobile-friendly)
+
+**Events Listened:**
+- `new_message` — New chat message
+
+**Events Emitted:**
+- `join_report` — Join a report's chat room
+- `leave_report` — Leave a report's chat room
+
+### MapPage Integration
+
+When clicking a notification:
+1. User is redirected to `/map?reportId=X`
+2. Map automatically centers on the report location
+3. Report details modal opens automatically
+4. "Open Chat" button in modal navigates to chat
+
+### Deduplication
+
+Messages received from multiple Socket.IO rooms (user room + report room) are deduplicated:
+- Header tracks processed message IDs to prevent double-counting
+- ChatsPage checks message ID before adding to list
