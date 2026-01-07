@@ -751,4 +751,244 @@ describe('report service unit tests', () => {
     expect(res[0].assigned_to_operator).toBeNull();
     expect(res[0].assigned_to_external).toBe(50);
   });
+
+  // ===============================================
+  // ANONYMOUS REPORT TESTS
+  // ===============================================
+
+  test('insertReport - creates anonymous report with citizen_id', async () => {
+    // Arrange
+    const citizen_id = 5;
+    getUserInfoByIdMock.mockResolvedValue({ citizen_id, verified: true });
+
+    const reportRow = {
+      report_id: 150,
+      citizen_id,
+      category_id: 2,
+      office_id: 8,
+      status_id: 1,
+      title: 'Anonymous Problem',
+      description: 'Hidden issue',
+      latitude: 41.5,
+      longitude: 12.3,
+      anonymous: true,
+      created_at: new Date(),
+    };
+
+    mockClientQuery.mockImplementation(async (text, params) => {
+      if (text.startsWith('BEGIN')) return { rows: [] };
+      if (text.includes('FROM categories WHERE category_id')) return { rows: [{ office_id: 8 }] };
+      if (text.includes('FROM statuses WHERE name')) return { rows: [{ status_id: 1 }] };
+      if (text.includes('INSERT INTO reports')) return { rows: [reportRow] };
+      if (text.startsWith('COMMIT')) return { rows: [] };
+      return { rows: [] };
+    });
+
+    // Act
+    const result = await reportsService.insertReport({
+      title: reportRow.title,
+      citizen_id,
+      description: reportRow.description,
+      image_urls: [],
+      latitude: reportRow.latitude,
+      longitude: reportRow.longitude,
+      category_id: 2,
+      anonymous: true,
+    });
+
+    // Assert
+    expect(result).toBeDefined();
+    expect(result.report_id).toBe(150);
+    expect(result.anonymous).toBe(true);
+    expect(result.citizen_id).toBe(citizen_id);
+  });
+
+  test('getAllApprovedReports - masks citizen info when report is anonymous', async () => {
+    // Arrange
+    const anonRow = {
+      report_id: 11,
+      title: 'Hidden Report',
+      description: 'Secret issue',
+      latitude: 45.1,
+      longitude: 9.1,
+      anonymous: true,
+      rejection_reason: null,
+      created_at: new Date(),
+      updated_at: new Date(),
+      citizen_id: 25, // citizen exists but should be masked
+      citizen_username: 'anonymous_user',
+      citizen_first_name: 'John',
+      citizen_last_name: 'Doe',
+      category_id: 1,
+      category_name: 'Organization',
+      office_name: 'Organization Office',
+      status_id: 2,
+      status_name: 'Assigned',
+      assigned_to_operator_id: null,
+      assigned_to_external_id: null,
+      operator_username: null,
+      operator_email: null,
+      external_operator_username: null,
+      external_operator_email: null,
+      external_company_name: null,
+      photos: [],
+    };
+    mockQuery.mockResolvedValueOnce({ rows: [anonRow] });
+
+    // Act
+    const res = await reportsService.getAllApprovedReports();
+
+    // Assert
+    expect(res).toHaveLength(1);
+    expect(res[0].anonymous).toBe(true);
+    expect(res[0].citizen).toBeNull(); // citizen info must be null
+    expect(res[0].status.name).toBe('Assigned');
+  });
+
+  test('getAllApprovedReports - correctly handles multiple anonymous and non-anonymous reports', async () => {
+    // Arrange
+    const rows = [
+      {
+        report_id: 12,
+        title: 'Anonymous Report 1',
+        description: 'D12',
+        latitude: 0,
+        longitude: 0,
+        anonymous: true,
+        rejection_reason: null,
+        created_at: new Date(),
+        updated_at: new Date(),
+        citizen_id: 100,
+        citizen_username: 'hidden1',
+        citizen_first_name: 'H1',
+        citizen_last_name: 'L1',
+        category_id: 1,
+        category_name: 'c1',
+        office_name: 'o1',
+        status_id: 2,
+        status_name: 'Assigned',
+        assigned_to_operator_id: null,
+        assigned_to_external_id: null,
+        operator_username: null,
+        operator_email: null,
+        external_operator_username: null,
+        external_operator_email: null,
+        external_company_name: null,
+        photos: [],
+      },
+      {
+        report_id: 13,
+        title: 'Public Report',
+        description: 'D13',
+        latitude: 0,
+        longitude: 0,
+        anonymous: false,
+        rejection_reason: null,
+        created_at: new Date(),
+        updated_at: new Date(),
+        citizen_id: 101,
+        citizen_username: 'public_user',
+        citizen_first_name: 'P',
+        citizen_last_name: 'User',
+        category_id: 2,
+        category_name: 'c2',
+        office_name: 'o2',
+        status_id: 3,
+        status_name: 'In Progress',
+        assigned_to_operator_id: null,
+        assigned_to_external_id: null,
+        operator_username: null,
+        operator_email: null,
+        external_operator_username: null,
+        external_operator_email: null,
+        external_company_name: null,
+        photos: [],
+      },
+      {
+        report_id: 14,
+        title: 'Anonymous Report 2',
+        description: 'D14',
+        latitude: 0,
+        longitude: 0,
+        anonymous: true,
+        rejection_reason: null,
+        created_at: new Date(),
+        updated_at: new Date(),
+        citizen_id: 102,
+        citizen_username: 'hidden2',
+        citizen_first_name: 'H2',
+        citizen_last_name: 'L2',
+        category_id: 3,
+        category_name: 'c3',
+        office_name: 'o3',
+        status_id: 4,
+        status_name: 'Completed',
+        assigned_to_operator_id: null,
+        assigned_to_external_id: null,
+        operator_username: null,
+        operator_email: null,
+        external_operator_username: null,
+        external_operator_email: null,
+        external_company_name: null,
+        photos: [],
+      },
+    ];
+    mockQuery.mockResolvedValueOnce({ rows });
+
+    // Act
+    const res = await reportsService.getAllApprovedReports();
+
+    // Assert
+    expect(res).toHaveLength(3);
+    // First anonymous report
+    expect(res[0].citizen).toBeNull();
+    expect(res[0].anonymous).toBe(true);
+    // Public report should show citizen info
+    expect(res[1].citizen).not.toBeNull();
+    expect(res[1].citizen.username).toBe('public_user');
+    // Second anonymous report
+    expect(res[2].citizen).toBeNull();
+    expect(res[2].anonymous).toBe(true);
+  });
+
+
+  test('getAllReports - includes anonymous reports in list', async () => {
+    // Arrange
+    const anonRow = {
+      report_id: 15,
+      title: 'List Anonymous',
+      description: 'Anon in list',
+      latitude: 45.2,
+      longitude: 9.2,
+      anonymous: true,
+      rejection_reason: null,
+      created_at: new Date(),
+      updated_at: new Date(),
+      citizen_id: 30,
+      citizen_username: 'citizen30',
+      citizen_first_name: 'C',
+      citizen_last_name: '30',
+      category_id: 2,
+      category_name: 'cat2',
+      office_id: 5,
+      office_name: 'office2',
+      status_id: 2,
+      status_name: 'Approved',
+      assigned_to_external_id: null,
+      external_username: null,
+      external_company_name: null,
+      photos: [],
+    };
+    mockQuery.mockResolvedValueOnce({ rows: [anonRow] });
+
+    // Act
+    const list = await reportsService.getAllReports();
+
+    // Assert
+    expect(list).toHaveLength(1);
+    expect(list[0].anonymous).toBe(true);
+    expect(list[0].id).toBe(15);
+    expect(list[0].title).toBe('List Anonymous');
+  });
+
 });
