@@ -225,6 +225,7 @@ function LoginForm(props) {
  */
 function SignUpForm(props) {
   const [state, formAction, isPending] = useActionState(signUpFunction, {
+    username: "",
     name: "",
     surname: "",
     email: "",
@@ -233,19 +234,20 @@ function SignUpForm(props) {
 
   /**
    * Action function for signup form submission.
-   * Extracts name, surname, email, and password from form data, combines name and surname,
+   * Extracts username, name, surname, email, and password from form data
    * and calls the signup handler.
    * @param {Object} _prevState - Previous state (unused)
-   * @param {FormData} formData - Form data containing name, surname, email, and password
+   * @param {FormData} formData - Form data containing username, name, surname, email, and password
    * @returns {Object} State object indicating success or failure
    */
   async function signUpFunction(_prevState, formData) {
+    const username = formData.get("username");
     const name = formData.get("name");
     const surname = formData.get("surname");
     const emailNotifications = formData.get("email_notifications") === "on";
 
     const userData = {
-      username: formData.get("email").split("@")[0] || name,
+      username: username,
       first_name: name,
       last_name: surname || "",
       email: formData.get("email"),
@@ -257,7 +259,7 @@ function SignUpForm(props) {
       await props.handleSignUp(userData);
       return { success: true };
     } catch (error) {
-      return { name: "", surname: "", email: "", password: "" };
+      return { username: "", name: "", surname: "", email: "", password: "" };
     }
   }
 
@@ -276,6 +278,16 @@ function SignUpForm(props) {
           {String(props.message.msg)}
         </div>
       )}
+
+      <input
+        type="text"
+        name="username"
+        placeholder="Username"
+        className={styles.inputField}
+        required
+        minLength={3}
+        disabled={isPending}
+      />
 
       <input
         type="text"
