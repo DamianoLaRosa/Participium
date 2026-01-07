@@ -669,13 +669,40 @@ function ApprovedReportsLayer({ reports, onViewDetails }) {
 }
 
 function ReportDetailsModal({ report, onClose }) {
+
+const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+useEffect(() => {
+  let isMounted = true;
+
+  const checkLogin = async () => {
+    const loggedIn = await API.getUserInfo();
+    if (isMounted) {
+      setIsLoggedIn(loggedIn);
+    }
+  };
+
+  checkLogin();
+
+  return () => {
+    isMounted = false;
+  };
+}, []);
+
+
+
   const navigate = useNavigate();
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
 
   const imageUrls = report.photos?.map((p) => p.image_url) || [];
+
+  //console.log("Report in modal:", report);
+  //console.log("Is logged in:", isLoggedIn);
+
+  const isLoggedInUser = isLoggedIn?.id == report.citizen?.id;
   
   // Show chat button only for approved reports (not pending or rejected)
-  const showChatButton = report.status?.id !== 1 && report.status?.id !== 5;
+  const showChatButton = isLoggedInUser &&report.status?.id !== 1 && report.status?.id !== 5;
 
   return (
     <>
