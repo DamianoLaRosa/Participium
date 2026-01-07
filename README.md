@@ -1,11 +1,13 @@
 # DB CHANGES - DIAGRAM ER
+
 To see the diagram ER to understand better the changes in the DB
 
 https://www.mermaidchart.com/d/79cd4c71-ca44-412d-bd18-f9a8536e063b
 
 # commands
+
 terminal BE : cd server;npm i;nodemon index.mjs
-terminal FE : cd client;npm i;npm run dev 
+terminal FE : cd client;npm i;npm run dev
 connection to db: (docker-desktop open and running) docker compose up -d
 test: cd server; npm test ( cd server; npm run test:coverage) (npm test name_file)
 retrospective: cd retrospective; node calculate.mjs
@@ -18,8 +20,7 @@ commands to remove a container named participium_db: docker rm -f participium_db
 Copy file in a compose.yaml file
 Copy init.sql in a folder called init.sql
 
-docker compose up 
-
+docker compose up
 
 ```yaml
 version: "3.9"
@@ -40,7 +41,7 @@ services:
     networks:
       - participium_network
     restart: unless-stopped
-  
+
   participium:
     image: gubc29/participium:latest
     container_name: participium_app
@@ -68,7 +69,8 @@ networks:
 ```
 
 # mail - password
-admin@participium.local -  participium
+
+admin@participium.local - participium
 
 -- Citizen
 melo@participium.local - password
@@ -123,36 +125,38 @@ The application uses **Socket.IO** for real-time communication between the serve
 
 ## Socket Rooms
 
-| Room Type | Format | Purpose |
-|-----------|--------|---------|
-| **Citizen Room** | `citizen:{id}` | Personal notifications for citizens |
+| Room Type         | Format          | Purpose                              |
+| ----------------- | --------------- | ------------------------------------ |
+| **Citizen Room**  | `citizen:{id}`  | Personal notifications for citizens  |
 | **Operator Room** | `operator:{id}` | Personal notifications for operators |
-| **Report Room** | `report:{id}` | Chat messages for a specific report |
+| **Report Room**   | `report:{id}`   | Chat messages for a specific report  |
 
 ## Events
 
 ### Server → Client
 
-| Event | Payload | Description |
-|-------|---------|-------------|
-| `new_notification` | `{ id, citizen_id, report_id, message, sent_at, seen }` | New status update notification |
-| `new_message` | `{ id, report_id, sender_type, sender_id, content, sent_at }` | New chat message |
+| Event              | Payload                                                       | Description                    |
+| ------------------ | ------------------------------------------------------------- | ------------------------------ |
+| `new_notification` | `{ id, citizen_id, report_id, message, sent_at, seen }`       | New status update notification |
+| `new_message`      | `{ id, report_id, sender_type, sender_id, content, sent_at }` | New chat message               |
 
 ### Client → Server
 
-| Event | Payload | Description |
-|-------|---------|-------------|
-| `join_report` | `reportId` | Join a report's chat room |
+| Event          | Payload    | Description                |
+| -------------- | ---------- | -------------------------- |
+| `join_report`  | `reportId` | Join a report's chat room  |
 | `leave_report` | `reportId` | Leave a report's chat room |
 
 ## Features
 
 ### Notifications (Citizens only)
+
 - Citizens receive real-time notifications when their report status changes
 - Notification badge in header shows unread count
 - Clicking a notification navigates to the report on the map
 
 ### Chat (Citizens & Technical Officers)
+
 - Each report has a dedicated chat between the citizen and assigned operator
 - Real-time message delivery via WebSocket
 - System messages for status changes (prefixed with 📋)
@@ -170,6 +174,7 @@ The application uses **Socket.IO** for real-time communication between the serve
 ---
 
 # DB
+
 citizens( citizen_id, email, username, first_name, last_name, password_hash, salt, profile_photo_url, telegram_username, email_notifications, created_at, verified )
 
 verification_codes( code_id, citizen_id, code, created_at, expires_at )
