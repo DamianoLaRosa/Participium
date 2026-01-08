@@ -46,7 +46,7 @@ client/
 │   │   │   ├── layout/      # Page layout wrapper
 │   │   │   └── logoutModal/ # Logout confirmation modal
 │   │   └── pages/           # Page components
-│   │       ├── admin/       # Admin dashboard & user creation
+│   │       ├── admin/       # Admin dashboard, user creation & operator editing
 │   │       ├── chats/       # Chat page for citizen-operator communication (NEW)
 │   │       ├── home/        # Landing page
 │   │       ├── inspectReport/# Report inspection view
@@ -55,7 +55,7 @@ client/
 │   │       ├── map/         # Interactive map page (UPDATED with chat button)
 │   │       ├── profile/     # User profile page (citizens only)
 │   │       ├── relation-officer/  # PR officer dashboard
-│   │       ├── report/      # Report submission form
+│   │       ├── report/      # Report submission form & comments page
 │   │       ├── technical-officer/ # Technical staff dashboard
 │   │       └── verify-email/ # Email verification page
 │   ├── constants/           # Shared constants
@@ -134,17 +134,19 @@ const user = await API.getUserInfo(); // Returns the entire data directly, not {
 
 They are devided by the purpose we use them for:
 
-| Module           | File              | Methods                                                                                                                         |
-| ---------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| **Auth**         | `auth.js`         | `logIn`, `getUserInfo`, `logOut`, `signUp`                                                                                      |
-| **Admin**        | `admin.js`        | `getAllRoles`, `createMunicipalityUser`, `getAllOperators`, `getAllOffices`                                                     |
-| **Map**          | `map.js`          | `getAllApprovedReports`                                                                                                         |
-| **Report**       | `report.js`       | `insertReport`, `getAllCategories`, `updateReportStatus`, `getAllPendingReports`, `getOperatorsByOffice`, `setOperatorByReport` |
-| **Image**        | `image.js`        | `getImageUploadUrl`, `uploadImageToSignedUrl`                                                                                   |
-| **Tech Officer** | `techofficer.js`  | `getAllReportsForTechOfficer`                                                                                                   |
-| **Citizen**      | `citizen.js`      | `getCitizenProfile`, `updateCitizenProfile`                                                                                     |
-| **Notification** | `notification.js` | `getNotifications`, `getUnreadNotificationCount`, `markNotificationAsSeen`, `markAllNotificationsAsSeen`                        |
-| **Chat**         | `chat.js`         | `getChats`, `getChatDetails`, `sendReportMessage`                                                                               |
+| Module           | File              | Methods                                                                                                                                                                                                        |
+| ---------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Auth**         | `auth.js`         | `logIn`, `getUserInfo`, `logOut`, `signUp`                                                                                                                                                                     |
+| **Admin**        | `admin.js`        | `getAllRoles`, `createMunicipalityUser`, `getAllOperators`, `getAllCompanies`, `getCompanyCategories`, `addOperatorCategory`, `removeOperatorCategory`                                                         |
+| **Map**          | `map.js`          | `getAllApprovedReports`                                                                                                                                                                                        |
+| **Report**       | `report.js`       | `insertReport`, `getAllCategories`, `updateReportStatus`, `getAllPendingReports`, `getOperatorsByOffice`, `setOperatorByReport`, `setMaintainerByReport`, `autoAssignMaintainer`, `autoAssignTechnicalOfficer` |
+| **Image**        | `image.js`        | `getImageUploadUrl`, `uploadImageToSignedUrl`                                                                                                                                                                  |
+| **Tech Officer** | `techofficer.js`  | `getAllReportsForTechOfficer`, `getMyCategories`                                                                                                                                                               |
+| **Maintainer**   | `maintainer.js`   | `getAssignedReportsForMaintainer`, `updateReportStatusByMaintainer`                                                                                                                                            |
+| **Citizen**      | `citizen.js`      | `getCitizenProfile`, `updateCitizenProfile`, `requestVerificationCode`, `verifyEmail`, `checkValidateToken`                                                                                                    |
+| **Comment**      | `comment.js`      | `getMessages`, `addMessage`, `getInternalComments`, `addInternalComment`                                                                                                                                       |
+| **Notification** | `notification.js` | `getNotifications`, `getUnreadNotificationCount`, `markNotificationAsSeen`, `markAllNotificationsAsSeen`, `getReportMessages`, `sendReportMessage`                                                             |
+| **Chat**         | `chat.js`         | `getChats`, `getChatDetails`, `getUnreadMessagesCount`, `markChatAsRead`                                                                                                                                       |
 
 ### Unified API Object (`API.js`)
 
@@ -366,28 +368,30 @@ export const useCityBoundaries = () => {
 | Component           | Location                               | Description                                                              |
 | ------------------- | -------------------------------------- | ------------------------------------------------------------------------ |
 | `Layout`            | `components/common/layout/`            | Page wrapper with header/footer                                          |
-| `Header`            | `components/common/header/`            | Navigation bar with notifications 🔔, chats 💬, avatar menu              |
+| `Header`            | `components/common/header/`            | Navigation bar with notifications 🔔 and avatar menu (includes messages) |
 | `Footer`            | `components/common/footer/`            | Page footer                                                              |
 | `LogoutModal`       | `components/common/logoutModal/`       | Logout confirmation dialog                                               |
 | `ImagePreviewModal` | `components/common/imagePreviewModal/` | Fullscreen image slider with navigation controls                         |
 
 ### Pages
 
-| Page                   | Route                   | Description                                         |
-| ---------------------- | ----------------------- | --------------------------------------------------- |
-| `HomePage`             | `/`                     | Landing page for unauthenticated users              |
-| `LoginPage`            | `/login`, `/signup`     | Authentication forms                                |
-| `MapPage`              | `/map`                  | Interactive map to view reports and select location |
-| `InsertReportPage`     | `/create_report`        | Report submission form                              |
-| `ProfilePage`          | `/profile`              | User profile editing (citizens only)                |
-| `ChatsPage`            | `/chats`                | Chat list and messaging (citizens & operators)      |
-| `AdminPage`            | `/admin`                | Admin dashboard                                     |
-| `CreateUserPage`       | `/admin/createuser`     | Create municipal staff accounts                     |
-| `RelationOfficerPage`  | `/relationOfficer`      | PR officer dashboard                                |
-| `TechnicalOfficerPage` | `/technicalOfficer`     | Technical staff dashboard                           |
-| `MaintainerPage`       | `/maintainer`           | External maintainer dashboard                       |
-| `InspectReportPage`    | `/inspectReport`        | Detailed report view                                |
-| `VerifyEmailPage`      | `/verify-email`         | Email verification page                             |
+| Page                   | Route                      | Description                                         |
+| ---------------------- | -------------------------- | --------------------------------------------------- |
+| `HomePage`             | `/`                        | Landing page for unauthenticated users              |
+| `LoginPage`            | `/login`, `/signup`        | Authentication forms                                |
+| `MapPage`              | `/map`                     | Interactive map to view reports and select location |
+| `InsertReportPage`     | `/create_report`           | Report submission form                              |
+| `ProfilePage`          | `/profile`                 | User profile editing (citizens only)                |
+| `ChatsPage`            | `/chats`                   | Chat list and messaging (citizens & operators)      |
+| `CommentsPage`         | `/report/:id/comments`     | Report comments view (internal and public)          |
+| `AdminPage`            | `/admin`                   | Admin dashboard                                     |
+| `CreateUserPage`       | `/admin/createuser`        | Create municipal staff accounts                     |
+| `EditOperatorPage`     | `/admin/operator/:id/edit` | Edit operator categories and details                |
+| `RelationOfficerPage`  | `/relationOfficer`         | PR officer dashboard                                |
+| `TechnicalOfficerPage` | `/technicalOfficer`        | Technical staff dashboard                           |
+| `MaintainerPage`       | `/maintainer`              | External maintainer dashboard                       |
+| `InspectReportPage`    | `/inspectReport`           | Detailed report view                                |
+| `VerifyEmailPage`      | `/verify-email`            | Email verification page                             |
 
 ---
 
@@ -451,20 +455,21 @@ import { useSocket } from "../context/SocketContext";
 
 function MyComponent() {
   const { socket, isConnected } = useSocket();
-  
+
   useEffect(() => {
     if (!socket) return;
-    
+
     socket.on("new_message", (message) => {
       console.log("Received message:", message);
     });
-    
+
     return () => socket.off("new_message");
   }, [socket]);
 }
 ```
 
 **Connection Logic:**
+
 - Connects when user is authenticated
 - Sends `userId` and `userType` for authentication
 - Automatically disconnects on logout
@@ -475,12 +480,14 @@ function MyComponent() {
 Citizens receive real-time notifications when their report status changes.
 
 **Header Component Features:**
+
 - 🔔 Notification bell with unread count badge
 - Dropdown list of recent notifications
 - Click to navigate to the report on the map
 - "Mark all as read" functionality
 
 **Events Listened:**
+
 - `new_notification` — New status update notification
 
 ### Chat System
@@ -488,27 +495,31 @@ Citizens receive real-time notifications when their report status changes.
 Real-time messaging between citizens and technical officers.
 
 **Header Component Features:**
-- 💬 Chat icon with unread messages badge
-- Dropdown with 3 most recent chats
-- "View all chats" button → `/chats` page
+
+- Unread messages badge displayed on the user avatar
+- "Messages" button in avatar dropdown menu → `/chats` page
+- Badge shows count of unread messages (synced in real-time)
 
 **ChatsPage Features:**
+
 - Left sidebar with chat list
 - Right panel with active chat messages
 - Real-time message delivery
 - System messages for status changes (prefixed with 📋)
-- Responsive design (mobile-friendly)
 
 **Events Listened:**
+
 - `new_message` — New chat message
 
 **Events Emitted:**
+
 - `join_report` — Join a report's chat room
 - `leave_report` — Leave a report's chat room
 
 ### MapPage Integration
 
 When clicking a notification:
+
 1. User is redirected to `/map?reportId=X`
 2. Map automatically centers on the report location
 3. Report details modal opens automatically
@@ -517,5 +528,6 @@ When clicking a notification:
 ### Deduplication
 
 Messages received from multiple Socket.IO rooms (user room + report room) are deduplicated:
+
 - Header tracks processed message IDs to prevent double-counting
 - ChatsPage checks message ID before adding to list
