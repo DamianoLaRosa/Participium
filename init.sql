@@ -113,6 +113,7 @@ CREATE TABLE notifications (
     citizen_id INT REFERENCES citizens(citizen_id),
     report_id INT REFERENCES reports(report_id),
     message TEXT NOT NULL,
+    new_status_id INT REFERENCES statuses(status_id),
     sent_at TIMESTAMP DEFAULT NOW(),
     seen BOOLEAN DEFAULT FALSE
 );

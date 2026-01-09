@@ -15,7 +15,8 @@ router.get("/notifications", async (req, res) => {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
-    const notifications = await getNotificationsByCitizen(req.user.id);
+    const limit = req.query.limit ? parseInt(req.query.limit) : null;
+    const notifications = await getNotificationsByCitizen(req.user.id, limit);
     return res.status(200).json(notifications);
   } catch (err) {
     return res.status(503).json({ error: "Database error during notification retrieval" });

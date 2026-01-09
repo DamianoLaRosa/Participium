@@ -91,6 +91,7 @@ function InspectReportPage() {
     await API.updateReportStatus(selectedReport.id, 5, rejectReason);
     setShowRejectModal(false);
     setRejectReason("");
+    window.dispatchEvent(new CustomEvent('report-updated'));
     navigate(-1);
   };
 
@@ -115,6 +116,7 @@ function InspectReportPage() {
   const confirmAssignMaintainer = async () => {
     await API.setMaintainerByReport(selectedReport.id, selectedMaintainer);
     setShowMaintainerModal(false);
+    window.dispatchEvent(new CustomEvent('report-updated'));
     navigate(-1);
   };
 
@@ -122,6 +124,7 @@ function InspectReportPage() {
     await API.setOperatorByReport(selectedReport.id, selectedOfficer);
     await API.updateReportStatus(selectedReport.id, 2);
     setShowApproveModal(false);
+    window.dispatchEvent(new CustomEvent('report-updated'));
     navigate(-1);
   };
 
@@ -133,6 +136,7 @@ function InspectReportPage() {
     try {
       await API.autoAssignTechnicalOfficer(selectedReport.id);
       setShowAutoAssignOfficerModal(false);
+      window.dispatchEvent(new CustomEvent('report-updated'));
       navigate(-1);
     } catch (err) {
       setShowAutoAssignOfficerModal(false);
@@ -149,6 +153,8 @@ function InspectReportPage() {
   const confirmStatusUpdate = async () => {
     await API.updateReportStatus(selectedReport.id, newStatusId);
     setShowStatusModal(false);
+    // Dispatch event to notify reports list to refresh
+    window.dispatchEvent(new CustomEvent('report-updated'));
     navigate(-1);
   };
 
@@ -160,6 +166,7 @@ function InspectReportPage() {
     try {
       await API.autoAssignMaintainer(selectedReport.id);
       setShowAutoAssignModal(false);
+      window.dispatchEvent(new CustomEvent('report-updated'));
       navigate(-1);
     } catch (err) {
       setShowAutoAssignModal(false);

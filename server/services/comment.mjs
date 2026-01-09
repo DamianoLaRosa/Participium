@@ -168,3 +168,22 @@ export const addSystemMessage = async (report_id, content) => {
   const result = await pool.query(sql, [report_id, content]);
   return result.rows[0];
 };
+
+/**
+ * Check if an operator has sent at least one real message (not system message) to a report
+ * @param {number} report_id - The report ID
+ * @returns {boolean} True if operator has sent a message
+ */
+export const hasOperatorMessage = async (report_id) => {
+  const sql = `
+    SELECT EXISTS (
+      SELECT 1 FROM messages 
+      WHERE report_id = $1 
+      AND sender_type = 'operator' 
+      AND sender_id != 0
+    ) as has_message
+  `;
+
+  const result = await pool.query(sql, [report_id]);
+  return result.rows[0]?.has_message || false;
+};

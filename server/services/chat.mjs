@@ -13,6 +13,8 @@ const pool = new Pool({
 
 /**
  * Get all chats for a citizen (reports they created with message history)
+ * Only shows chats where the operator has sent at least one real message (not system messages)
+ * This ensures citizens only see chats after the technical officer initiates contact
  * @param {number} citizen_id - The citizen ID
  * @returns {array} List of chats with last message and unread count
  */
@@ -50,6 +52,7 @@ export const getChatsByCitizen = async (citizen_id) => {
         FROM messages m
         WHERE m.report_id = r.report_id
         AND m.sender_type != 'citizen'
+        AND m.sender_id != 0
         AND m.sent_at > COALESCE(
           (SELECT last_read_at FROM chat_reads cr 
            WHERE cr.user_type = 'citizen' AND cr.user_id = $1 AND cr.report_id = r.report_id),
@@ -60,6 +63,12 @@ export const getChatsByCitizen = async (citizen_id) => {
     JOIN statuses s ON r.status_id = s.status_id
     WHERE r.citizen_id = $1
     AND r.status_id NOT IN (1, 5)
+    AND EXISTS (
+      SELECT 1 FROM messages m 
+      WHERE m.report_id = r.report_id 
+      AND m.sender_type = 'operator' 
+      AND m.sender_id != 0
+    )
     ORDER BY 
       COALESCE(
         (SELECT MAX(m.sent_at) FROM messages m WHERE m.report_id = r.report_id),
@@ -83,6 +92,8 @@ export const getChatsByCitizen = async (citizen_id) => {
 
 /**
  * Get all chats for an operator (reports assigned to them)
+ * Only shows chats where the operator has explicitly opened the chat (clicked "Open Chat")
+ * This is tracked via the chat_reads table - a record is created when they first open the chat
  * @param {number} operator_id - The operator ID
  * @param {string} role - The operator role
  * @returns {array} List of chats with last message and unread count
@@ -142,6 +153,12 @@ export const getChatsByOperator = async (operator_id, role) => {
     LEFT JOIN citizens c ON r.citizen_id = c.citizen_id
     WHERE ${whereClause}
     AND r.status_id NOT IN (1, 5)
+    AND EXISTS (
+      SELECT 1 FROM chat_reads cr 
+      WHERE cr.report_id = r.report_id 
+      AND cr.user_type = 'operator' 
+      AND cr.user_id = $1
+    )
     ORDER BY 
       COALESCE(
         (SELECT MAX(m.sent_at) FROM messages m WHERE m.report_id = r.report_id),

@@ -16,17 +16,31 @@ const pool = new Pool({
  * @param {number} citizen_id - The citizen to notify
  * @param {number} report_id - The related report
  * @param {string} message - Notification message
+ * @param {number} new_status_id - The new status ID (optional)
  * @param {object} io - Socket.IO instance (optional)
  * @returns {object} The created notification
  */
-export const createNotification = async (citizen_id, report_id, message, io = null) => {
+export const createNotification = async (citizen_id, report_id, message, new_status_id = null, io = null) => {
+  // First get the report title for the notification
+  const reportSql = `SELECT title FROM reports WHERE report_id = $1`;
+  const reportResult = await pool.query(reportSql, [report_id]);
+  const reportTitle = reportResult.rows[0]?.title || 'Unknown Report';
+
+  // Get the status name if new_status_id is provided
+  let statusName = null;
+  if (new_status_id) {
+    const statusSql = `SELECT name FROM statuses WHERE status_id = $1`;
+    const statusResult = await pool.query(statusSql, [new_status_id]);
+    statusName = statusResult.rows[0]?.name || null;
+  }
+
   const sql = `
-    INSERT INTO notifications (citizen_id, report_id, message, sent_at, seen)
-    VALUES ($1, $2, $3, NOW(), FALSE)
-    RETURNING notification_id, citizen_id, report_id, message, sent_at, seen
+    INSERT INTO notifications (citizen_id, report_id, message, new_status_id, sent_at, seen)
+    VALUES ($1, $2, $3, $4, NOW(), FALSE)
+    RETURNING notification_id, citizen_id, report_id, message, new_status_id, sent_at, seen
   `;
 
-  const result = await pool.query(sql, [citizen_id, report_id, message]);
+  const result = await pool.query(sql, [citizen_id, report_id, message, new_status_id]);
   const notification = result.rows[0];
 
   // Send via WebSocket if io instance is available
@@ -34,7 +48,10 @@ export const createNotification = async (citizen_id, report_id, message, io = nu
     io.to(`citizen:${citizen_id}`).emit("new_notification", {
       id: notification.notification_id,
       report_id: notification.report_id,
+      report_title: reportTitle,
       message: notification.message,
+      new_status_id: notification.new_status_id,
+      status_name: statusName,
       sent_at: notification.sent_at,
       seen: notification.seen,
     });
@@ -46,23 +63,32 @@ export const createNotification = async (citizen_id, report_id, message, io = nu
 /**
  * Get all notifications for a citizen
  * @param {number} citizen_id - The citizen ID
+ * @param {number} limit - Maximum number of notifications to return (optional)
  * @returns {array} List of notifications
  */
-export const getNotificationsByCitizen = async (citizen_id) => {
-  const sql = `
+export const getNotificationsByCitizen = async (citizen_id, limit = null) => {
+  let sql = `
     SELECT 
       n.notification_id as id,
       n.report_id,
       n.message,
+      n.new_status_id,
       n.sent_at,
       n.seen,
-      r.title as report_title
+      r.title as report_title,
+      r.latitude,
+      r.longitude,
+      s.name as status_name
     FROM notifications n
     LEFT JOIN reports r ON n.report_id = r.report_id
+    LEFT JOIN statuses s ON n.new_status_id = s.status_id
     WHERE n.citizen_id = $1
     ORDER BY n.sent_at DESC
-    LIMIT 50
   `;
+  
+  if (limit) {
+    sql += ` LIMIT ${parseInt(limit)}`;
+  }
 
   const result = await pool.query(sql, [citizen_id]);
   return result.rows;

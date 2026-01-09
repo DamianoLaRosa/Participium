@@ -47,9 +47,10 @@ client/
 │   │   │   └── logoutModal/ # Logout confirmation modal
 │   │   └── pages/           # Page components
 │   │       ├── admin/       # Admin dashboard, user creation & operator editing
-│   │       ├── chats/       # Chat page for citizen-operator communication (NEW)
+│   │       ├── chats/       # Chat page for citizen-operator communication
 │   │       ├── home/        # Landing page
-│   │       ├── inspectReport/# Report inspection view
+│   │       ├── inspectReport/# Report inspection view (dispatches status update events)
+│   │       ├── notifications/# Full notifications history page (NEW)
 │   │       ├── login/       # Login/Signup page
 │   │       ├── maintainer/  # Maintainer dashboard
 │   │       ├── map/         # Interactive map page (UPDATED with chat button)
@@ -368,7 +369,7 @@ export const useCityBoundaries = () => {
 | Component           | Location                               | Description                                                              |
 | ------------------- | -------------------------------------- | ------------------------------------------------------------------------ |
 | `Layout`            | `components/common/layout/`            | Page wrapper with header/footer                                          |
-| `Header`            | `components/common/header/`            | Navigation bar with notifications 🔔 and avatar menu (includes messages) |
+| `Header`            | `components/common/header/`            | Navigation bar with notifications 🔔 (last 10 + "Show All") and avatar menu |
 | `Footer`            | `components/common/footer/`            | Page footer                                                              |
 | `LogoutModal`       | `components/common/logoutModal/`       | Logout confirmation dialog                                               |
 | `ImagePreviewModal` | `components/common/imagePreviewModal/` | Fullscreen image slider with navigation controls                         |
@@ -383,14 +384,15 @@ export const useCityBoundaries = () => {
 | `InsertReportPage`     | `/create_report`           | Report submission form                              |
 | `ProfilePage`          | `/profile`                 | User profile editing (citizens only)                |
 | `ChatsPage`            | `/chats`                   | Chat list and messaging (citizens & operators)      |
+| `NotificationsPage`    | `/notifications`           | Full notifications history with "View on Map"       |
 | `CommentsPage`         | `/report/:id/comments`     | Report comments view (internal and public)          |
 | `AdminPage`            | `/admin`                   | Admin dashboard                                     |
 | `CreateUserPage`       | `/admin/createuser`        | Create municipal staff accounts                     |
 | `EditOperatorPage`     | `/admin/operator/:id/edit` | Edit operator categories and details                |
-| `RelationOfficerPage`  | `/relationOfficer`         | PR officer dashboard                                |
-| `TechnicalOfficerPage` | `/technicalOfficer`        | Technical staff dashboard                           |
+| `RelationOfficerPage`  | `/relationOfficer`         | PR officer dashboard (auto-refreshes on status change) |
+| `TechnicalOfficerPage` | `/technicalOfficer`        | Technical staff dashboard (auto-refreshes on status change) |
 | `MaintainerPage`       | `/maintainer`              | External maintainer dashboard                       |
-| `InspectReportPage`    | `/inspectReport`           | Detailed report view                                |
+| `InspectReportPage`    | `/inspectReport`           | Detailed report view (dispatches status update events) |
 | `VerifyEmailPage`      | `/verify-email`            | Email verification page                             |
 
 ---
@@ -482,34 +484,55 @@ Citizens receive real-time notifications when their report status changes.
 **Header Component Features:**
 
 - 🔔 Notification bell with unread count badge
-- Dropdown list of recent notifications
-- Click to navigate to the report on the map
+- Dropdown list shows **last 10 notifications** with:
+  - Report title (truncated with ellipsis if too long)
+  - New status
+  - Time
+- "Show All Notifications" button → `/notifications` page
+- Click notification to navigate to the report on the map
+- Badge syncs with NotificationsPage via custom events
+
+**NotificationsPage Features:**
+
+- Full table view of all notifications
+- Columns: Report Title, Status (colored badge), Message, Time, Actions
+- "View on Map" button for each notification
 - "Mark all as read" functionality
+- "Back" button to return to previous page
 
 **Events Listened:**
 
-- `new_notification` — New status update notification
+- `new_notification` — New status update notification (includes `report_title`, `status_name`)
+- `notification-read` (custom event) — Syncs unread count between Header and NotificationsPage
 
 ### Chat System
 
-Real-time messaging between citizens and technical officers.
+Real-time messaging between citizens and technical officers with **role-based visibility**.
 
-**Header Component Features:**
+**For Citizens:**
 
-- Unread messages badge displayed on the user avatar
-- "Messages" button in avatar dropdown menu → `/chats` page
-- Badge shows count of unread messages (synced in real-time)
+- Chat appears in list **only after** technical officer sends the first message
+- Citizens cannot send the first message (input disabled until operator message exists)
+- "Open Chat" button on map is hidden until chat is started by technical officer
+- New chats appear **instantly** when technical officer sends first message (via WebSocket)
+
+**For Technical Officers:**
+
+- Chat appears in list **only after** they click "Open Chat" for a specific report
+- Chats are not created automatically when a report is assigned
+- Chat list updates **instantly** when "Open Chat" is clicked (no refresh needed)
 
 **ChatsPage Features:**
 
-- Left sidebar with chat list
+- Left sidebar with chat list (sorted by last activity)
 - Right panel with active chat messages
 - Real-time message delivery
-- System messages for status changes (prefixed with 📋)
+- Status badges use consistent color standards (via `STATUS_MAP`)
+- "Waiting for the technical officer to start the conversation..." message for citizens
 
 **Events Listened:**
 
-- `new_message` — New chat message
+- `new_message` — New chat message (triggers instant chat list update for citizens)
 
 **Events Emitted:**
 
@@ -523,7 +546,15 @@ When clicking a notification:
 1. User is redirected to `/map?reportId=X`
 2. Map automatically centers on the report location
 3. Report details modal opens automatically
-4. "Open Chat" button in modal navigates to chat
+4. "Open Chat" button shown **only if** technical officer has started the conversation (`chat_started` flag)
+
+### Real-time Report Status Updates
+
+When a technical officer changes a report's status in `InspectReportPage`:
+
+1. A custom event `report-status-updated` is dispatched
+2. `TechnicalOfficerPage` and `RelationOfficerPage` listen for this event
+3. Report lists are automatically refreshed (no page reload needed)
 
 ### Deduplication
 

@@ -363,7 +363,13 @@ export const getAllApprovedReports = async () => {
         ext_op.username as external_operator_username,
         ext_op.email as external_operator_email,
         ext_comp.name as external_company_name,
-        COALESCE(json_agg(DISTINCT jsonb_build_object('photo_id', p.photo_id, 'image_url', p.image_url)) FILTER (WHERE p.photo_id IS NOT NULL), '[]') AS photos
+        COALESCE(json_agg(DISTINCT jsonb_build_object('photo_id', p.photo_id, 'image_url', p.image_url)) FILTER (WHERE p.photo_id IS NOT NULL), '[]') AS photos,
+        EXISTS (
+          SELECT 1 FROM messages m 
+          WHERE m.report_id = r.report_id 
+          AND m.sender_type = 'operator' 
+          AND m.sender_id != 0
+        ) as chat_started
       FROM reports r
       LEFT JOIN citizens c ON r.citizen_id = c.citizen_id
       LEFT JOIN categories cat ON r.category_id = cat.category_id
@@ -408,7 +414,8 @@ export const getAllApprovedReports = async () => {
         email: row.external_operator_email,
         company: row.external_company_name
       } : null,
-      photos: row.photos || []
+      photos: row.photos || [],
+      chat_started: row.chat_started || false
     }));
 };
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import API from "../../../API/API.js";
 import { useNavigate } from "react-router";
 import "./RelationOfficerPage.css";
@@ -15,18 +15,53 @@ function RelationOfficerPage() {
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  useEffect(() => {
-    loadReports();
-  }, []);
-
-  const loadReports = async () => {
+  const loadReports = useCallback(async () => {
     try {
       const data = await API.getAllPendingReports();
       setReports(data);
     } catch (err) {
       setError("Failed to load reports: " + err);
     }
-  };
+  }, []);
+
+  // Load data on mount
+  useEffect(() => {
+    loadReports();
+  }, [loadReports]);
+
+  // Reload data when navigating back or when page regains focus
+  useEffect(() => {
+    const handlePopState = () => {
+      loadReports();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadReports();
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [loadReports]);
+
+  // Listen for custom event dispatched when report is updated
+  useEffect(() => {
+    const handleReportUpdated = () => {
+      loadReports();
+    };
+
+    window.addEventListener('report-updated', handleReportUpdated);
+
+    return () => {
+      window.removeEventListener('report-updated', handleReportUpdated);
+    };
+  }, [loadReports]);
 
   const formatDate = (isoString) => {
     const date = new Date(isoString);

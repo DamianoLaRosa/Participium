@@ -183,29 +183,7 @@
   font-weight: 500;
   padding: 3px 8px;
   border-radius: 12px;
-  background-color: var(--background-default);
-  color: var(--foreground-default);
   width: fit-content;
-}
-
-.statusAssigned {
-  background-color: #e3f2fd;
-  color: #1565c0;
-}
-
-.statusInProgress {
-  background-color: #fff3e0;
-  color: #ef6c00;
-}
-
-.statusSuspended {
-  background-color: #fce4ec;
-  color: #c2185b;
-}
-
-.statusResolved {
-  background-color: #e8f5e9;
-  color: #2e7d32;
 }
 
 .lastMessage {
@@ -563,6 +541,16 @@
   opacity: 0.4;
   cursor: not-allowed;
   transform: none;
+}
+
+/* Waiting message for citizens */
+.waitingMessage {
+  padding: 16px 20px;
+  text-align: center;
+  color: var(--foreground-default);
+  font-size: 14px;
+  background-color: var(--background-default);
+  border-top: 1px solid var(--border-default);
 }
 
 /* =====================================================

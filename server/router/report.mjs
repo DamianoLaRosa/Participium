@@ -15,8 +15,8 @@ import {
   autoAssignMaintainer,
   autoAssignTechnicalOfficer,
   createNotification,
-  addSystemMessage,
   getReportParticipants,
+  hasOperatorMessage,
 } from "../dao.mjs";
 import { getIO } from "../socket.mjs";
 
@@ -144,35 +144,13 @@ router.put("/reports/:id/status", async (req, res) => {
     );
     if (!updated) return res.status(404).json({ error: "Report not found" });
 
-    // Send notification to citizen on status change and add system message to chat
+    // Send notification to citizen on status change (NOT as chat message, only as notification)
     if (updated.citizen?.id && STATUS_MESSAGES[status_id]) {
       let message = STATUS_MESSAGES[status_id];
       if (status_id === 5 && rejection_reason) {
         message = `Your report was rejected: ${rejection_reason}`;
       }
-      await createNotification(updated.citizen.id, reportId, message, getIO());
-      
-      // Add system message to chat (for status updates visible in chat history)
-      const systemMessage = await addSystemMessage(reportId, `📋 ${message}`);
-      
-      // Emit system message via WebSocket to report room and citizen room
-      const io = getIO();
-      if (io) {
-        const sysMessagePayload = {
-          id: systemMessage.message_id,
-          report_id: systemMessage.report_id,
-          sender_type: systemMessage.sender_type,
-          sender_id: systemMessage.sender_id,
-          content: systemMessage.content,
-          sent_at: systemMessage.sent_at,
-        };
-
-        // Emit to report room
-        io.to(`report:${reportId}`).emit("new_message", sysMessagePayload);
-
-        // Emit to citizen room for badge update
-        io.to(`citizen:${updated.citizen.id}`).emit("new_message", sysMessagePayload);
-      }
+      await createNotification(updated.citizen.id, reportId, message, status_id, getIO());
     }
 
   return res.status(200).json(updated);
@@ -402,6 +380,16 @@ router.post("/reports/:id/messages", async (req, res) => {
     }
 
     const senderType = req.user.role === "user" ? "citizen" : "operator";
+
+    // Citizens cannot send the first message - only operators can initiate chat
+    if (senderType === "citizen") {
+      const operatorHasMessaged = await hasOperatorMessage(reportId);
+      if (!operatorHasMessaged) {
+        return res.status(403).json({ 
+          error: "You cannot send messages until the technical officer contacts you" 
+        });
+      }
+    }
 
     const message = await addMessage(
       reportId,

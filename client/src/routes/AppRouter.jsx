@@ -13,6 +13,7 @@ import RelationOfficerPage from "../components/pages/relation-officer/RelatioOff
 import TechnicalOfficerPage from "../components/pages/technical-officer/TechnicalOfficerPage";
 import { MapPage } from "../components/pages/map/MapPage";
 import ChatsPage from "../components/pages/chats/ChatsPage";
+import NotificationsPage from "../components/pages/notifications/NotificationsPage";
 import ProtectedRoute from "./ProtectedRoute";
 import RoleBasedHomePage from "./RoleBasedHomePage";
 
@@ -154,6 +155,20 @@ function AppRouter({
               isAuthLoading={isAuthLoading}
             >
               <ChatsPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute
+              isUnverifiedSession={isUnverifiedSession}
+              requireAuth
+              user={user}
+              isAuthLoading={isAuthLoading}
+            >
+              <NotificationsPage />
             </ProtectedRoute>
           }
         />

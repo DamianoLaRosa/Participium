@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import API from "../../../API/API.js";
 import { useNavigate } from "react-router";
 import "./TechnicalOfficerPage.css";
@@ -17,16 +17,7 @@ function TechnicalOfficerPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  useEffect(() => {
-    // Quando reports o myCategories cambiano, dividi i report
-    divideReports();
-  }, [reports, myCategories]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       // Carica sia i report che le categorie dell'operatore
       const [reportsData, categoriesData] = await Promise.all([
@@ -39,7 +30,53 @@ function TechnicalOfficerPage() {
     } catch (err) {
       setError("Failed to load data: " + err);
     }
-  };
+  }, []);
+
+  // Load data on mount
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Reload data when navigating back or when page regains focus
+  useEffect(() => {
+    const handlePopState = () => {
+      loadData();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadData();
+      }
+    };
+
+    // Listen for browser back/forward navigation
+    window.addEventListener('popstate', handlePopState);
+    // Listen for tab visibility changes
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [loadData]);
+
+  // Listen for custom event dispatched when status is updated
+  useEffect(() => {
+    const handleReportUpdated = () => {
+      loadData();
+    };
+
+    window.addEventListener('report-updated', handleReportUpdated);
+
+    return () => {
+      window.removeEventListener('report-updated', handleReportUpdated);
+    };
+  }, [loadData]);
+
+  useEffect(() => {
+    // Quando reports o myCategories cambiano, dividi i report
+    divideReports();
+  }, [reports, myCategories]);
 
   const divideReports = () => {
     if (reports.length === 0 || myCategories.length === 0) {

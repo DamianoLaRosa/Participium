@@ -710,8 +710,15 @@ function ReportDetailsModal({ report, onClose }) {
     report.citizen?.id != null &&
     Number(report.citizen.id) === Number(isLoggedIn.id);
 
+  // Only show chat button if:
+  // 1. User is the owner of the report
+  // 2. Report status is not Pending (1) or Rejected (5)
+  // 3. Chat has been started by the technical officer (operator sent at least one message)
   const showChatButton =
-    isOwner && report.status?.id !== 1 && report.status?.id !== 5;
+    isOwner && 
+    report.status?.id !== 1 && 
+    report.status?.id !== 5 &&
+    report.chat_started === true;
 
   return (
     <>

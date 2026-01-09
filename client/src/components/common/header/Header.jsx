@@ -92,6 +92,22 @@ export function Header(props) {
     };
   }, [canAccessChats]);
 
+  // Listen for notification-read events to sync notification count from NotificationsPage
+  useEffect(() => {
+    if (!isCitizen) return;
+
+    const handleNotificationRead = (event) => {
+      const { count } = event.detail;
+      setUnreadCount((prev) => Math.max(0, prev - count));
+    };
+
+    window.addEventListener('notification-read', handleNotificationRead);
+
+    return () => {
+      window.removeEventListener('notification-read', handleNotificationRead);
+    };
+  }, [isCitizen]);
+
   // Listen for new messages via WebSocket
   useEffect(() => {
     if (!socket || !canAccessChats) return;
@@ -259,12 +275,27 @@ export function Header(props) {
                             role="button"
                             tabIndex={0}
                           >
-                            <p>{notif.message}</p>
+                            <div className={styles.notificationReportTitle}>
+                              {notif.report_title || "Report"}
+                            </div>
+                            <p className={styles.notificationMessage}>{notif.message}</p>
                             <small>{formatTime(notif.sent_at)}</small>
                           </div>
                         ))
                       )}
                     </div>
+
+                    {notifications.length > 0 && (
+                      <button
+                        className={styles.viewAllButton}
+                        onClick={() => {
+                          setIsNotifOpen(false);
+                          navigate("/notifications");
+                        }}
+                      >
+                        Show All Notifications
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

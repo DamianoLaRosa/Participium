@@ -135,10 +135,10 @@ The application uses **Socket.IO** for real-time communication between the serve
 
 ### Server → Client
 
-| Event              | Payload                                                       | Description                    |
-| ------------------ | ------------------------------------------------------------- | ------------------------------ |
-| `new_notification` | `{ id, citizen_id, report_id, message, sent_at, seen }`       | New status update notification |
-| `new_message`      | `{ id, report_id, sender_type, sender_id, content, sent_at }` | New chat message               |
+| Event              | Payload                                                                               | Description                    |
+| ------------------ | ------------------------------------------------------------------------------------- | ------------------------------ |
+| `new_notification` | `{ id, report_id, report_title, message, new_status_id, status_name, sent_at, seen }` | New status update notification |
+| `new_message`      | `{ id, report_id, sender_type, sender_id, content, sent_at }`                         | New chat message               |
 
 ### Client → Server
 
@@ -153,15 +153,33 @@ The application uses **Socket.IO** for real-time communication between the serve
 
 - Citizens receive real-time notifications when their report status changes
 - Notification badge in header shows unread count
+- Notification dropdown shows last 10 notifications with report title, new status, and time
+- "Show All" button opens `/notifications` page with full notification history
 - Clicking a notification navigates to the report on the map
 
 ### Chat (Citizens & Technical Officers)
 
-- Each report has a dedicated chat between the citizen and assigned operator
+Chat visibility follows different rules for each role:
+
+**For Citizens:**
+
+- Chat appears in their list **only after** a technical officer sends the first message
+- Citizens cannot initiate a chat or send the first message
+- "Open Chat" button on map is hidden until the technical officer starts the conversation
+- New chats appear instantly when the technical officer sends the first message (no refresh needed)
+
+**For Technical Officers:**
+
+- Chat appears in their list **only after** they click "Open Chat" for a specific report
+- Chats are not created automatically when a report is assigned
+- Technical officer can send the first message after opening the chat
+
+**Features:**
+
 - Real-time message delivery via WebSocket
-- System messages for status changes (prefixed with 📋)
 - Unread message badge in header
 - Full chat history available on `/chats` page
+- Status badges use consistent color standards across the app
 
 ## Connection Flow
 
@@ -201,7 +219,7 @@ internal_comment( internal_comment_id, report_id, sender_operator_id, content, c
 
 messages( message_id, report_id, sender_type, sender_id, content, sent_at )
 
-notifications( notification_id, citizen_id, report_id, message, sent_at, seen )
+notifications( notification_id, citizen_id, report_id, message, new_status_id, sent_at, seen )
 
 telegram_users( telegram_user_id, citizen_id, chat_id, linked_at )
 
