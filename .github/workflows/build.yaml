@@ -21,7 +21,7 @@ jobs:
       - name: Build Docker Image
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/participium:latest .
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/participium:latest ../.
 
       - name: Push Docker Image
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
