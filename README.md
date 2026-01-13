@@ -17,7 +17,8 @@ commands to remove a container named participium_db: docker rm -f participium_db
 
 # Docker compose using participium image example
 
-Copy the following compose.yaml file and init.sql of the project into the same folder. Then from command line run: docker-compose up
+Copy the following compose.yaml file and init.sql of the project into the same folder. Then from command line run: docker-compose up.
+
 Wait that participium_db is up before to test the app otherwise it will fail.
 
 
