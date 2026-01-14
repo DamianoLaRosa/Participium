@@ -151,15 +151,17 @@ function NotificationsPage() {
                     <td className={styles.message}>{notification.message}</td>
                     <td className={styles.date}>{formatDate(notification.sent_at)}</td>
                     <td>
-                      <button
-                        className={styles.viewButton}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRowClick(notification);
-                        }}
-                      >
-                        View on Map
-                      </button>
+                      {(notification.new_status_id !== 1 && notification.new_status_id !== 5) && (
+                        <button
+                          className={styles.viewButton}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRowClick(notification);
+                          }}
+                        >
+                          View on Map
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))

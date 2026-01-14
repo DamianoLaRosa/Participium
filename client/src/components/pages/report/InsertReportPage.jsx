@@ -433,62 +433,44 @@ function ReportSummary({ report, user, message, categories }) {
   const navigate = useNavigate();
 
   return (
-    <div className={styles.pageWrapper}>
-      <div className={styles.contentWrapper}>
-        <div className={styles.formContainer}>
-          <h3 className={styles.title}>Report Created Successfully</h3>
+    <div className={styles.summaryWrapper}>
+      <div className={styles.summaryContainer}>
+        <h2 className={styles.summaryTitle}>Report Submitted Successfully</h2>
 
-          <div className={styles.successMessage}>
-            Your report has been submitted successfully!
-          </div>
+        <div className={styles.successMessage}>
+          Your report has been submitted!
+        </div>
 
-          <div className={styles.reportDetails}>
-            <h5>Report Details</h5>
-            <p>
-              <strong>Title:</strong> {report.title}
-            </p>
-            <p>
-              <strong>Latitude:</strong> {report.latitude}{" "}
-              <strong>Longitude:</strong> {report.longitude}
-            </p>
-            <p>
-              <strong>Description:</strong> {report.description}
-            </p>
-            <p>
-              <strong>Category:</strong>{" "}
-              {categories.find((cat) => cat.id === report.category_id)?.name ||
-                "Unknown"}
-            </p>
-            <p>
-            <strong>Anonymous:</strong> {report.anonymous ? "Yes" : "No"}
+        <div className={styles.card}>
+          <h4 className={styles.cardTitle}>Report Details</h4>
+          <p><strong>Title:</strong> {report.title}</p>
+          <p>
+            <strong>Location:</strong> {report.latitude}, {report.longitude}
           </p>
-            <p>
-              <strong>Images:</strong> {report.images.length} file(s) attached
-            </p>
-          </div>
+          <p><strong>Description:</strong> {report.description}</p>
+          <p>
+            <strong>Category:</strong>{" "}
+            {categories.find((cat) => cat.id === report.category_id)?.name || "Unknown"}
+          </p>
+          <p><strong>Anonymous:</strong> {report.anonymous ? "Yes" : "No"}</p>
+          <p><strong>Images:</strong> {report.images.length} file(s) attached</p>
+        </div>
 
-          {!report.anonymous && (
-            <div className={styles.reportDetails}>
-              <h5>User Information</h5>
-              <p>
-                <strong>User:</strong> {user?.name || user?.username}
-              </p>
-              {user?.email && (
-                <p>
-                  <strong>Email:</strong> {user.email}
-                </p>
-              )}
-            </div>
-          )}
-
-          <div className={styles.footerButtons}>
-            <button
-              className={`${styles.button} ${styles.buttonPrimary}`}
-              onClick={() => navigate("/")}
-            >
-              Back to Home
-            </button>
+        {!report.anonymous && user && (
+          <div className={styles.card}>
+            <h4 className={styles.cardTitle}>User Information</h4>
+            <p><strong>Name:</strong> {user.name || user.username}</p>
+            {user.email && <p><strong>Email:</strong> {user.email}</p>}
           </div>
+        )}
+
+        <div className={styles.footerButtons}>
+          <button
+            className={`${styles.button} ${styles.buttonPrimary}`}
+            onClick={() => navigate("/")}
+          >
+            Back to Home
+          </button>
         </div>
       </div>
     </div>

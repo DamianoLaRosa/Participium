@@ -24,6 +24,7 @@ const router = Router();
 
 // Status change messages for notifications
 const STATUS_MESSAGES = {
+  1: "Your report has been created and is pending approval",
   2: "Your report has been assigned to a technical officer",
   3: "Work on your report is now in progress",
   4: "Your report has been temporarily suspended",
@@ -94,6 +95,10 @@ router.post(
       category_id,
         anonymous,
     });
+
+    // 🔔 NOTIFICA DI CREAZIONE REPORT
+   await createNotification(req.user.id,report.report_id, STATUS_MESSAGES[1],1,getIO());
+
   return res.status(201).json(report);
   } catch (err) {
       return res.status(503).json({ error: err.message });
@@ -179,7 +184,7 @@ router.put("/reports/:id/operator", async (req, res) => {
       return res.status(422).json({ error: "operatorId must be a number" });
     const updated = await setOperatorByReport(reportId, operatorId);
     if (!updated) return res.status(404).json({ error: "Report not found" });
-  return res.sendStatus(200);
+    return res.sendStatus(200);
   } catch (err) {
     res.status(503).json({ error: "Database error during operator assignment" });
   }
@@ -202,6 +207,17 @@ router.post("/reports/:id/auto-assign-officer", async (req, res) => {
       return res.status(422).json({ error: "Invalid report id" });
 
     const result = await autoAssignTechnicalOfficer(reportId);
+
+    // 🔔 NOTIFICA AL CITIZEN
+    if (result.report.citizen_id) {
+      await createNotification(
+        result.report.citizen_id,
+        reportId,
+        STATUS_MESSAGES[2], // "Your report has been assigned to a technical officer"
+        2,
+        getIO()
+      );
+    }
     
     return res.status(200).json({
         id: result.assigned_officer.operator_id,

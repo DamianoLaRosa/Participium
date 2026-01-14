@@ -426,6 +426,7 @@ export const setOperatorByReport = async (report_id, operator_id) => {
       WHERE report_id = $1
       RETURNING 
         report_id,
+        citizen_id,
         assigned_to_operator_id,
         title,
         status_id,
@@ -619,6 +620,7 @@ export const autoAssignTechnicalOfficer = async (report_id) => {
       WHERE report_id = $1
       RETURNING 
         report_id,
+        citizen_id,
         assigned_to_operator_id,
         category_id,
         title,
