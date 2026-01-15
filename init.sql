@@ -617,15 +617,15 @@ INSERT INTO reports (
 ) VALUES (
     (SELECT citizen_id FROM citizens WHERE email='melo@participium.local'),
     (SELECT category_id FROM categories WHERE name='Roads and Urban Furnishings'),
-    (SELECT status_id FROM statuses WHERE name='Pending Approval'),
-    NULL,
+    2,
+    9,
     'Pothole on the roadway',
     'Large pothole causing danger to cars and bicycles.',
     45.070120, 7.668450, TRUE
 ) RETURNING report_id
 )
 INSERT INTO photos (report_id, image_url)
-SELECT report_id, 'https://example.com/pothole_road.jpg' FROM new_report;
+SELECT report_id, 'https://vxofqxupvztswwxksllp.supabase.co/storage/v1/object/public/Reports/1768502322961-pothole-in-the-road.jpg' FROM new_report;
 
 WITH new_report AS (
 INSERT INTO reports (
@@ -635,15 +635,15 @@ INSERT INTO reports (
 ) VALUES (
     (SELECT citizen_id FROM citizens WHERE email='melo@participium.local'),
     (SELECT category_id FROM categories WHERE name='Water Supply – Drinking Water'),
-    (SELECT status_id FROM statuses WHERE name='Pending Approval'),
-    NULL,
+    2,
+    3,
     'Water leak from sidewalk',
     'Continuous water leak coming out from the pavement.',
     45.068940, 7.662310, TRUE
 ) RETURNING report_id
 )
 INSERT INTO photos (report_id, image_url)
-SELECT report_id, 'https://example.com/water_leak_street.jpg' FROM new_report;
+SELECT report_id, 'https://vxofqxupvztswwxksllp.supabase.co/storage/v1/object/public/Reports/1768503058207-water.jfif' FROM new_report;
 
 WITH new_report AS (
 INSERT INTO reports (
@@ -653,15 +653,33 @@ INSERT INTO reports (
 ) VALUES (
     (SELECT citizen_id FROM citizens WHERE email='melo@participium.local'),
     (SELECT category_id FROM categories WHERE name='Waste'),
-    (SELECT status_id FROM statuses WHERE name='Pending Approval'),
-    NULL,
+    2,
+    7,
     'Illegal dumping',
     'Bulky waste abandoned on sidewalk.',
-    45.071500, 7.669820, TRUE
+    45.089099, 7.668285, TRUE
 ) RETURNING report_id
 )
 INSERT INTO photos (report_id, image_url)
-SELECT report_id, 'https://example.com/illegal_dumping.jpg' FROM new_report;
+SELECT report_id, 'https://vxofqxupvztswwxksllp.supabase.co/storage/v1/object/public/Reports/1768502516755-rifiuti.jfif' FROM new_report;
+
+WITH new_report AS (
+INSERT INTO reports (
+        citizen_id, category_id, status_id,
+        assigned_to_operator_id, title, description,
+        latitude, longitude, anonymous
+) VALUES (
+    (SELECT citizen_id FROM citizens WHERE email='melo@participium.local'),
+    (SELECT category_id FROM categories WHERE name='Waste'),
+    2,
+    7,
+    'Rubbish on the road',
+    'Bulky waste abandoned on sidewalk.',
+    45.077534, 7.702425, TRUE
+) RETURNING report_id
+)
+INSERT INTO photos (report_id, image_url)
+SELECT report_id, 'https://vxofqxupvztswwxksllp.supabase.co/storage/v1/object/public/Reports/1768503057793-rifiuti_2.jfif' FROM new_report;
 
 WITH new_report AS (
 INSERT INTO reports (
@@ -671,15 +689,15 @@ INSERT INTO reports (
 ) VALUES (
     (SELECT citizen_id FROM citizens WHERE email='melo@participium.local'),
     (SELECT category_id FROM categories WHERE name='Public Lighting'),
-    (SELECT status_id FROM statuses WHERE name='Pending Approval'),
-    NULL,
+    2,
+    6,
     'Flickering streetlight',
     'Streetlight intermittently turns on and off at night.',
-    45.065200, 7.671900, TRUE
+     45.076104, 7.643008, TRUE
 ) RETURNING report_id
 )
 INSERT INTO photos (report_id, image_url)
-SELECT report_id, 'https://example.com/flickering_streetlight.jpg' FROM new_report;
+SELECT report_id, 'https://vxofqxupvztswwxksllp.supabase.co/storage/v1/object/public/Reports/1768503057273-flicker.jfif' FROM new_report;
 
 WITH new_report AS (
 INSERT INTO reports (
@@ -689,15 +707,15 @@ INSERT INTO reports (
 ) VALUES (
     (SELECT citizen_id FROM citizens WHERE email='melo@participium.local'),
     (SELECT category_id FROM categories WHERE name='Architectural Barriers'),
-    (SELECT status_id FROM statuses WHERE name='Pending Approval'),
-    NULL,
+    2,
+    4,
     'Broken sidewalk ramp',
     'Wheelchair ramp is broken and inaccessible.',
-    45.064870, 7.658930, TRUE
+    45.057051, 7.645352, TRUE
 ) RETURNING report_id
 )
 INSERT INTO photos (report_id, image_url)
-SELECT report_id, 'https://example.com/sidewalk_ramp.jpg' FROM new_report;
+SELECT report_id, 'https://vxofqxupvztswwxksllp.supabase.co/storage/v1/object/public/Reports/1768502797485-ramp.jfif' FROM new_report;
 
 WITH new_report AS (
 INSERT INTO reports (
@@ -707,11 +725,11 @@ INSERT INTO reports (
 ) VALUES (
     (SELECT citizen_id FROM citizens WHERE email='melo@participium.local'),
     (SELECT category_id FROM categories WHERE name='Road Signs and Traffic Lights'),
-    (SELECT status_id FROM statuses WHERE name='Pending Approval'),
-    NULL,
+    2,
+    8,
     'Traffic light not working',
     'Traffic light completely off causing traffic confusion.',
-    45.067110, 7.673500, TRUE
+    45.051353, 7.662778, TRUE
 ) RETURNING report_id
 )
 INSERT INTO photos (report_id, image_url)
@@ -725,15 +743,15 @@ INSERT INTO reports (
 ) VALUES (
     (SELECT citizen_id FROM citizens WHERE email='melo@participium.local'),
     (SELECT category_id FROM categories WHERE name='Sewer System'),
-    (SELECT status_id FROM statuses WHERE name='Pending Approval'),
-    NULL,
+    2,
+    5,
     'Blocked manhole',
     'Sewer is blocked and it is flooding.',
-    45.066540, 7.664880, TRUE
+    45.051099, 7.689944, TRUE
 ) RETURNING report_id
 )
 INSERT INTO photos (report_id, image_url)
-SELECT report_id, 'https://example.com/manhole_sewer.jpg' FROM new_report;
+SELECT report_id, 'https://vxofqxupvztswwxksllp.supabase.co/storage/v1/object/public/Reports/1768502517318-sewage.jfif' FROM new_report;
 
 WITH new_report AS (
 INSERT INTO reports (
@@ -743,15 +761,15 @@ INSERT INTO reports (
 ) VALUES (
     (SELECT citizen_id FROM citizens WHERE email='melo@participium.local'),
     (SELECT category_id FROM categories WHERE name='Public Green Areas and Playgrounds'),
-    (SELECT status_id FROM statuses WHERE name='Pending Approval'),
-    NULL,
+    2,
+    10,
     'Broken playground swing',
     'Swing structure damaged and unsafe for children.',
-    45.072300, 7.666910, TRUE
+    45.057628, 7.632340, TRUE
 ) RETURNING report_id
 )
 INSERT INTO photos (report_id, image_url)
-SELECT report_id, 'https://example.com/broken_swing.jpg' FROM new_report;
+SELECT report_id, 'https://vxofqxupvztswwxksllp.supabase.co/storage/v1/object/public/Reports/1768502517696-altalena.jfif' FROM new_report;
 
 WITH new_report AS (
 INSERT INTO reports (
@@ -761,15 +779,15 @@ INSERT INTO reports (
 ) VALUES (
     (SELECT citizen_id FROM citizens WHERE email='melo@participium.local'),
     (SELECT category_id FROM categories WHERE name='Roads and Urban Furnishings'),
-    (SELECT status_id FROM statuses WHERE name='Pending Approval'),
-    NULL,
+    2,
+    9,
     'Damaged bench',
     'Public bench is broken.',
-    45.069900, 7.660120, TRUE
+    45.072085, 7.688524, TRUE
 ) RETURNING report_id
 )
 INSERT INTO photos (report_id, image_url)
-SELECT report_id, 'https://example.com/broken_bench.jpg' FROM new_report;
+SELECT report_id, 'https://vxofqxupvztswwxksllp.supabase.co/storage/v1/object/public/Reports/1768502321554-bench.jfif' FROM new_report;
 
 WITH new_report AS (
 INSERT INTO reports (
@@ -779,12 +797,48 @@ INSERT INTO reports (
 ) VALUES (
     (SELECT citizen_id FROM citizens WHERE email='melo@participium.local'),
     (SELECT category_id FROM categories WHERE name='Other'),
-    (SELECT status_id FROM statuses WHERE name='Pending Approval'),
-    NULL,
+    2,
+    11,
     'Public clock broken',
     'City square clock is now broken.',
-    45.074100, 7.667800, TRUE
+    45.076286, 7.683368, TRUE
 ) RETURNING report_id
 )
 INSERT INTO photos (report_id, image_url)
-SELECT report_id, 'https://example.com/public_clock.jpg' FROM new_report;
+SELECT report_id, 'https://vxofqxupvztswwxksllp.supabase.co/storage/v1/object/public/Reports/1768502322562-clock.jfif' FROM new_report;
+
+WITH new_report AS (
+INSERT INTO reports (
+        citizen_id, category_id, status_id,
+        assigned_to_operator_id, title, description,
+        latitude, longitude, anonymous
+) VALUES (
+    (SELECT citizen_id FROM citizens WHERE email='melo@participium.local'),
+    (SELECT category_id FROM categories WHERE name='Public Lighting'),
+    2,
+    6,
+    'Broken streetlight',
+    'The streatlight is shattered.',
+    45.075540, 7.656291, TRUE
+) RETURNING report_id
+)
+INSERT INTO photos (report_id, image_url)
+SELECT report_id, 'https://vxofqxupvztswwxksllp.supabase.co/storage/v1/object/public/Reports/1768502795592-lambione.jpg' FROM new_report;
+
+WITH new_report AS (
+INSERT INTO reports (
+        citizen_id, category_id, status_id,
+        assigned_to_operator_id, title, description,
+        latitude, longitude, anonymous
+) VALUES (
+    (SELECT citizen_id FROM citizens WHERE email='melo@participium.local'),
+    (SELECT category_id FROM categories WHERE name='Public Lighting'),
+    2,
+    6,
+    'Broken semaphor',
+    'The streatlight is always off.',
+    45.065200, 7.671900, TRUE
+) RETURNING report_id
+)
+INSERT INTO photos (report_id, image_url)
+SELECT report_id, 'https://vxofqxupvztswwxksllp.supabase.co/storage/v1/object/public/Reports/1768502797899-semaphor.jfif' FROM new_report;
