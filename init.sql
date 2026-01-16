@@ -281,6 +281,8 @@ INSERT INTO companies (name, description) VALUES
 ('SMAT', 'Water and sewage system management'),
 ('AMIAT', 'Waste management and street cleaning'),
 ('GTT Infrastrutture', 'Public transport infrastructure maintenance');
+INSERT INTO companies (name, description) VALUES
+('FixRoads Srl', 'Maintenance of roads and urban furnishings');
 
 -- 5. Company Categories
 -- Participium gestisce TUTTE le categorie
@@ -312,6 +314,11 @@ INSERT INTO company_categories (company_id, category_id) VALUES
 ((SELECT company_id FROM companies WHERE name = 'GTT Infrastrutture'),
  (SELECT category_id FROM categories WHERE name = 'Road Signs and Traffic Lights'));
 
+ -- DEMO Company Roads and Urban Furnishings
+ INSERT INTO company_categories (company_id, category_id) VALUES
+((SELECT company_id FROM companies WHERE name = 'FixRoads Srl'),
+ (SELECT category_id FROM categories WHERE name = 'Roads and Urban Furnishings'));
+
 -- 6. Operators
 -- Admin
 INSERT INTO operators (email, username, password_hash, salt, role_id, company_id)
@@ -326,7 +333,7 @@ VALUES (
 
 -- Public Relations Officer
 INSERT INTO operators (email, username, password_hash, salt, role_id, company_id) VALUES
-('off.org@participium.local', 'off_organization', 
+('mimmo.schillaci@participium.local', 'off_organization', 
  'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', 
  '4c999d4a2a78113f997cc7fd2cd05043', 
  (SELECT role_id FROM roles WHERE name = 'Municipal public relations officer'),
@@ -352,7 +359,7 @@ INSERT INTO operators (email, username, password_hash, salt, role_id, company_id
 ('tec.traffic@participium.local', 'tec_traffic', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
   (SELECT role_id FROM roles WHERE name = 'Technical office staff member'),
   (SELECT company_id FROM companies WHERE name = 'Participium')),
-('tec.publicworks@participium.local', 'tec_publicworks', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
+('ada.lovelace@participium.local', 'tec_publicworks', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
   (SELECT role_id FROM roles WHERE name = 'Technical office staff member'),
   (SELECT company_id FROM companies WHERE name = 'Participium')),
 ('tec.parks@participium.local', 'tec_parks', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043', 
@@ -375,7 +382,10 @@ INSERT INTO operators (email, username, password_hash, salt, role_id, company_id
     (SELECT company_id FROM companies WHERE name = 'AMIAT')),
 ('maint.traffic@gtt.com', 'ext_gtt', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043',
     (SELECT role_id FROM roles WHERE name = 'External maintainer'),      
-    (SELECT company_id FROM companies WHERE name = 'GTT Infrastrutture'));
+    (SELECT company_id FROM companies WHERE name = 'GTT Infrastrutture')),
+('maint.publicworks@fixroads.com', 'ext_fixroads', 'f746cd28ba22bc7f3bbd4f62f152180f17236d0463d70888c4881d154c7526af', '4c999d4a2a78113f997cc7fd2cd05043',
+    (SELECT role_id FROM roles WHERE name = 'External maintainer'),      
+    (SELECT company_id FROM companies WHERE name = 'FixRoads Srl'));
 
 -- 7. Operator Categories (associazioni N-N)
 -- Associa ogni technical staff member alla sua categoria principale
@@ -415,6 +425,11 @@ INSERT INTO operator_categories (operator_id, category_id) VALUES
 -- 8. Citizen
 INSERT INTO citizens (email, username, first_name, last_name, password_hash, salt, profile_photo_url, telegram_username, email_notifications, verified) VALUES
 ('melo@participium.local', 'melo', 'Carmelo', 'Locali', '858461e61ed6a0863bb44c4541e7bdcb33f9dd8d4401095ea6016bb4645b1239', '50ca648a1d5bbd29454d4a19efd9775b', NULL, NULL, TRUE, TRUE);
+
+INSERT INTO citizens (email, username, first_name, last_name, password_hash, salt, profile_photo_url, telegram_username, email_notifications, verified) VALUES
+('rosa.bianca@mail.example', 'RosaB', 'Rosa', 'Bianca', '858461e61ed6a0863bb44c4541e7bdcb33f9dd8d4401095ea6016bb4645b1239', '50ca648a1d5bbd29454d4a19efd9775b', NULL, NULL, TRUE, TRUE);
+
+
 
 -- 9. Reports
 -- Report 1: Pending Approval
@@ -842,3 +857,11 @@ INSERT INTO reports (
 )
 INSERT INTO photos (report_id, image_url)
 SELECT report_id, 'https://vxofqxupvztswwxksllp.supabase.co/storage/v1/object/public/Reports/1768502797899-semaphor.jfif' FROM new_report;
+
+UPDATE operators
+SET username = 'm_schillaci'
+WHERE email = 'mimmo.schillaci@participium.local';
+
+UPDATE operators
+SET username = 'a_lovelace'
+WHERE email = 'ada.lovelace@participium.local';
