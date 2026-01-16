@@ -466,7 +466,7 @@ export const setMainteinerByReport = async (report_id, operator_id) => {
 
 
 // Assegna automaticamente il maintainer con meno report attivi
-export const autoAssignMaintainer = async (report_id) => {
+export const autoAssignMaintainer = async (report_id, company) => {
   const client = await pool.connect();
   
   try {
@@ -504,11 +504,11 @@ export const autoAssignMaintainer = async (report_id) => {
       LEFT JOIN reports r ON r.assigned_to_external_id = o.operator_id 
         AND r.status_id NOT IN (5, 6)
       WHERE o.role_id = (SELECT role_id FROM roles WHERE name = 'External maintainer')
-        AND oc.category_id = $1
+        AND oc.category_id = $1 AND c.name = $2
       GROUP BY o.operator_id, o.username, c.name
       ORDER BY assigned_reports_count ASC, RANDOM()
     `;
-    const maintainersResult = await client.query(maintainersQuery, [category_id]);
+    const maintainersResult = await client.query(maintainersQuery, [ category_id , company]);
     
     if (maintainersResult.rows.length === 0) {
       throw new Error(`Nessun maintainer disponibile per la categoria con ID ${category_id}`);

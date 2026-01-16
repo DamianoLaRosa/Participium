@@ -52,8 +52,8 @@ export const setMaintainerByReport = async (reportId, operatorId) => {
 };
 
 // Auto-assign maintainer to a report
-export const autoAssignMaintainer = async (reportId) => {
-  return await axiosInstance.post(`/api/reports/${reportId}/auto-assign-maintainer`);
+export const autoAssignMaintainer = async (reportId, company) => {
+  return await axiosInstance.post(`/api/reports/${reportId}/auto-assign-maintainer`,{company:company});
 };
 
 // Auto-assign technical officer to a report

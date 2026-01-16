@@ -26,7 +26,7 @@ function InspectReportPage() {
   const [rejectReason, setRejectReason] = useState("");
   const [officers, setOfficers] = useState([]);
   const [selectedOfficer, setSelectedOfficer] = useState(null);
-  const [selectedMaintainer, setSelectedMaintainer] = useState(null);
+  const [selectedCompany, setSelectedCompany] = useState("");
   const [error, setError] = useState("");
   const [warning, setWarning] = useState("");
   const [address, setAddress] = useState("Loading address...");
@@ -105,8 +105,8 @@ function InspectReportPage() {
   };
 
   const handleAssignMaintainer = async () => {
-    if (!selectedMaintainer) {
-      setWarning("Please select a maintainer.");
+    if (!selectedCompany) {
+      setWarning("Please select a company.");
       setTimeout(() => setWarning(""), 3000);
       return;
     }
@@ -114,11 +114,18 @@ function InspectReportPage() {
   };
 
   const confirmAssignMaintainer = async () => {
-    await API.setMaintainerByReport(selectedReport.id, selectedMaintainer);
+  try {
+    await API.autoAssignMaintainer(selectedReport.id, selectedCompany);
     setShowMaintainerModal(false);
+    setSelectedCompany(""); // Reset della selezione
     window.dispatchEvent(new CustomEvent('report-updated'));
     navigate(-1);
-  };
+  } catch (err) {
+    setShowMaintainerModal(false);
+    setError("Failed to assign maintainer from " + selectedCompany);
+    setTimeout(() => setError(""), 5000);
+  }
+};
 
   const confirmApproveReport = async () => {
     await API.setOperatorByReport(selectedReport.id, selectedOfficer);
@@ -158,13 +165,9 @@ function InspectReportPage() {
     navigate(-1);
   };
 
-  const handleAutoAssignMaintainer = () => {
-    setShowAutoAssignModal(true);
-  };
-
   const confirmAutoAssignMaintainer = async () => {
     try {
-      await API.autoAssignMaintainer(selectedReport.id);
+      await API.autoAssignMaintainer(selectedReport.id,);
       setShowAutoAssignModal(false);
       window.dispatchEvent(new CustomEvent('report-updated'));
       navigate(-1);
@@ -364,42 +367,35 @@ function InspectReportPage() {
   </div>
 )}
         {/* Maintainer Assignment - Only for Technical Officers */}
-        {isTechnicalOfficer && selectedReport.assigned_to_external == null && (
-          <div className={`${styles.section} ${styles.sectionNoBorder}`}>
-            <h3 className={styles.sectionTitle}>Assign External Maintainer</h3>
+{isTechnicalOfficer && selectedReport.assigned_to_external == null && (
 
-            {/* 
-            <select
-              value={selectedMaintainer || ""}
-              onChange={(e) => setSelectedMaintainer(Number(e.target.value))}
-              className={styles.select}
-            >
-              <option value="">Select a maintainer manually...</option>
-              {officers.map((maintainer) => (
-                <option key={maintainer.id} value={maintainer.id}>
-                  {maintainer.username} — {maintainer.company}
-                </option>
-              ))}
-            </select> 
+  <div className={`${styles.section} ${styles.sectionNoBorder}`}>
+    <h3 className={styles.sectionTitle}>Assign External Maintainer</h3>
 
-            <div className={styles.maintainerButtons}>
-              
-              <button
-                className={styles.primaryButton}
-                onClick={handleAssignMaintainer}
-                disabled={!selectedMaintainer}
-              >
-                Assign Selected
-              </button> */}
-              <button
-                className={styles.assignButton}
-                onClick={handleAutoAssignMaintainer}
-              >
-                Automatically assign to External Maintainer
-              </button>
-            
-          </div>
-        )}
+    <select
+      value={selectedCompany}
+      onChange={(e) => setSelectedCompany(e.target.value)}
+      className={styles.select}
+    >
+      <option value="">Select a company...</option>
+      {[...new Set(officers.filter(o => o.company).map(o => o.company))].sort().map((company, index) => (
+        <option key={index} value={company}>
+          {company}
+        </option>
+      ))}
+    </select>
+
+      <div className={styles.threeButtonsRow}>
+    <button
+      className={styles.assignButton}
+      onClick={() => handleAssignMaintainer()}
+      disabled={!selectedCompany}
+    >
+      Automatically assign to External Maintainer from {selectedCompany || 'selected company'}
+    </button>
+    </div>
+  </div>
+)}
 
         {/* External Maintainer and Technical Officer Status Update */}
         { (isTechnicalOfficer || isExternalMaintainer) && selectedReport.status.id !== 6 && (
@@ -433,7 +429,7 @@ function InspectReportPage() {
         {/* Open Chat Button - Full width for Technical Officers and External Maintainers */}
         {(isTechnicalOfficer || isExternalMaintainer) && (
           <button
-            className={styles.openChatButton}
+            className={`${styles.openChatButton}`}
             onClick={() => navigate(`/chats?reportId=${selectedReport.id}`)}
           >
             💬 Open Chat
@@ -563,37 +559,37 @@ function InspectReportPage() {
 
       {/* Maintainer Assignment Confirmation Modal */}
       {showMaintainerModal && (
-        <div
-          className={styles.confirmModalOverlay}
-          onClick={(e) =>
-            e.target === e.currentTarget && setShowMaintainerModal(false)
-          }
-          onKeyDown={(e) => e.key === "Escape" && setShowMaintainerModal(false)}
-          role="dialog"
-          aria-modal="true"
+  <div
+    className={styles.confirmModalOverlay}
+    onClick={(e) =>
+      e.target === e.currentTarget && setShowMaintainerModal(false)
+    }
+    onKeyDown={(e) => e.key === "Escape" && setShowMaintainerModal(false)}
+    role="dialog"
+    aria-modal="true"
+  >
+    <div className={styles.confirmModal}>
+      <p className={styles.confirmQuestion}>
+        Are you sure you want to automatically assign an external maintainer from{' '}
+        <strong>{selectedCompany}</strong> to this report?
+      </p>
+      <div className={styles.confirmModalButtons}>
+        <button
+          className={styles.cancelButton}
+          onClick={() => setShowMaintainerModal(false)}
         >
-          <div className={styles.confirmModal}>
-            <p className={styles.confirmQuestion}>
-              Are you sure you want to assign this report to the selected
-              maintainer?
-            </p>
-            <div className={styles.confirmModalButtons}>
-              <button
-                className={styles.cancelButton}
-                onClick={() => setShowMaintainerModal(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className={styles.confirmButton}
-                onClick={confirmAssignMaintainer}
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          Cancel
+        </button>
+        <button
+          className={styles.confirmButton}
+          onClick={confirmAssignMaintainer}
+        >
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* Auto-Assign Officer Confirmation Modal */}
       {showAutoAssignOfficerModal && (

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { check } from "express-validator";
+import { check, validationResult  } from "express-validator";
 import { 
   insertReport,
   getAllReports,
@@ -257,7 +257,13 @@ router.put("/reports/:id/mainteiner", async (req, res) => {
 });
 
 // POST /api/reports/:id/auto-assign-maintainer -> Auto-assign maintainer
-router.post("/reports/:id/auto-assign-maintainer", async (req, res) => {
+router.post("/reports/:id/auto-assign-maintainer", [
+  check("company")
+      .exists()
+      .withMessage("Company is required")
+      .isString()  // ← CAMBIATO: dovrebbe essere stringa (nome company), non int
+      .withMessage("Company must be a string"),
+], async (req, res) => {
   try {
     if (!req.isAuthenticated())
       return res.status(401).json({ error: "Not authenticated" });
@@ -268,18 +274,27 @@ router.post("/reports/:id/auto-assign-maintainer", async (req, res) => {
     )
       return res.status(403).json({ error: "Forbidden" });
     
+    // Validazione degli errori di check
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+    
     const reportId = Number.parseInt(req.params.id, 10);
     if (Number.isNaN(reportId))
       return res.status(422).json({ error: "Invalid report id" });
 
-    const result = await autoAssignMaintainer(reportId);
+    const { company } = req.body;  // ← AGGIUNTO: estrai company dal body
+    
+    const result = await autoAssignMaintainer(reportId, company);  // ← CORRETTO
     
     return res.status(200).json({
-        id: result.assigned_maintainer.operator_id,
-        username: result.assigned_maintainer.username,
+      id: result.assigned_maintainer.operator_id,
+      username: result.assigned_maintainer.username,
       company: result.assigned_maintainer.company_name,
     });
-  } catch (err) {  
+  } catch (err) {
+    console.error("Error auto-assigning maintainer:", err);  // ← AGGIUNTO: log dell'errore
     return res
       .status(503)
       .json({ error: "Database error during maintainer assignment" });
