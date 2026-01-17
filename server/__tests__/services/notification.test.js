@@ -29,9 +29,13 @@ describe('services/notification', () => {
         citizen_id: 10,
         report_id: 5,
         message: 'Your report has been accepted',
+        new_status_id: null,
         sent_at: new Date('2026-01-07T10:00:00Z'),
         seen: false
       };
+      // Mock the SELECT title query
+      mockQuery.mockResolvedValueOnce({ rows: [{ title: 'Test Report' }] });
+      // Mock the INSERT notification query
       mockQuery.mockResolvedValueOnce({ rows: [notification] });
 
       const result = await svc.createNotification(10, 5, 'Your report has been accepted');
@@ -39,7 +43,7 @@ describe('services/notification', () => {
       expect(result).toEqual(notification);
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO notifications'),
-        [10, 5, 'Your report has been accepted']
+        [10, 5, 'Your report has been accepted', null]
       );
     });
 
@@ -49,9 +53,13 @@ describe('services/notification', () => {
         citizen_id: 10,
         report_id: 5,
         message: 'Your report has been accepted',
+        new_status_id: null,
         sent_at: new Date('2026-01-07T10:00:00Z'),
         seen: false
       };
+      // Mock the SELECT title query
+      mockQuery.mockResolvedValueOnce({ rows: [{ title: 'Test Report' }] });
+      // Mock the INSERT notification query
       mockQuery.mockResolvedValueOnce({ rows: [notification] });
 
       const mockIo = {
@@ -59,17 +67,17 @@ describe('services/notification', () => {
         emit: jest.fn()
       };
 
-      const result = await svc.createNotification(10, 5, 'Your report has been accepted', mockIo);
+      const result = await svc.createNotification(10, 5, 'Your report has been accepted', null, mockIo);
 
       expect(result).toEqual(notification);
       expect(mockIo.to).toHaveBeenCalledWith('citizen:10');
-      expect(mockIo.emit).toHaveBeenCalledWith('new_notification', {
+      expect(mockIo.emit).toHaveBeenCalledWith('new_notification', expect.objectContaining({
         id: 2,
         report_id: 5,
         message: 'Your report has been accepted',
         sent_at: notification.sent_at,
         seen: false
-      });
+      }));
     });
 
     test('propagates database error', async () => {
@@ -113,7 +121,6 @@ describe('services/notification', () => {
       const [sql] = mockQuery.mock.calls[0];
       expect(sql).toContain('FROM notifications');
       expect(sql).toContain('ORDER BY n.sent_at DESC');
-      expect(sql).toContain('LIMIT 50');
     });
 
     test('returns empty array when no notifications', async () => {

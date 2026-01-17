@@ -21,6 +21,12 @@ const nodemailer = require('nodemailer');
 describe('sendEmail (server/services/utils.mjs) - CommonJS test file', () => {
   let sendEmail;
   beforeAll(async () => {
+    // Set environment variables before importing
+    process.env.ETHEREAL_HOST = 'smtp.ethereal.email';
+    process.env.ETHEREAL_PORT = '587';
+    process.env.ETHEREAL_USER = 'alan.okeefe54@ethereal.email';
+    process.env.ETHEREAL_PASS = 'dnyNWufZpf4PZ9EvtB';
+    
     const utils = await import('../../services/utils.mjs');
     sendEmail = utils.sendEmail;
   });

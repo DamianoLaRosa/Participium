@@ -81,7 +81,7 @@ describe('router/notification', () => {
       const res = await request(app).get('/api/notifications');
       expect(res.status).toBe(200);
       expect(res.body).toEqual(notifications);
-      expect(getNotificationsByCitizenMock).toHaveBeenCalledWith(1);
+      expect(getNotificationsByCitizenMock).toHaveBeenCalledWith(1, null);
     });
 
     test('empty notifications list -> 200', async () => {

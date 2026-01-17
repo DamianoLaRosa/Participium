@@ -10,7 +10,8 @@ let insertReportMock,
   addMessageMock,
   getMessagesMock,
   autoAssignTechnicalOfficerMock,
-  autoAssignMaintainerMock;
+  autoAssignMaintainerMock,
+  hasOperatorMessageMock;
 
 let requestLib, makeApp, router;
 let isAuth = false;
@@ -33,6 +34,7 @@ describe('router/report', () => {
     getMessagesMock = jest.fn();
     autoAssignTechnicalOfficerMock = jest.fn();
     autoAssignMaintainerMock = jest.fn();
+    hasOperatorMessageMock = jest.fn();
 
     // mock dao before importing the router
     await jest.unstable_mockModule('../../dao.mjs', () => ({
@@ -52,6 +54,7 @@ describe('router/report', () => {
       createNotification: jest.fn(),
       addSystemMessage: jest.fn(),
       getReportParticipants: jest.fn(),
+      hasOperatorMessage: hasOperatorMessageMock,
     }));
 
     const supertest = await import('supertest');
@@ -413,6 +416,8 @@ describe('router/report', () => {
 
     const msg = { id: 15, content: 'hello' };
     addMessageMock.mockResolvedValue(msg);
+    hasOperatorMessageMock.mockResolvedValue(true);
+    
     app = makeApp();
     res = await requestLib(app).post('/reports/4/messages').send({ content: 'hey' });
     expect(res.status).toBe(201);
