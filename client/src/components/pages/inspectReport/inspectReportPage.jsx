@@ -32,6 +32,9 @@ function InspectReportPage() {
   const [address, setAddress] = useState("Loading address...");
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
   const [maintainer, setMaintainer] = useState(null);
+  const [showResolveModal, setShowResolveModal] = useState(false);
+  const [resolutionNote, setResolutionNote] = useState("");
+
 
   useEffect(() => {
     const load = async () => {
@@ -134,6 +137,25 @@ function InspectReportPage() {
     window.dispatchEvent(new CustomEvent('report-updated'));
     navigate(-1);
   };
+
+  const confirmResolveReport = async () => {
+  try {
+    await API.updateReportStatus(
+      selectedReport.id,
+      6,
+      resolutionNote // <-- text sent to backend
+    );
+    setShowResolveModal(false);
+    setResolutionNote("");
+    window.dispatchEvent(new CustomEvent("report-updated"));
+    navigate(-1);
+  } catch (err) {
+    setShowResolveModal(false);
+    setError("Failed to resolve report");
+    setTimeout(() => setError(""), 5000);
+  }
+};
+
 
   const handleAutoAssignOfficer = () => {
     setShowAutoAssignOfficerModal(true);
@@ -417,17 +439,18 @@ function InspectReportPage() {
                 Mark as Suspended
               </button>
               <button
-                className={styles.successButton}
-                onClick={() => handleStatusChange(6)}
-              >
-                Mark as Resolved
-              </button>
+  className={styles.successButton}
+  onClick={() => setShowResolveModal(true)}
+>
+  Mark as Resolved
+</button>
+
             </div>
           </div>
         )}
 
         {/* Open Chat Button - Full width for Technical Officers and External Maintainers */}
-        {(isTechnicalOfficer || isExternalMaintainer) && (
+        {(isTechnicalOfficer ) && (
           <button
             className={`${styles.openChatButton}`}
             onClick={() => navigate(`/chats?reportId=${selectedReport.id}`)}
@@ -522,6 +545,41 @@ function InspectReportPage() {
           </div>
         </div>
       )}
+
+      {showResolveModal && (
+  <div className={styles.modalOverlay}>
+    <div className={styles.modal}>
+      <h3 className={styles.modalTitle}>Resolve Report</h3>
+      <p className={styles.modalDescription}>
+        Please describe how the issue was resolved.
+      </p>
+
+      <textarea
+        className={styles.textarea}
+        value={resolutionNote}
+        onChange={(e) => setResolutionNote(e.target.value)}
+        placeholder="Enter resolution details..."
+      />
+
+      <div className={styles.modalActions}>
+        <button
+          className={styles.secondaryButton}
+          onClick={() => setShowResolveModal(false)}
+        >
+          Cancel
+        </button>
+        <button
+          className={styles.successButton}
+          onClick={confirmResolveReport}
+          disabled={resolutionNote.trim().length < 5}
+        >
+          Confirm Resolution
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
       {/* Status Update Confirmation Modal */}
       {showStatusModal && (
